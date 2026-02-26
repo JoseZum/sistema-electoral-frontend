@@ -1,0 +1,3983 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEE — Sistema Electoral Estudiantil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════
+       DESIGN SYSTEM — CSS Custom Properties
+       ═══════════════════════════════════════════ */
+    :root {
+      --ink: #141414;
+      --ink-soft: #333333;
+      --surface: #FAF9F7;
+      --surface-raised: #FFFFFF;
+      --surface-sunken: #F0EEEB;
+      --accent: #E53935;
+      --accent-hover: #C62828;
+      --accent-light: #FFF5F5;
+      --accent-glow: rgba(229, 57, 53, 0.07);
+      --muted: #666666;
+      --muted-light: #999999;
+      --border: #E5E5E5;
+      --border-strong: #CCCCCC;
+      --success: #0D7C46;
+      --success-light: #ECFDF5;
+      --warning: #B45309;
+      --warning-light: #FFFBEB;
+      --error: #D32F2F;
+      --error-light: #FFF5F5;
+
+      --font-display: 'Newsreader', serif;
+      --font-body: 'Instrument Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+
+      --shadow-sm: 0 1px 2px rgba(12,18,32,0.04);
+      --shadow-md: 0 4px 12px rgba(12,18,32,0.06);
+      --shadow-lg: 0 12px 32px rgba(12,18,32,0.08);
+      --shadow-xl: 0 24px 48px rgba(12,18,32,0.12);
+
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+      --sidebar-w: 260px;
+      --header-h: 64px;
+    }
+
+    /* ═══════════════════════════════════════════
+       RESET & BASE
+       ═══════════════════════════════════════════ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--surface);
+      color: var(--ink);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* Guilloche security texture */
+    .guilloche-bg {
+      background-image:
+        repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(185,28,28,0.015) 10px, rgba(185,28,28,0.015) 11px),
+        repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(185,28,28,0.015) 10px, rgba(185,28,28,0.015) 11px);
+    }
+
+    /* ═══════════════════════════════════════════
+       TYPOGRAPHY
+       ═══════════════════════════════════════════ */
+    h1, h2, h3 { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.02em; }
+    h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.08; }
+    h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); line-height: 1.15; }
+    h3 { font-size: 1.25rem; line-height: 1.25; }
+
+    .label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .overline {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .overline::before {
+      content: '';
+      display: block;
+      width: 32px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    /* ═══════════════════════════════════════════
+       COMPONENTS — Buttons
+       ═══════════════════════════════════════════ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-smooth);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .btn-primary {
+      background: var(--ink);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--ink-soft); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+    .btn-accent {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-accent:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--ink);
+      border: 1.5px solid var(--border-strong);
+    }
+    .btn-outline:hover { border-color: var(--ink); background: var(--surface); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+    }
+    .btn-ghost:hover { color: var(--ink); background: var(--surface-sunken); }
+
+    .btn-lg { padding: 0.875rem 1.75rem; font-size: 1rem; border-radius: var(--radius-md); }
+    .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8125rem; }
+    .btn-icon { padding: 0.5rem; width: 36px; height: 36px; }
+
+    /* ═══════════════════════════════════════════
+       COMPONENTS — Inputs
+       ═══════════════════════════════════════════ */
+    .input-group { display: flex; flex-direction: column; gap: 0.375rem; }
+    .input-group label { font-size: 0.8125rem; font-weight: 600; color: var(--ink-soft); }
+
+    .input {
+      padding: 0.625rem 0.875rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      color: var(--ink);
+      background: var(--surface-raised);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+    .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .input::placeholder { color: var(--muted-light); }
+
+    .search-input {
+      padding-left: 2.5rem;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 0.75rem center;
+    }
+
+    /* ═══════════════════════════════════════════
+       COMPONENTS — Cards
+       ═══════════════════════════════════════════ */
+    .card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      transition: box-shadow 0.3s var(--ease-smooth), transform 0.3s var(--ease-out);
+    }
+    .card:hover { box-shadow: var(--shadow-md); }
+    .card-interactive:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); cursor: pointer; }
+
+    /* ═══════════════════════════════════════════
+       COMPONENTS — Badges
+       ═══════════════════════════════════════════ */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .badge-dot::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .badge-open { background: #ECFDF5; color: #059669; }
+    .badge-draft { background: #F1F5F9; color: #64748B; }
+    .badge-closed { background: #FEF2F2; color: #B91C1C; }
+    .badge-archived { background: #F5F3FF; color: #7C3AED; }
+    .badge-scrutinized { background: #FFFBEB; color: #D97706; }
+
+    /* ═══════════════════════════════════════════
+       COMPONENTS — Table
+       ═══════════════════════════════════════════ */
+    .table-wrapper {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-raised);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead {
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.2s;
+    }
+    th:hover { color: var(--ink); }
+    th .sort-icon { opacity: 0.3; transition: opacity 0.2s; margin-left: 0.25rem; }
+    th:hover .sort-icon { opacity: 0.7; }
+    th.sorted { color: var(--accent); }
+    th.sorted .sort-icon { opacity: 1; }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--ink-soft);
+      transition: background 0.15s;
+    }
+
+    tr { transition: background 0.15s ease; }
+    tbody tr:hover { background: var(--accent-glow); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* Row animation for table entries */
+    .table-row-enter {
+      animation: tableRowSlide 0.3s var(--ease-out) forwards;
+    }
+    @keyframes tableRowSlide {
+      from { opacity: 0; transform: translateX(-8px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .table-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+
+    .pagination-btns {
+      display: flex;
+      gap: 0.25rem;
+    }
+    .pagination-btns button {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-raised);
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      color: var(--ink-soft);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pagination-btns button:hover { border-color: var(--ink); color: var(--ink); }
+    .pagination-btns button.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+    /* ═══════════════════════════════════════════
+       LAYOUT — App Shell
+       ═══════════════════════════════════════════ */
+    .app { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--ink);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 50;
+      transition: transform 0.3s var(--ease-out);
+    }
+
+    .sidebar-brand {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .sidebar-brand-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      color: white;
+      flex-shrink: 0;
+    }
+    .sidebar-brand-text { font-weight: 600; font-size: 0.9375rem; letter-spacing: -0.01em; }
+    .sidebar-brand-sub { font-size: 0.6875rem; color: rgba(255,255,255,0.5); }
+
+    .sidebar-nav { flex: 1; padding: 1rem 0; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+    .sidebar-nav::-webkit-scrollbar { display: none; }
+
+    .sidebar-section { padding: 0.5rem 1.5rem; margin-top: 0.5rem; }
+    .sidebar-section-label {
+      font-size: 0.625rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 0.5rem;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1.5rem;
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 0;
+      transition: all 0.15s;
+      position: relative;
+      cursor: pointer;
+    }
+    .sidebar-link:hover { color: white; background: rgba(255,255,255,0.05); }
+    .sidebar-link.active {
+      color: white;
+      background: rgba(255,255,255,0.08);
+    }
+    .sidebar-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 4px;
+      bottom: 4px;
+      width: 3px;
+      background: var(--accent);
+      border-radius: 0 2px 2px 0;
+    }
+    .sidebar-link svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
+    .sidebar-link.active svg { opacity: 1; }
+
+    .sidebar-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .sidebar-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: white;
+      flex-shrink: 0;
+    }
+    .sidebar-user-name { font-size: 0.8125rem; font-weight: 600; color: white; }
+    .sidebar-user-role { font-size: 0.6875rem; color: rgba(255,255,255,0.4); }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+    }
+
+    .main-header {
+      height: var(--header-h);
+      background: var(--surface-raised);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .main-header-title { font-size: 1.125rem; font-weight: 600; }
+
+    .main-body { padding: 2rem; max-width: 1400px; }
+
+    /* ═══════════════════════════════════════════
+       VIEW SYSTEM — Show/hide screens
+       ═══════════════════════════════════════════ */
+    .view { display: none; }
+    .view.active { display: block; animation: viewFadeIn 0.35s var(--ease-out); }
+
+    @keyframes viewFadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Voter views are full-screen (no sidebar) */
+    .voter-shell { display: none; min-height: 100vh; }
+    .voter-shell.active { display: flex; flex-direction: column; }
+
+    .admin-shell { display: none; }
+    .admin-shell.active { display: flex; }
+
+    /* ═══════════════════════════════════════════
+       VOTER — Login Screen
+       ═══════════════════════════════════════════ */
+    .voter-login {
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .voter-login-left {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .voter-login-right {
+      width: 48%;
+      background: var(--ink);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .voter-login-right::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.02) 20px, rgba(255,255,255,0.02) 21px),
+        repeating-linear-gradient(-45deg, transparent, transparent 20px, rgba(255,255,255,0.02) 20px, rgba(255,255,255,0.02) 21px);
+      pointer-events: none;
+    }
+
+    .login-card {
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .login-card .overline { margin-bottom: 1rem; }
+    .login-card h1 { margin-bottom: 0.5rem; font-size: 2.5rem; }
+    .login-card .subtitle { color: var(--muted); margin-bottom: 2.5rem; font-size: 0.9375rem; }
+
+    .login-divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      color: var(--muted-light);
+      font-size: 0.8125rem;
+    }
+    .login-divider::before, .login-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .microsoft-btn {
+      width: 100%;
+      padding: 0.75rem 1.25rem;
+      background: var(--surface-raised);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      transition: all 0.2s;
+      color: var(--ink);
+    }
+    .microsoft-btn:hover { border-color: var(--ink); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+    .login-info-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      color: white;
+      position: relative;
+      z-index: 1;
+    }
+    .login-info-card h2 { color: white; margin-bottom: 1rem; font-size: 2rem; }
+    .login-info-card p { color: rgba(255,255,255,0.6); font-size: 0.9375rem; line-height: 1.7; margin-bottom: 1.5rem; }
+
+    .login-stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .login-stat-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      color: white;
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .login-stat-label {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ═══════════════════════════════════════════
+       VOTER — Elections Available
+       ═══════════════════════════════════════════ */
+    .voter-header {
+      height: var(--header-h);
+      background: var(--surface-raised);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(1.5rem, 4vw, 3rem);
+    }
+    .voter-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-weight: 700;
+      font-size: 0.9375rem;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .voter-brand-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+    }
+    .voter-user {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .voter-content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 3rem clamp(1.5rem, 4vw, 2rem);
+    }
+
+    .election-card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s var(--ease-out);
+      cursor: pointer;
+    }
+    .election-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 8px 24px rgba(185,28,28,0.06);
+      transform: translateY(-2px);
+    }
+    .election-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+    }
+    .election-card-type {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    .election-card h3 { margin-bottom: 0.25rem; font-size: 1.25rem; }
+    .election-card-desc { color: var(--muted); font-size: 0.875rem; margin-bottom: 1.25rem; }
+    .election-card-meta {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+    .election-card-meta span { display: flex; align-items: center; gap: 0.375rem; }
+
+    /* ═══════════════════════════════════════════
+       VOTER — Voting Booth
+       ═══════════════════════════════════════════ */
+    .voting-booth {
+      min-height: calc(100vh - var(--header-h));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .ballot {
+      max-width: 560px;
+      width: 100%;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .ballot-header {
+      padding: 2rem 2rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+      position: relative;
+    }
+    .ballot-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+    .ballot-header .label { margin-bottom: 0.5rem; }
+    .ballot-header h2 { margin-bottom: 0.25rem; }
+    .ballot-header p { color: var(--muted); font-size: 0.875rem; }
+
+    .ballot-body { padding: 1.5rem 2rem 2rem; }
+
+    .ballot-option {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-smooth);
+      position: relative;
+    }
+    .ballot-option:hover { border-color: var(--border-strong); background: var(--surface); }
+    .ballot-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .ballot-radio {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-strong);
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .ballot-option.selected .ballot-radio {
+      border-color: var(--accent);
+    }
+    .ballot-option.selected .ballot-radio::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: radioFill 0.25s var(--ease-spring);
+    }
+    @keyframes radioFill {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+
+    .ballot-option-label { font-weight: 500; font-size: 0.9375rem; }
+    .ballot-option-sub { font-size: 0.8125rem; color: var(--muted); }
+
+    .ballot-footer {
+      padding: 1.5rem 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ═══════════════════════════════════════════
+       VOTER — Vote Confirmation
+       ═══════════════════════════════════════════ */
+    .vote-confirmation {
+      min-height: calc(100vh - var(--header-h));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .confirmation-card {
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+
+    .stamp {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: var(--success-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      animation: stampIn 0.5s var(--ease-spring);
+    }
+    @keyframes stampIn {
+      0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+      60% { transform: scale(1.15) rotate(5deg); }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    .stamp svg { width: 40px; height: 40px; color: var(--success); }
+
+    .confirmation-card h2 { margin-bottom: 0.5rem; }
+    .confirmation-card p { color: var(--muted); margin-bottom: 2rem; line-height: 1.7; }
+
+    .receipt {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      text-align: left;
+      font-size: 0.875rem;
+      margin-bottom: 2rem;
+    }
+    .receipt-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .receipt-row:last-child { border-bottom: none; }
+    .receipt-label { color: var(--muted); }
+    .receipt-value { font-weight: 600; }
+
+    /* ═══════════════════════════════════════════
+       ADMIN — Dashboard Stats
+       ═══════════════════════════════════════════ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1.5rem;
+      transition: all 0.3s var(--ease-out);
+    }
+    .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .stat-card .label { margin-bottom: 0.5rem; }
+    .stat-card-value {
+      font-family: var(--font-display);
+      font-size: 2.25rem;
+      line-height: 1;
+      margin-bottom: 0.375rem;
+      color: var(--ink);
+    }
+    .stat-card-change {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .stat-card-change.positive { color: var(--success); }
+
+    /* ═══════════════════════════════════════════
+       ADMIN — Padron Explorer
+       ═══════════════════════════════════════════ */
+    .padron-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .padron-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+      min-width: 200px;
+    }
+    .padron-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--ink-soft);
+      background: var(--surface-raised);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-chip:hover { border-color: var(--ink); }
+    .filter-chip.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+    /* Progress bar component */
+    .progress-bar {
+      height: 8px;
+      background: var(--surface-sunken);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      transition: width 1s var(--ease-out);
+    }
+    .progress-bar-fill.accent { background: var(--accent); }
+    .progress-bar-fill.success { background: var(--success); }
+
+    /* ═══════════════════════════════════════════
+       ADMIN — Results Charts
+       ═══════════════════════════════════════════ */
+    .results-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .results-bar-label {
+      width: 140px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .results-bar-track {
+      flex: 1;
+      height: 32px;
+      background: var(--surface-sunken);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      position: relative;
+    }
+    .results-bar-fill {
+      height: 100%;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      padding: 0 0.75rem;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: white;
+      transition: width 1.2s var(--ease-out);
+      min-width: fit-content;
+    }
+    .results-bar-count {
+      width: 60px;
+      text-align: right;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--ink-soft);
+      flex-shrink: 0;
+    }
+
+    /* ═══════════════════════════════════════════
+       ANIMATIONS
+       ═══════════════════════════════════════════ */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .animate-in { animation: fadeInUp 0.5s var(--ease-out) forwards; }
+    .animate-delay-1 { animation-delay: 0.05s; }
+    .animate-delay-2 { animation-delay: 0.1s; }
+    .animate-delay-3 { animation-delay: 0.15s; }
+    .animate-delay-4 { animation-delay: 0.2s; }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE
+       ═══════════════════════════════════════════ */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.5rem;
+      color: var(--ink);
+    }
+
+    @media (max-width: 1024px) {
+      .voter-login { flex-direction: column; }
+      .voter-login-right { width: 100%; padding: 3rem 2rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .mobile-menu-btn { display: flex; }
+      .main-body { padding: 1.25rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .padron-toolbar { flex-direction: column; align-items: stretch; }
+      .padron-toolbar-left, .padron-toolbar-right { width: 100%; }
+      .ballot { border-radius: var(--radius-lg); }
+      .ballot-header, .ballot-body, .ballot-footer { padding: 1.25rem; }
+      .voter-login-left { padding: 1.5rem; }
+      .login-card h1 { font-size: 2rem; }
+      .election-card-meta { flex-wrap: wrap; gap: 0.75rem; }
+    }
+
+    /* Overlay for mobile sidebar */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 45;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .sidebar-overlay.active { display: block; opacity: 1; }
+
+    /* ═══════════════════════════════════════════
+       REDUCED MOTION
+       ═══════════════════════════════════════════ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Modal overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(12,18,32,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--surface-raised);
+      border-radius: var(--radius-lg);
+      max-width: 480px;
+      width: 100%;
+      padding: 2rem;
+      animation: fadeInUp 0.3s var(--ease-out);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+    }
+    .empty-state svg { width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.3; }
+    .empty-state h3 { color: var(--ink-soft); margin-bottom: 0.5rem; font-family: var(--font-body); font-weight: 600; }
+
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+    }
+    .tooltip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%) scale(0.95);
+      background: var(--ink);
+      color: white;
+      padding: 0.375rem 0.625rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.15s;
+    }
+    .tooltip:hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
+
+    /* Activity log */
+    .activity-item {
+      display: flex;
+      gap: 1rem;
+      padding: 0.875rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 0.4rem;
+      flex-shrink: 0;
+    }
+    .activity-text { font-size: 0.875rem; color: var(--ink-soft); }
+    .activity-time { font-size: 0.75rem; color: var(--muted-light); margin-top: 0.125rem; }
+
+    /* Export button animation */
+    .btn-export {
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-export::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.4s, height 0.4s;
+    }
+    .btn-export:active::after {
+      width: 200px;
+      height: 200px;
+    }
+
+    /* ═══════════════════════════════════════════
+       WIZARD — Step Indicator
+       ═══════════════════════════════════════════ */
+    .wizard-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.375rem;
+    }
+    .wizard-step-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      transition: all 0.35s var(--ease-out);
+      background: var(--surface-raised);
+    }
+    .wizard-step.active .wizard-step-num {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      box-shadow: 0 4px 12px rgba(229,57,53,0.25);
+      transform: scale(1.08);
+    }
+    .wizard-step.completed .wizard-step-num {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
+    }
+    .wizard-step-label {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .wizard-step.active .wizard-step-label {
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .wizard-step.completed .wizard-step-label {
+      color: var(--success);
+    }
+    .wizard-step-line {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      margin-top: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .wizard-step-line.completed {
+      background: var(--success);
+    }
+    .wizard-step-line.completed::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--success);
+      animation: lineGrow 0.4s var(--ease-out) forwards;
+    }
+    @keyframes lineGrow { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); } }
+
+    /* Wizard panels */
+    .wizard-panel { display: none; }
+    .wizard-panel.active { display: block; animation: fadeInUp 0.4s var(--ease-out); }
+
+    /* ═══════════════════════════════════════════
+       WIZARD — Type Selection Cards
+       ═══════════════════════════════════════════ */
+    .type-card {
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.125rem;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-smooth);
+      text-align: center;
+      position: relative;
+    }
+    .type-card:hover { border-color: var(--border-strong); background: var(--surface); }
+    .type-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+    .type-card.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      width: 18px;
+      height: 18px;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      font-size: 0.625rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    /* ═══════════════════════════════════════════
+       WIZARD — Radio Label Rows
+       ═══════════════════════════════════════════ */
+    .radio-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.2s var(--ease-smooth);
+    }
+    .radio-label:hover { border-color: var(--border-strong); background: var(--surface); }
+    .radio-label.selected {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+    .radio-label input[type="radio"] { margin-top: 0.2rem; }
+
+    /* ═══════════════════════════════════════════
+       WIZARD — Option Rows
+       ═══════════════════════════════════════════ */
+    .option-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
+      transition: background 0.15s;
+      border-radius: var(--radius-sm);
+    }
+    .option-row:hover { background: var(--surface); }
+
+    /* ═══════════════════════════════════════════
+       LIVE PULSE DOT
+       ═══════════════════════════════════════════ */
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      display: inline-block;
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(13,124,70,0.45); }
+      50% { box-shadow: 0 0 0 8px rgba(13,124,70,0); }
+    }
+
+    /* ═══════════════════════════════════════════
+       MONITOR — Hour Bars
+       ═══════════════════════════════════════════ */
+    .hour-bar { position: relative; }
+
+    /* ═══════════════════════════════════════════
+       UPLOAD — Drop Zone
+       ═══════════════════════════════════════════ */
+    .drop-zone {
+      border: 2px dashed var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      background: var(--surface);
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+    .drop-zone.dragover { transform: scale(1.01); }
+    .drop-zone-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--surface-sunken);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem;
+      transition: background 0.3s;
+    }
+    .drop-zone:hover .drop-zone-icon { background: var(--accent-light); }
+    .drop-zone-icon svg { width: 24px; height: 24px; color: var(--muted); }
+
+    /* Merge preview stats */
+    .merge-stat {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .merge-stat:last-child { border-bottom: none; }
+    .merge-stat-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .merge-stat-value {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    /* ═══════════════════════════════════════════
+       SETTINGS — Config Cards
+       ═══════════════════════════════════════════ */
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label { font-weight: 500; font-size: 0.9375rem; }
+    .setting-desc { font-size: 0.8125rem; color: var(--muted); margin-top: 0.125rem; }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: var(--border-strong);
+      border-radius: 100px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: none;
+      padding: 0;
+    }
+    .toggle.active { background: var(--success); }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      transition: transform 0.2s var(--ease-spring);
+    }
+    .toggle.active::after { transform: translateX(20px); }
+
+    /* ═══════════════════════════════════════════
+       SWISS ACCENT — Red overline bar
+       ═══════════════════════════════════════════ */
+    .swiss-bar {
+      width: 40px;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 2px;
+      margin-bottom: 1rem;
+    }
+
+    /* Monospace utility */
+    .mono { font-family: var(--font-mono); }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       VOTER SHELL — Login
+       ═══════════════════════════════════════════ -->
+  <div id="voter-login-shell" class="voter-shell active">
+    <div class="voter-login">
+      <div class="voter-login-left">
+        <div class="login-card" style="opacity:0; animation: fadeInUp 0.6s var(--ease-out) 0.1s forwards;">
+          <div class="overline">Tribunal Electoral Estudiantil</div>
+          <h1>Portal de Votación</h1>
+          <p class="subtitle">Ingresá con tu cuenta institucional para ver las votaciones disponibles.</p>
+
+          <button class="microsoft-btn" onclick="navigateTo('voter-elections')">
+            <svg width="20" height="20" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
+            Continuar con Microsoft
+          </button>
+
+          <div class="login-divider">o ingresá con token</div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div class="input-group">
+              <label for="carnet">Carnet estudiantil</label>
+              <input type="text" id="carnet" class="input" placeholder="2024XXXXXX">
+            </div>
+            <div class="input-group">
+              <label for="token">Token de acceso</label>
+              <input type="password" id="token" class="input" placeholder="Token recibido por correo">
+            </div>
+            <button class="btn btn-primary btn-lg" style="width:100%; margin-top: 0.5rem;" onclick="navigateTo('voter-elections')">
+              Ingresar
+            </button>
+          </div>
+
+          <p style="font-size: 0.8125rem; color: var(--muted); margin-top: 1.5rem; text-align: center;">
+            El token fue enviado a tu correo @estudiantec.cr
+          </p>
+          <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center;">
+            <a href="#" onclick="showAdminView('admin-dashboard', document.querySelector('.sidebar-link')); return false;" style="font-size: 0.8125rem; color: var(--muted); text-decoration: none; transition: color 0.2s;">
+              Acceso administrativo TEE →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="voter-login-right">
+        <div class="login-info-card" style="opacity:0; animation: fadeInUp 0.6s var(--ease-out) 0.3s forwards;">
+          <h2>Tu voto importa</h2>
+          <p>El sistema electoral del TEC garantiza la integridad, anonimato y transparencia de cada proceso electoral estudiantil.</p>
+          <div class="login-stats-row">
+            <div>
+              <div class="login-stat-value">11,247</div>
+              <div class="login-stat-label">Estudiantes</div>
+            </div>
+            <div>
+              <div class="login-stat-value">34</div>
+              <div class="login-stat-label">Asociaciones</div>
+            </div>
+            <div>
+              <div class="login-stat-value">100%</div>
+              <div class="login-stat-label">Anónimo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       VOTER SHELL — Elections Available
+       ═══════════════════════════════════════════ -->
+  <div id="voter-elections-shell" class="voter-shell">
+    <div class="voter-header">
+      <a class="voter-brand" href="#">
+        <div class="voter-brand-icon">T</div>
+        TEE Votación
+      </a>
+      <div class="voter-user">
+        <span>José Zumbado</span>
+        <div class="sidebar-avatar" style="width:28px;height:28px;background:var(--accent);font-size:0.6875rem;">JZ</div>
+      </div>
+    </div>
+
+    <div class="voter-content">
+      <div style="margin-bottom: 2.5rem; opacity:0; animation: fadeInUp 0.5s var(--ease-out) 0.1s forwards;">
+        <div class="overline" style="margin-bottom: 0.75rem;">Votaciones disponibles</div>
+        <h2>Tus elecciones activas</h2>
+        <p style="color: var(--muted); margin-top: 0.5rem;">Seleccioná una votación para emitir tu voto.</p>
+      </div>
+
+      <div class="election-card" onclick="navigateTo('voter-booth')" style="opacity:0; animation: fadeInUp 0.5s var(--ease-out) 0.2s forwards;">
+        <div class="election-card-header">
+          <div>
+            <div class="election-card-type">Electoral Masiva</div>
+            <h3>Elección Consejo Ejecutivo FITEC 2026</h3>
+          </div>
+          <span class="badge badge-dot badge-open">Abierta</span>
+        </div>
+        <p class="election-card-desc">Postulaciones a la presidencia del Consejo Ejecutivo de la Federación de Estudiantes del TEC.</p>
+        <div class="election-card-meta">
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Cierra hoy 6:00 PM
+          </span>
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            11,247 elegibles
+          </span>
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            3 candidatos
+          </span>
+        </div>
+      </div>
+
+      <div class="election-card" style="opacity:0; animation: fadeInUp 0.5s var(--ease-out) 0.3s forwards;">
+        <div class="election-card-header">
+          <div>
+            <div class="election-card-type">Plenario</div>
+            <h3>PME — Aprobación de Acta 007-2026</h3>
+          </div>
+          <span class="badge badge-dot badge-open">Abierta</span>
+        </div>
+        <p class="election-card-desc">Aprobación del acta de la sesión ordinaria 007-2026 del Plenario del Movimiento Estudiantil.</p>
+        <div class="election-card-meta">
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Cierra en 45 min
+          </span>
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            172 elegibles
+          </span>
+        </div>
+      </div>
+
+      <div class="election-card" style="opacity: 0.5; pointer-events: none; opacity:0; animation: fadeInUp 0.5s var(--ease-out) 0.4s forwards;">
+        <div class="election-card-header">
+          <div>
+            <div class="election-card-type">Asociación</div>
+            <h3>Junta Directiva — AETEC Computación</h3>
+          </div>
+          <span class="badge badge-dot badge-draft">Programada</span>
+        </div>
+        <p class="election-card-desc">Elección de la junta directiva de la Asociación de Estudiantes de Ingeniería en Computación.</p>
+        <div class="election-card-meta">
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Abre 28 Feb, 8:00 AM
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       VOTER SHELL — Voting Booth
+       ═══════════════════════════════════════════ -->
+  <div id="voter-booth-shell" class="voter-shell">
+    <div class="voter-header">
+      <a class="voter-brand" href="#" onclick="navigateTo('voter-elections'); return false;">
+        <div class="voter-brand-icon">T</div>
+        TEE Votación
+      </a>
+      <button class="btn btn-ghost btn-sm" onclick="navigateTo('voter-elections')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Volver
+      </button>
+    </div>
+
+    <div class="voting-booth guilloche-bg">
+      <div class="ballot">
+        <div class="ballot-header">
+          <div class="label">Electoral Masiva</div>
+          <h2>Consejo Ejecutivo FITEC 2026</h2>
+          <p>Seleccioná un candidato para emitir tu voto</p>
+        </div>
+        <div class="ballot-body">
+          <div class="ballot-option" onclick="selectOption(this)">
+            <div class="ballot-radio"></div>
+            <div>
+              <div class="ballot-option-label">María Fernanda Solís</div>
+              <div class="ballot-option-sub">Ingeniería en Producción Industrial — Cartago</div>
+            </div>
+          </div>
+          <div class="ballot-option" onclick="selectOption(this)">
+            <div class="ballot-radio"></div>
+            <div>
+              <div class="ballot-option-label">Carlos Andrés Méndez</div>
+              <div class="ballot-option-sub">Administración de Empresas — San José</div>
+            </div>
+          </div>
+          <div class="ballot-option" onclick="selectOption(this)">
+            <div class="ballot-radio"></div>
+            <div>
+              <div class="ballot-option-label">Ana Lucía Rojas</div>
+              <div class="ballot-option-sub">Ingeniería en Computación — Cartago</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px dashed var(--border);">
+            <div class="ballot-option" onclick="selectOption(this)">
+              <div class="ballot-radio"></div>
+              <div><div class="ballot-option-label" style="color: var(--muted);">Voto en blanco</div></div>
+            </div>
+            <div class="ballot-option" onclick="selectOption(this)">
+              <div class="ballot-radio"></div>
+              <div><div class="ballot-option-label" style="color: var(--muted);">Voto nulo</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="ballot-footer">
+          <span style="font-size: 0.8125rem; color: var(--muted);">Voto secreto y anónimo</span>
+          <button class="btn btn-accent" id="vote-submit-btn" onclick="submitVote()" disabled style="opacity: 0.5;">
+            Emitir voto
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       VOTER SHELL — Confirmation
+       ═══════════════════════════════════════════ -->
+  <div id="voter-confirm-shell" class="voter-shell">
+    <div class="voter-header">
+      <a class="voter-brand" href="#">
+        <div class="voter-brand-icon">T</div>
+        TEE Votación
+      </a>
+      <div class="voter-user">
+        <span>José Zumbado</span>
+        <div class="sidebar-avatar" style="width:28px;height:28px;background:var(--accent);font-size:0.6875rem;">JZ</div>
+      </div>
+    </div>
+
+    <div class="vote-confirmation guilloche-bg">
+      <div class="confirmation-card">
+        <div class="stamp">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>Voto registrado</h2>
+        <p>Tu voto fue emitido exitosamente y registrado de forma segura. No es posible modificarlo ni vincularlo a tu identidad.</p>
+
+        <div class="receipt">
+          <div class="receipt-row">
+            <span class="receipt-label">Votación</span>
+            <span class="receipt-value">Consejo Ejecutivo FITEC 2026</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-label">Hash de verificación</span>
+            <span class="receipt-value" style="font-family: monospace; font-size: 0.75rem;">a7f3…c92d</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-label">Fecha y hora</span>
+            <span class="receipt-value">24 Feb 2026, 14:32</span>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" onclick="navigateTo('voter-elections')" style="width: 100%;">
+          Volver a mis votaciones
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ADMIN SHELL
+       ═══════════════════════════════════════════ -->
+  <div id="admin-shell" class="admin-shell">
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">T</div>
+        <div>
+          <div class="sidebar-brand-text">TEE Admin</div>
+          <div class="sidebar-brand-sub">Panel Administrativo</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="sidebar-section">
+          <div class="sidebar-section-label">General</div>
+        </div>
+        <a class="sidebar-link active" onclick="showAdminView('admin-dashboard', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+        <a class="sidebar-link" onclick="showAdminView('admin-elections', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Votaciones
+        </a>
+        <a class="sidebar-link" onclick="showAdminView('admin-new-election', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Crear votación
+        </a>
+        <a class="sidebar-link" onclick="showAdminView('admin-monitor', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Monitor en vivo
+        </a>
+        <a class="sidebar-link" onclick="showAdminView('admin-scrutiny', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Escrutinio
+        </a>
+        <a class="sidebar-link" onclick="showAdminView('admin-email', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Correos
+        </a>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-label">Datos</div>
+        </div>
+        <a class="sidebar-link" onclick="showAdminView('admin-padron', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Padrón
+        </a>
+        <a class="sidebar-link" onclick="showAdminView('admin-padron-upload', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Cargar padrón
+        </a>
+        <a class="sidebar-link" onclick="showAdminView('admin-keys', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+          Generar llaves
+        </a>
+        <a class="sidebar-link" onclick="showAdminView('admin-results', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Resultados
+        </a>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-label">Sistema</div>
+        </div>
+        <a class="sidebar-link" onclick="showAdminView('admin-team', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><circle cx="19" cy="11" r="2.5"/><path d="M19 8v-1m0 8v1m-2.6-1.3l-.7.7m6.6-6.8l-.7.7m-5.2 0l.7.7m4.6 4.6l-.7-.7"/></svg>
+          Equipo TEE
+        </a>
+        <a class="sidebar-link" onclick="showAdminView('admin-audit', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Auditoría
+        </a>
+        <a class="sidebar-link" onclick="showAdminView('admin-settings', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Configuración
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-avatar">AP</div>
+        <div>
+          <div class="sidebar-user-name">Alden Portugués</div>
+          <div class="sidebar-user-role">Presidente TEE</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main">
+      <header class="main-header">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <button class="mobile-menu-btn" onclick="toggleSidebar()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <span class="main-header-title" id="admin-header-title">Dashboard</span>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:center;">
+          <button class="btn btn-ghost btn-sm" onclick="navigateTo('voter-login')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Vista votante
+          </button>
+        </div>
+      </header>
+
+      <div class="main-body">
+        <!-- ═══ DASHBOARD VIEW ═══ -->
+        <div id="admin-dashboard" class="view active">
+          <div style="margin-bottom: 2rem;">
+            <h2>Bienvenido, Alden</h2>
+            <p style="color: var(--muted); margin-top: 0.25rem;">Resumen del sistema electoral estudiantil</p>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card" style="opacity:0; animation: fadeInUp 0.4s var(--ease-out) 0.05s forwards;">
+              <div class="label">Votaciones activas</div>
+              <div class="stat-card-value">2</div>
+              <div class="stat-card-change positive">En curso ahora</div>
+            </div>
+            <div class="stat-card" style="opacity:0; animation: fadeInUp 0.4s var(--ease-out) 0.1s forwards;">
+              <div class="label">Estudiantes en padrón</div>
+              <div class="stat-card-value">11,247</div>
+              <div class="stat-card-change positive">+342 este semestre</div>
+            </div>
+            <div class="stat-card" style="opacity:0; animation: fadeInUp 0.4s var(--ease-out) 0.15s forwards;">
+              <div class="label">Participación promedio</div>
+              <div class="stat-card-value">67%</div>
+              <div class="stat-card-change positive">+12% vs anterior</div>
+            </div>
+            <div class="stat-card" style="opacity:0; animation: fadeInUp 0.4s var(--ease-out) 0.2s forwards;">
+              <div class="label">Votaciones totales</div>
+              <div class="stat-card-value">18</div>
+              <div class="stat-card-change" style="color:var(--muted);">Este período</div>
+            </div>
+          </div>
+
+          <!-- Active Elections -->
+          <div style="margin-bottom: 2rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+              <h3 style="font-family: var(--font-body); font-weight: 600; font-size: 1rem;">Votaciones en curso</h3>
+              <button class="btn btn-outline btn-sm" onclick="showAdminView('admin-elections', document.querySelectorAll('.sidebar-link')[1])">Ver todas</button>
+            </div>
+
+            <div class="card" style="margin-bottom: 0.75rem; padding: 1.25rem;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+                <div>
+                  <div style="font-weight:600;">Consejo Ejecutivo FITEC 2026</div>
+                  <div style="font-size:0.8125rem;color:var(--muted);">Electoral Masiva — Cierra hoy 6:00 PM</div>
+                </div>
+                <span class="badge badge-dot badge-open">Abierta</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:1rem;">
+                <div class="progress-bar" style="flex:1;">
+                  <div class="progress-bar-fill accent" style="width: 43%;"></div>
+                </div>
+                <span style="font-size:0.875rem;font-weight:600;min-width:40px;">43%</span>
+              </div>
+              <div style="font-size:0.75rem;color:var(--muted);margin-top:0.375rem;">4,836 de 11,247 han votado</div>
+            </div>
+
+            <div class="card" style="padding: 1.25rem;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+                <div>
+                  <div style="font-weight:600;">PME — Aprobación Acta 007-2026</div>
+                  <div style="font-size:0.8125rem;color:var(--muted);">Plenario — Cierra en 45 min</div>
+                </div>
+                <span class="badge badge-dot badge-open">Abierta</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:1rem;">
+                <div class="progress-bar" style="flex:1;">
+                  <div class="progress-bar-fill success" style="width: 78%;"></div>
+                </div>
+                <span style="font-size:0.875rem;font-weight:600;min-width:40px;">78%</span>
+              </div>
+              <div style="font-size:0.75rem;color:var(--muted);margin-top:0.375rem;">134 de 172 han votado</div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div>
+            <h3 style="font-family: var(--font-body); font-weight: 600; font-size: 1rem; margin-bottom: 1rem;">Actividad reciente</h3>
+            <div class="card" style="padding: 0.5rem 1.25rem;">
+              <div class="activity-item">
+                <div class="activity-dot" style="background: var(--success);"></div>
+                <div>
+                  <div class="activity-text"><strong>Alden Portugués</strong> abrió la votación "Consejo Ejecutivo FITEC 2026"</div>
+                  <div class="activity-time">Hace 4 horas</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background: var(--accent);"></div>
+                <div>
+                  <div class="activity-text"><strong>Stanley Ligoñi</strong> cargó el padrón actualizado (11,247 registros)</div>
+                  <div class="activity-time">Hace 2 días</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background: var(--warning);"></div>
+                <div>
+                  <div class="activity-text"><strong>Sistema</strong> archivó la votación "JD Asociación Electrónica"</div>
+                  <div class="activity-time">Hace 5 días</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background: #7C3AED;"></div>
+                <div>
+                  <div class="activity-text"><strong>Alden Portugués</strong> asignó rol "Fiscal" a Andrea Mora</div>
+                  <div class="activity-time">Hace 1 semana</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ ELECTIONS VIEW ═══ -->
+        <div id="admin-elections" class="view">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+            <div>
+              <h2>Votaciones</h2>
+              <p style="color:var(--muted);font-size:0.875rem;margin-top:0.25rem;">Gestión de procesos electorales</p>
+            </div>
+            <button class="btn btn-accent">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nueva votación
+            </button>
+          </div>
+
+          <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+            <span class="filter-chip active">Todas (18)</span>
+            <span class="filter-chip" onclick="this.classList.toggle('active')">Abiertas (2)</span>
+            <span class="filter-chip" onclick="this.classList.toggle('active')">Borrador (3)</span>
+            <span class="filter-chip" onclick="this.classList.toggle('active')">Cerradas (5)</span>
+            <span class="filter-chip" onclick="this.classList.toggle('active')">Archivadas (8)</span>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Título <span class="sort-icon">↕</span></th>
+                  <th>Tipo</th>
+                  <th>Estado</th>
+                  <th>Elegibles</th>
+                  <th>Participación</th>
+                  <th>Fecha</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="table-row-enter" style="animation-delay:0.05s">
+                  <td style="font-weight:500;color:var(--ink);">Consejo Ejecutivo FITEC 2026</td>
+                  <td><span style="font-size:0.8125rem;">Electoral Masiva</span></td>
+                  <td><span class="badge badge-dot badge-open">Abierta</span></td>
+                  <td>11,247</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                      <div class="progress-bar" style="width:80px;height:6px;"><div class="progress-bar-fill accent" style="width:43%;"></div></div>
+                      <span style="font-size:0.8125rem;font-weight:500;">43%</span>
+                    </div>
+                  </td>
+                  <td style="font-size:0.8125rem;">24 Feb 2026</td>
+                  <td><button class="btn btn-ghost btn-sm">Ver</button></td>
+                </tr>
+                <tr class="table-row-enter" style="animation-delay:0.1s">
+                  <td style="font-weight:500;color:var(--ink);">PME — Acta 007-2026</td>
+                  <td><span style="font-size:0.8125rem;">Plenario</span></td>
+                  <td><span class="badge badge-dot badge-open">Abierta</span></td>
+                  <td>172</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                      <div class="progress-bar" style="width:80px;height:6px;"><div class="progress-bar-fill success" style="width:78%;"></div></div>
+                      <span style="font-size:0.8125rem;font-weight:500;">78%</span>
+                    </div>
+                  </td>
+                  <td style="font-size:0.8125rem;">24 Feb 2026</td>
+                  <td><button class="btn btn-ghost btn-sm">Ver</button></td>
+                </tr>
+                <tr class="table-row-enter" style="animation-delay:0.15s">
+                  <td style="font-weight:500;color:var(--ink);">JD AETEC Computación</td>
+                  <td><span style="font-size:0.8125rem;">Asociación</span></td>
+                  <td><span class="badge badge-dot badge-draft">Borrador</span></td>
+                  <td>847</td>
+                  <td><span style="font-size:0.8125rem;color:var(--muted);">—</span></td>
+                  <td style="font-size:0.8125rem;">28 Feb 2026</td>
+                  <td><button class="btn btn-ghost btn-sm">Editar</button></td>
+                </tr>
+                <tr class="table-row-enter" style="animation-delay:0.2s">
+                  <td style="font-weight:500;color:var(--ink);">JD AEEC Electrónica</td>
+                  <td><span style="font-size:0.8125rem;">Asociación</span></td>
+                  <td><span class="badge badge-dot badge-archived">Archivada</span></td>
+                  <td>623</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                      <div class="progress-bar" style="width:80px;height:6px;"><div class="progress-bar-fill" style="width:71%;background:var(--muted-light);"></div></div>
+                      <span style="font-size:0.8125rem;font-weight:500;">71%</span>
+                    </div>
+                  </td>
+                  <td style="font-size:0.8125rem;">15 Feb 2026</td>
+                  <td><button class="btn btn-ghost btn-sm">Ver</button></td>
+                </tr>
+                <tr class="table-row-enter" style="animation-delay:0.25s">
+                  <td style="font-weight:500;color:var(--ink);">Moción de Orden — Sesión 12</td>
+                  <td><span style="font-size:0.8125rem;">Interna</span></td>
+                  <td><span class="badge badge-dot badge-closed">Cerrada</span></td>
+                  <td>5</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                      <div class="progress-bar" style="width:80px;height:6px;"><div class="progress-bar-fill" style="width:100%;background:var(--success);"></div></div>
+                      <span style="font-size:0.8125rem;font-weight:500;">100%</span>
+                    </div>
+                  </td>
+                  <td style="font-size:0.8125rem;">10 Feb 2026</td>
+                  <td><button class="btn btn-ghost btn-sm">Ver</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ═══ PADRÓN VIEW ═══ -->
+        <div id="admin-padron" class="view">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+            <div>
+              <h2>Padrón Estudiantil</h2>
+              <p style="color:var(--muted);font-size:0.875rem;margin-top:0.25rem;">11,247 estudiantes activos — Última carga: 20 Feb 2026</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;">
+              <button class="btn btn-outline btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Importar Excel
+              </button>
+              <button class="btn btn-accent btn-sm btn-export" onclick="exportTable()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Exportar
+              </button>
+            </div>
+          </div>
+
+          <div class="padron-toolbar">
+            <div class="padron-toolbar-left">
+              <input type="text" class="input search-input" placeholder="Buscar por carnet, nombre o correo..." id="padron-search" oninput="filterPadron()">
+            </div>
+            <div class="padron-toolbar-right">
+              <select class="input" style="width:auto;padding-right:2rem;" id="padron-sede" onchange="filterPadron()">
+                <option value="">Todas las sedes</option>
+                <option value="Cartago">Cartago</option>
+                <option value="San José">San José</option>
+                <option value="San Carlos">San Carlos</option>
+                <option value="Limón">Limón</option>
+              </select>
+              <select class="input" style="width:auto;padding-right:2rem;" id="padron-career" onchange="filterPadron()">
+                <option value="">Todas las carreras</option>
+                <option value="Ing. Computación">Ing. Computación</option>
+                <option value="Ing. Electrónica">Ing. Electrónica</option>
+                <option value="Ing. Producción Industrial">Ing. Producción Industrial</option>
+                <option value="Administración de Empresas">Administración de Empresas</option>
+                <option value="Ing. Mecatrónica">Ing. Mecatrónica</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-wrapper" id="padron-table-wrapper">
+            <table id="padron-table">
+              <thead>
+                <tr>
+                  <th onclick="sortPadron('carnet')" class="sorted">Carnet <span class="sort-icon">↓</span></th>
+                  <th onclick="sortPadron('nombre')">Nombre <span class="sort-icon">↕</span></th>
+                  <th onclick="sortPadron('correo')">Correo <span class="sort-icon">↕</span></th>
+                  <th onclick="sortPadron('sede')">Sede <span class="sort-icon">↕</span></th>
+                  <th onclick="sortPadron('carrera')">Carrera <span class="sort-icon">↕</span></th>
+                  <th onclick="sortPadron('grado')">Grado <span class="sort-icon">↕</span></th>
+                  <th style="width:60px;"></th>
+                </tr>
+              </thead>
+              <tbody id="padron-tbody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+            <div class="table-pagination" id="padron-pagination">
+              <span id="padron-showing">Mostrando 1–25 de 11,247</span>
+              <div class="pagination-btns">
+                <button onclick="changePage(-1)">‹</button>
+                <button class="active">1</button>
+                <button onclick="changePage(2)">2</button>
+                <button onclick="changePage(3)">3</button>
+                <button>…</button>
+                <button onclick="changePage(450)">450</button>
+                <button onclick="changePage(1)">›</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ RESULTS VIEW ═══ -->
+        <div id="admin-results" class="view">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+            <div>
+              <h2>Resultados</h2>
+              <p style="color:var(--muted);font-size:0.875rem;margin-top:0.25rem;">Consejo Ejecutivo FITEC 2026 — Cerrada</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;">
+              <button class="btn btn-outline btn-sm btn-export">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Exportar Excel
+              </button>
+              <button class="btn btn-outline btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Generar PDF
+              </button>
+            </div>
+          </div>
+
+          <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="stat-card">
+              <div class="label">Total votos</div>
+              <div class="stat-card-value" style="font-size:1.75rem;">7,842</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Participación</div>
+              <div class="stat-card-value" style="font-size:1.75rem;color:var(--success);">69.7%</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Votos válidos</div>
+              <div class="stat-card-value" style="font-size:1.75rem;">7,614</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Abstenciones</div>
+              <div class="stat-card-value" style="font-size:1.75rem;color:var(--muted);">3,405</div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:1.5rem;">
+            <h3 style="font-family:var(--font-body);font-weight:600;font-size:1rem;margin-bottom:1.5rem;">Desglose de resultados</h3>
+
+            <div class="results-bar">
+              <div class="results-bar-label">María F. Solís</div>
+              <div class="results-bar-track">
+                <div class="results-bar-fill" style="width:47.2%;background:var(--accent);">47.2%</div>
+              </div>
+              <div class="results-bar-count">3,596</div>
+            </div>
+            <div class="results-bar">
+              <div class="results-bar-label">Carlos A. Méndez</div>
+              <div class="results-bar-track">
+                <div class="results-bar-fill" style="width:31.8%;background:var(--ink-soft);">31.8%</div>
+              </div>
+              <div class="results-bar-count">2,423</div>
+            </div>
+            <div class="results-bar">
+              <div class="results-bar-label">Ana L. Rojas</div>
+              <div class="results-bar-track">
+                <div class="results-bar-fill" style="width:18.1%;background:var(--muted);">18.1%</div>
+              </div>
+              <div class="results-bar-count">1,380</div>
+            </div>
+
+            <div style="border-top: 1px dashed var(--border); margin-top: 1rem; padding-top: 1rem;">
+              <div class="results-bar">
+                <div class="results-bar-label" style="color:var(--muted);">Voto en blanco</div>
+                <div class="results-bar-track">
+                  <div class="results-bar-fill" style="width:2.1%;background:var(--border-strong);color:var(--muted);">2.1%</div>
+                </div>
+                <div class="results-bar-count" style="color:var(--muted);">160</div>
+              </div>
+              <div class="results-bar">
+                <div class="results-bar-label" style="color:var(--muted);">Voto nulo</div>
+                <div class="results-bar-track">
+                  <div class="results-bar-fill" style="width:0.8%;background:var(--border-strong);color:var(--muted);">0.8%</div>
+                </div>
+                <div class="results-bar-count" style="color:var(--muted);">68</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="background:var(--success-light);border-color:#BBF7D0;">
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <div>
+                <div style="font-weight:600;color:#065F46;">Candidata electa: María Fernanda Solís</div>
+                <div style="font-size:0.8125rem;color:#059669;">47.2% de los votos válidos — mayoría simple alcanzada</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ TEAM VIEW ═══ -->
+        <div id="admin-team" class="view">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+            <div>
+              <h2>Equipo TEE</h2>
+              <p style="color:var(--muted);font-size:0.875rem;margin-top:0.25rem;">Miembros del directorio y sus permisos</p>
+            </div>
+            <button class="btn btn-accent btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Agregar miembro
+            </button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;">
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+                <div class="sidebar-avatar" style="width:44px;height:44px;background:var(--accent);font-size:0.875rem;">AP</div>
+                <div>
+                  <div style="font-weight:600;">Alden Portugués</div>
+                  <div style="font-size:0.8125rem;color:var(--muted);">Presidente</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.375rem;">
+                <span class="badge" style="background:var(--accent-light);color:var(--accent);font-size:0.6875rem;">Admin total</span>
+                <span class="badge" style="background:var(--surface-sunken);color:var(--muted);font-size:0.6875rem;">Llave escrutinio</span>
+              </div>
+            </div>
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+                <div class="sidebar-avatar" style="width:44px;height:44px;background:#7C3AED;font-size:0.875rem;">SL</div>
+                <div>
+                  <div style="font-weight:600;">Stanley Ligoñi</div>
+                  <div style="font-size:0.8125rem;color:var(--muted);">Secretario General</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.375rem;">
+                <span class="badge" style="background:#F5F3FF;color:#7C3AED;font-size:0.6875rem;">Ver padrón</span>
+                <span class="badge" style="background:#F5F3FF;color:#7C3AED;font-size:0.6875rem;">Crear votaciones</span>
+                <span class="badge" style="background:var(--surface-sunken);color:var(--muted);font-size:0.6875rem;">Llave escrutinio</span>
+              </div>
+            </div>
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+                <div class="sidebar-avatar" style="width:44px;height:44px;background:#059669;font-size:0.875rem;">AM</div>
+                <div>
+                  <div style="font-weight:600;">Andrea Mora</div>
+                  <div style="font-size:0.8125rem;color:var(--muted);">Fiscal</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.375rem;">
+                <span class="badge" style="background:#ECFDF5;color:#059669;font-size:0.6875rem;">Ver padrón</span>
+                <span class="badge" style="background:var(--surface-sunken);color:var(--muted);font-size:0.6875rem;">Llave escrutinio</span>
+              </div>
+            </div>
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+                <div class="sidebar-avatar" style="width:44px;height:44px;background:#D97706;font-size:0.875rem;">RC</div>
+                <div>
+                  <div style="font-weight:600;">Roberto Castro</div>
+                  <div style="font-size:0.8125rem;color:var(--muted);">Vocal 1</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.375rem;">
+                <span class="badge" style="background:#FFFBEB;color:#D97706;font-size:0.6875rem;">Ver padrón</span>
+                <span class="badge" style="background:var(--surface-sunken);color:var(--muted);font-size:0.6875rem;">Llave escrutinio</span>
+              </div>
+            </div>
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+                <div class="sidebar-avatar" style="width:44px;height:44px;background:#0EA5E9;font-size:0.875rem;">LV</div>
+                <div>
+                  <div style="font-weight:600;">Laura Vargas</div>
+                  <div style="font-size:0.8125rem;color:var(--muted);">Vocal 2 (Suplente)</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.375rem;">
+                <span class="badge" style="background:#F0F9FF;color:#0EA5E9;font-size:0.6875rem;">Ver padrón</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ CREATE ELECTION WIZARD ═══ -->
+        <div id="admin-new-election" class="view">
+          <div style="max-width:780px;margin:0 auto;">
+            <div style="margin-bottom:2rem;">
+              <div class="overline" style="margin-bottom:0.75rem;">Nueva votación</div>
+              <h2>Crear proceso electoral</h2>
+              <p style="color:var(--muted);margin-top:0.25rem;font-size:0.875rem;">Configurá los detalles de la votación paso a paso.</p>
+            </div>
+
+            <!-- Wizard Steps Indicator -->
+            <div style="display:flex;gap:0;margin-bottom:2.5rem;" id="wizard-steps">
+              <div class="wizard-step active" data-step="1">
+                <div class="wizard-step-num">1</div>
+                <div class="wizard-step-label">Información</div>
+              </div>
+              <div class="wizard-step-line"></div>
+              <div class="wizard-step" data-step="2">
+                <div class="wizard-step-num">2</div>
+                <div class="wizard-step-label">Votantes</div>
+              </div>
+              <div class="wizard-step-line"></div>
+              <div class="wizard-step" data-step="3">
+                <div class="wizard-step-num">3</div>
+                <div class="wizard-step-label">Opciones</div>
+              </div>
+              <div class="wizard-step-line"></div>
+              <div class="wizard-step" data-step="4">
+                <div class="wizard-step-num">4</div>
+                <div class="wizard-step-label">Seguridad</div>
+              </div>
+            </div>
+
+            <!-- Step 1: Basic Info -->
+            <div class="wizard-panel active" id="wizard-step-1">
+              <div class="card" style="padding:2rem;">
+                <div style="display:flex;flex-direction:column;gap:1.25rem;">
+                  <div class="input-group">
+                    <label>Título de la votación</label>
+                    <input type="text" class="input" placeholder="Ej: Elección Consejo Ejecutivo FITEC 2026">
+                  </div>
+                  <div class="input-group">
+                    <label>Descripción (opcional)</label>
+                    <input type="text" class="input" placeholder="Ej: Postulaciones a la Vicepresidencia del Directorio...">
+                  </div>
+                  <div class="input-group">
+                    <label>Tipo de votación</label>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;">
+                      <div class="type-card selected" onclick="selectTypeCard(this)">
+                        <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.25rem;">Electoral Masiva</div>
+                        <div style="font-size:0.75rem;color:var(--muted);">Todo el padrón vota</div>
+                      </div>
+                      <div class="type-card" onclick="selectTypeCard(this)">
+                        <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.25rem;">Plenario</div>
+                        <div style="font-size:0.75rem;color:var(--muted);">Subconjunto del padrón</div>
+                      </div>
+                      <div class="type-card" onclick="selectTypeCard(this)">
+                        <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.25rem;">Interna</div>
+                        <div style="font-size:0.75rem;color:var(--muted);">Solo directorio TEE</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div class="input-group">
+                      <label>Fecha y hora de apertura</label>
+                      <input type="datetime-local" class="input">
+                    </div>
+                    <div class="input-group">
+                      <label>Fecha y hora de cierre</label>
+                      <input type="datetime-local" class="input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin-top:1.5rem;">
+                <button class="btn btn-primary" onclick="wizardNext(2)">Siguiente — Votantes →</button>
+              </div>
+            </div>
+
+            <!-- Step 2: Voters -->
+            <div class="wizard-panel" id="wizard-step-2">
+              <div class="card" style="padding:2rem;">
+                <div style="display:flex;flex-direction:column;gap:1.25rem;">
+                  <div class="input-group">
+                    <label>Origen de los votantes</label>
+                    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                      <label class="radio-label selected" onclick="selectRadioLabel(this)">
+                        <input type="radio" name="voter-source" checked style="accent-color:var(--accent);">
+                        <div>
+                          <div style="font-weight:600;font-size:0.875rem;">Padrón completo</div>
+                          <div style="font-size:0.8125rem;color:var(--muted);">Los 11,247 estudiantes pueden votar</div>
+                        </div>
+                      </label>
+                      <label class="radio-label" onclick="selectRadioLabel(this)">
+                        <input type="radio" name="voter-source" style="accent-color:var(--accent);">
+                        <div>
+                          <div style="font-weight:600;font-size:0.875rem;">Filtrar por sede / carrera</div>
+                          <div style="font-size:0.8125rem;color:var(--muted);">Seleccionar un subconjunto del padrón</div>
+                        </div>
+                      </label>
+                      <label class="radio-label" onclick="selectRadioLabel(this)">
+                        <input type="radio" name="voter-source" style="accent-color:var(--accent);">
+                        <div>
+                          <div style="font-weight:600;font-size:0.875rem;">Selección manual</div>
+                          <div style="font-size:0.8125rem;color:var(--muted);">Elegir votantes uno por uno del padrón</div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="input-group">
+                    <label>Método de autenticación</label>
+                    <select class="input">
+                      <option>Microsoft OAuth (cuenta @estudiantec.cr)</option>
+                      <option>Token único por correo</option>
+                      <option>Ambos (votante elige)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
+                <button class="btn btn-outline" onclick="wizardNext(1)">← Anterior</button>
+                <button class="btn btn-primary" onclick="wizardNext(3)">Siguiente — Opciones →</button>
+              </div>
+            </div>
+
+            <!-- Step 3: Options -->
+            <div class="wizard-panel" id="wizard-step-3">
+              <div class="card" style="padding:2rem;">
+                <div style="display:flex;flex-direction:column;gap:1.25rem;">
+                  <div class="input-group">
+                    <label>Candidatos / Opciones de voto</label>
+                    <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">Agregá los candidatos o las opciones que aparecerán en la boleta.</p>
+
+                    <div id="options-list" style="display:flex;flex-direction:column;gap:0.5rem;">
+                      <div class="option-row">
+                        <div style="display:flex;align-items:center;gap:0.5rem;flex:1;">
+                          <span style="font-size:0.75rem;color:var(--muted);font-weight:600;width:20px;">1</span>
+                          <input type="text" class="input" value="María Fernanda Solís" style="flex:1;">
+                          <select class="input" style="width:auto;">
+                            <option>Candidato</option>
+                            <option>A favor</option>
+                            <option>En contra</option>
+                            <option>Personalizado</option>
+                          </select>
+                        </div>
+                        <button class="btn btn-ghost btn-icon" style="width:28px;height:28px;color:var(--muted);">✕</button>
+                      </div>
+                      <div class="option-row">
+                        <div style="display:flex;align-items:center;gap:0.5rem;flex:1;">
+                          <span style="font-size:0.75rem;color:var(--muted);font-weight:600;width:20px;">2</span>
+                          <input type="text" class="input" value="Carlos Andrés Méndez" style="flex:1;">
+                          <select class="input" style="width:auto;">
+                            <option>Candidato</option>
+                            <option>A favor</option>
+                            <option>En contra</option>
+                            <option>Personalizado</option>
+                          </select>
+                        </div>
+                        <button class="btn btn-ghost btn-icon" style="width:28px;height:28px;color:var(--muted);">✕</button>
+                      </div>
+                      <div class="option-row">
+                        <div style="display:flex;align-items:center;gap:0.5rem;flex:1;">
+                          <span style="font-size:0.75rem;color:var(--muted);font-weight:600;width:20px;">3</span>
+                          <input type="text" class="input" value="Ana Lucía Rojas" style="flex:1;">
+                          <select class="input" style="width:auto;">
+                            <option>Candidato</option>
+                            <option>A favor</option>
+                            <option>En contra</option>
+                            <option>Personalizado</option>
+                          </select>
+                        </div>
+                        <button class="btn btn-ghost btn-icon" style="width:28px;height:28px;color:var(--muted);">✕</button>
+                      </div>
+                    </div>
+
+                    <button class="btn btn-outline btn-sm" style="margin-top:0.75rem;align-self:flex-start;" onclick="addOption()">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Agregar opción
+                    </button>
+                  </div>
+
+                  <div style="border-top:1px solid var(--border);padding-top:1rem;">
+                    <label style="font-size:0.8125rem;font-weight:600;color:var(--ink-soft);display:flex;align-items:center;gap:0.5rem;">
+                      <input type="checkbox" checked style="accent-color:var(--accent);"> Incluir "Voto en blanco"
+                    </label>
+                    <label style="font-size:0.8125rem;font-weight:600;color:var(--ink-soft);display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;">
+                      <input type="checkbox" checked style="accent-color:var(--accent);"> Incluir "Voto nulo"
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
+                <button class="btn btn-outline" onclick="wizardNext(2)">← Anterior</button>
+                <button class="btn btn-primary" onclick="wizardNext(4)">Siguiente — Seguridad →</button>
+              </div>
+            </div>
+
+            <!-- Step 4: Security -->
+            <div class="wizard-panel" id="wizard-step-4">
+              <div class="card" style="padding:2rem;">
+                <div style="display:flex;flex-direction:column;gap:1.25rem;">
+                  <div>
+                    <label style="font-size:0.8125rem;font-weight:600;color:var(--ink-soft);display:flex;align-items:center;gap:0.5rem;">
+                      <input type="checkbox" checked style="accent-color:var(--accent);"> Voto anónimo (secreto)
+                    </label>
+                    <p style="font-size:0.75rem;color:var(--muted);margin-top:0.375rem;margin-left:1.5rem;">El voto se separa criptográficamente de la identidad del votante.</p>
+                  </div>
+                  <div>
+                    <label style="font-size:0.8125rem;font-weight:600;color:var(--ink-soft);display:flex;align-items:center;gap:0.5rem;">
+                      <input type="checkbox" checked id="requires-keys" style="accent-color:var(--accent);" onchange="toggleKeysConfig()"> Requiere llaves de escrutinio
+                    </label>
+                    <p style="font-size:0.75rem;color:var(--muted);margin-top:0.375rem;margin-left:1.5rem;">Los resultados solo se revelan cuando la mayoría del directorio ingresa su llave.</p>
+                  </div>
+
+                  <div id="keys-config" style="background:var(--surface);border-radius:var(--radius-md);padding:1.25rem;margin-left:1.5rem;">
+                    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+                      <div class="input-group" style="width:auto;">
+                        <label>Llaves mínimas</label>
+                        <input type="number" class="input" value="3" min="1" max="6" style="width:80px;">
+                      </div>
+                      <span style="font-size:0.875rem;color:var(--muted);margin-top:1.25rem;">de 5 miembros del directorio</span>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                      <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8125rem;">
+                        <div class="sidebar-avatar" style="width:24px;height:24px;background:var(--accent);font-size:0.625rem;">AP</div>
+                        Alden P.
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8125rem;">
+                        <div class="sidebar-avatar" style="width:24px;height:24px;background:#7C3AED;font-size:0.625rem;">SL</div>
+                        Stanley L.
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8125rem;">
+                        <div class="sidebar-avatar" style="width:24px;height:24px;background:#059669;font-size:0.625rem;">AM</div>
+                        Andrea M.
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8125rem;">
+                        <div class="sidebar-avatar" style="width:24px;height:24px;background:#D97706;font-size:0.625rem;">RC</div>
+                        Roberto C.
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8125rem;">
+                        <div class="sidebar-avatar" style="width:24px;height:24px;background:#0EA5E9;font-size:0.625rem;">LV</div>
+                        Laura V.
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
+                <button class="btn btn-outline" onclick="wizardNext(3)">← Anterior</button>
+                <button class="btn btn-accent btn-lg" onclick="showAdminView('admin-elections', document.querySelectorAll('.sidebar-link')[1])">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  Crear votación
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ LIVE MONITOR VIEW ═══ -->
+        <div id="admin-monitor" class="view">
+          <div style="margin-bottom:1.5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <h2>Monitor en vivo</h2>
+                <p style="color:var(--muted);font-size:0.875rem;margin-top:0.25rem;">Consejo Ejecutivo FITEC 2026 — En curso</p>
+              </div>
+              <div style="display:flex;align-items:center;gap:0.75rem;">
+                <span class="badge badge-dot badge-open" style="font-size:0.8125rem;padding:0.375rem 0.875rem;">
+                  <span class="pulse-dot"></span>
+                  En vivo
+                </span>
+                <button class="btn btn-outline btn-sm">Cerrar votación</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Big participation number -->
+          <div class="card" style="text-align:center;padding:3rem 2rem;margin-bottom:1.5rem;position:relative;overflow:hidden;">
+            <div style="position:absolute;inset:0;background:linear-gradient(135deg,var(--accent-light),transparent 60%);pointer-events:none;"></div>
+            <div style="position:relative;">
+              <div class="label" style="margin-bottom:0.75rem;">Participación actual</div>
+              <div style="font-family:var(--font-display);font-size:clamp(4rem,10vw,6rem);line-height:1;margin-bottom:0.5rem;color:var(--ink);" id="monitor-pct">43%</div>
+              <div style="font-size:1.125rem;color:var(--muted);">4,836 de 11,247 elegibles han votado</div>
+              <div class="progress-bar" style="max-width:400px;margin:1.5rem auto 0;height:12px;">
+                <div class="progress-bar-fill accent" style="width:43%;transition:width 2s var(--ease-out);" id="monitor-bar"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+            <div class="card" style="padding:1.5rem;">
+              <div class="label" style="margin-bottom:0.5rem;">Votos por hora</div>
+              <!-- Simple bar chart -->
+              <div style="display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:1rem;">
+                <div style="flex:1;background:var(--accent-light);border-radius:3px 3px 0 0;height:15%;transition:height 0.8s var(--ease-out);position:relative;" class="hour-bar">
+                  <span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:0.625rem;color:var(--muted);">8</span>
+                </div>
+                <div style="flex:1;background:var(--accent-light);border-radius:3px 3px 0 0;height:35%;" class="hour-bar">
+                  <span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:0.625rem;color:var(--muted);">9</span>
+                </div>
+                <div style="flex:1;background:var(--accent-light);border-radius:3px 3px 0 0;height:72%;" class="hour-bar">
+                  <span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:0.625rem;color:var(--muted);">10</span>
+                </div>
+                <div style="flex:1;background:var(--accent-light);border-radius:3px 3px 0 0;height:88%;" class="hour-bar">
+                  <span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:0.625rem;color:var(--muted);">11</span>
+                </div>
+                <div style="flex:1;background:var(--accent);border-radius:3px 3px 0 0;height:100%;" class="hour-bar">
+                  <span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:0.625rem;color:var(--accent);font-weight:600;">12</span>
+                </div>
+                <div style="flex:1;background:var(--accent-light);border-radius:3px 3px 0 0;height:65%;" class="hour-bar">
+                  <span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:0.625rem;color:var(--muted);">13</span>
+                </div>
+                <div style="flex:1;background:var(--accent-light);border-radius:3px 3px 0 0;height:42%;" class="hour-bar">
+                  <span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:0.625rem;color:var(--muted);">14</span>
+                </div>
+                <div style="flex:1;border:1px dashed var(--border);border-radius:3px 3px 0 0;height:20%;opacity:0.5;" class="hour-bar">
+                  <span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:0.625rem;color:var(--muted-light);">15</span>
+                </div>
+                <div style="flex:1;border:1px dashed var(--border);border-radius:3px 3px 0 0;height:10%;opacity:0.3;" class="hour-bar">
+                  <span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:0.625rem;color:var(--muted-light);">16</span>
+                </div>
+                <div style="flex:1;border:1px dashed var(--border);border-radius:3px 3px 0 0;height:5%;opacity:0.2;" class="hour-bar">
+                  <span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:0.625rem;color:var(--muted-light);">17</span>
+                </div>
+              </div>
+              <div style="font-size:0.75rem;color:var(--muted);margin-top:0.75rem;text-align:center;">Hora del día (proyectado en gris)</div>
+            </div>
+
+            <div class="card" style="padding:1.5rem;">
+              <div class="label" style="margin-bottom:1rem;">Participación por sede</div>
+              <div style="display:flex;flex-direction:column;gap:0.875rem;">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:0.8125rem;margin-bottom:0.375rem;">
+                    <span>Cartago</span><span style="font-weight:600;">48%</span>
+                  </div>
+                  <div class="progress-bar"><div class="progress-bar-fill accent" style="width:48%;"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:0.8125rem;margin-bottom:0.375rem;">
+                    <span>San José</span><span style="font-weight:600;">41%</span>
+                  </div>
+                  <div class="progress-bar"><div class="progress-bar-fill accent" style="width:41%;"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:0.8125rem;margin-bottom:0.375rem;">
+                    <span>San Carlos</span><span style="font-weight:600;">37%</span>
+                  </div>
+                  <div class="progress-bar"><div class="progress-bar-fill accent" style="width:37%;"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:0.8125rem;margin-bottom:0.375rem;">
+                    <span>Limón</span><span style="font-weight:600;">29%</span>
+                  </div>
+                  <div class="progress-bar"><div class="progress-bar-fill accent" style="width:29%;"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:1.25rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+              <div class="label">Información de la votación</div>
+              <span style="font-size:0.75rem;color:var(--muted);">Se actualiza cada 5 min</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;">
+              <div>
+                <div style="font-size:0.8125rem;color:var(--muted);">Apertura</div>
+                <div style="font-weight:600;font-size:0.875rem;">24 Feb, 8:00 AM</div>
+              </div>
+              <div>
+                <div style="font-size:0.8125rem;color:var(--muted);">Cierre</div>
+                <div style="font-weight:600;font-size:0.875rem;">24 Feb, 6:00 PM</div>
+              </div>
+              <div>
+                <div style="font-size:0.8125rem;color:var(--muted);">Tiempo restante</div>
+                <div style="font-weight:600;font-size:0.875rem;color:var(--accent);" id="countdown">3h 28m</div>
+              </div>
+              <div>
+                <div style="font-size:0.8125rem;color:var(--muted);">Candidatos</div>
+                <div style="font-weight:600;font-size:0.875rem;">3</div>
+              </div>
+              <div>
+                <div style="font-size:0.8125rem;color:var(--muted);">Autenticación</div>
+                <div style="font-weight:600;font-size:0.875rem;">Microsoft OAuth</div>
+              </div>
+              <div>
+                <div style="font-size:0.8125rem;color:var(--muted);">Voto secreto</div>
+                <div style="font-weight:600;font-size:0.875rem;color:var(--success);">Sí — Anónimo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ SCRUTINY VIEW ═══ -->
+        <div id="admin-scrutiny" class="view">
+          <div style="max-width:640px;margin:0 auto;">
+            <div style="text-align:center;margin-bottom:2.5rem;">
+              <div style="width:64px;height:64px;background:var(--warning-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <h2>Escrutinio de resultados</h2>
+              <p style="color:var(--muted);margin-top:0.5rem;">Consejo Ejecutivo FITEC 2026</p>
+              <p style="color:var(--muted);font-size:0.875rem;margin-top:0.25rem;">Se requieren <strong style="color:var(--ink);">3 de 5 llaves</strong> del directorio para revelar los resultados.</p>
+            </div>
+
+            <!-- Keys Status -->
+            <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.5rem;">
+              <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-weight:600;">Llaves de escrutinio</span>
+                <span style="font-size:0.875rem;color:var(--warning);font-weight:600;">2 de 3 requeridas</span>
+              </div>
+
+              <div style="padding:0;">
+                <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:var(--success-light);">
+                  <div class="sidebar-avatar" style="width:36px;height:36px;background:var(--accent);font-size:0.75rem;">AP</div>
+                  <div style="flex:1;">
+                    <div style="font-weight:500;font-size:0.875rem;">Alden Portugués</div>
+                    <div style="font-size:0.75rem;color:var(--success);">Llave ingresada — 24 Feb, 18:12</div>
+                  </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:var(--success-light);">
+                  <div class="sidebar-avatar" style="width:36px;height:36px;background:#059669;font-size:0.75rem;">AM</div>
+                  <div style="flex:1;">
+                    <div style="font-weight:500;font-size:0.875rem;">Andrea Mora</div>
+                    <div style="font-size:0.75rem;color:var(--success);">Llave ingresada — 24 Feb, 18:15</div>
+                  </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border);">
+                  <div class="sidebar-avatar" style="width:36px;height:36px;background:#7C3AED;font-size:0.75rem;">SL</div>
+                  <div style="flex:1;">
+                    <div style="font-weight:500;font-size:0.875rem;">Stanley Ligoñi</div>
+                    <div style="font-size:0.75rem;color:var(--muted);">Pendiente</div>
+                  </div>
+                  <div style="width:20px;height:20px;border:2px solid var(--border);border-radius:50%;"></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border);opacity:0.5;">
+                  <div class="sidebar-avatar" style="width:36px;height:36px;background:#D97706;font-size:0.75rem;">RC</div>
+                  <div style="flex:1;">
+                    <div style="font-weight:500;font-size:0.875rem;">Roberto Castro</div>
+                    <div style="font-size:0.75rem;color:var(--muted);">Pendiente</div>
+                  </div>
+                  <div style="width:20px;height:20px;border:2px solid var(--border);border-radius:50%;"></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;opacity:0.5;">
+                  <div class="sidebar-avatar" style="width:36px;height:36px;background:#0EA5E9;font-size:0.75rem;">LV</div>
+                  <div style="flex:1;">
+                    <div style="font-weight:500;font-size:0.875rem;">Laura Vargas</div>
+                    <div style="font-size:0.75rem;color:var(--muted);">Pendiente</div>
+                  </div>
+                  <div style="width:20px;height:20px;border:2px solid var(--border);border-radius:50%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Key Input -->
+            <div class="card guilloche-bg" style="padding:1.5rem;border:2px dashed var(--border);">
+              <div style="text-align:center;margin-bottom:1rem;">
+                <div style="font-weight:600;margin-bottom:0.25rem;">Ingresar tu llave</div>
+                <div style="font-size:0.8125rem;color:var(--muted);">Pegá tu llave de escrutinio asignada</div>
+              </div>
+              <div style="display:flex;gap:0.5rem;">
+                <input type="password" class="input" placeholder="Pegar llave criptográfica..." style="font-family:monospace;">
+                <button class="btn btn-accent" onclick="submitKey()">Enviar</button>
+              </div>
+            </div>
+
+            <p style="text-align:center;font-size:0.75rem;color:var(--muted);margin-top:1.5rem;">
+              Los resultados se revelarán automáticamente cuando se alcance el mínimo de llaves requeridas. Este proceso queda registrado en el log de auditoría.
+            </p>
+          </div>
+        </div>
+
+        <!-- ═══ AUDIT VIEW ═══ -->
+        <div id="admin-audit" class="view">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+            <div>
+              <h2>Auditoría</h2>
+              <p style="color:var(--muted);font-size:0.875rem;margin-top:0.25rem;">Registro inmutable de todas las acciones del sistema</p>
+            </div>
+            <button class="btn btn-outline btn-sm btn-export">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Exportar logs
+            </button>
+          </div>
+
+          <div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;">
+            <input type="text" class="input search-input" placeholder="Buscar en logs..." style="max-width:300px;">
+            <select class="input" style="width:auto;">
+              <option>Todas las acciones</option>
+              <option>LOGIN</option>
+              <option>CREATE_ELECTION</option>
+              <option>OPEN_ELECTION</option>
+              <option>CLOSE_ELECTION</option>
+              <option>CAST_VOTE</option>
+              <option>UPLOAD_PADRON</option>
+              <option>MODIFY_PERMISSIONS</option>
+            </select>
+            <input type="date" class="input" style="width:auto;">
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha/Hora</th>
+                  <th>Actor</th>
+                  <th>Acción</th>
+                  <th>Recurso</th>
+                  <th>Detalle</th>
+                  <th>IP</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="table-row-enter" style="animation-delay:0.05s">
+                  <td style="font-size:0.8125rem;font-family:monospace;white-space:nowrap;">24/02/26 14:32:01</td>
+                  <td style="font-weight:500;">José Zumbado</td>
+                  <td><span class="badge badge-open" style="font-size:0.6875rem;">CAST_VOTE</span></td>
+                  <td style="font-size:0.8125rem;">Consejo Ejecutivo FITEC</td>
+                  <td style="font-size:0.8125rem;color:var(--muted);">Voto emitido exitosamente</td>
+                  <td style="font-size:0.75rem;font-family:monospace;color:var(--muted);">190.113.x.x</td>
+                </tr>
+                <tr class="table-row-enter" style="animation-delay:0.1s">
+                  <td style="font-size:0.8125rem;font-family:monospace;white-space:nowrap;">24/02/26 10:00:00</td>
+                  <td style="font-weight:500;">Alden Portugués</td>
+                  <td><span class="badge badge-open" style="font-size:0.6875rem;">OPEN_ELECTION</span></td>
+                  <td style="font-size:0.8125rem;">Consejo Ejecutivo FITEC</td>
+                  <td style="font-size:0.8125rem;color:var(--muted);">Votación abierta 8AM-6PM</td>
+                  <td style="font-size:0.75rem;font-family:monospace;color:var(--muted);">201.207.x.x</td>
+                </tr>
+                <tr class="table-row-enter" style="animation-delay:0.15s">
+                  <td style="font-size:0.8125rem;font-family:monospace;white-space:nowrap;">20/02/26 15:47:22</td>
+                  <td style="font-weight:500;">Stanley Ligoñi</td>
+                  <td><span class="badge badge-scrutinized" style="font-size:0.6875rem;">UPLOAD_PADRON</span></td>
+                  <td style="font-size:0.8125rem;">Padrón 2026-I</td>
+                  <td style="font-size:0.8125rem;color:var(--muted);">11,247 registros — +342 nuevos, -89 inactivos</td>
+                  <td style="font-size:0.75rem;font-family:monospace;color:var(--muted);">201.207.x.x</td>
+                </tr>
+                <tr class="table-row-enter" style="animation-delay:0.2s">
+                  <td style="font-size:0.8125rem;font-family:monospace;white-space:nowrap;">18/02/26 09:12:45</td>
+                  <td style="font-weight:500;">Alden Portugués</td>
+                  <td><span class="badge" style="background:#F5F3FF;color:#7C3AED;font-size:0.6875rem;">MODIFY_PERMISSIONS</span></td>
+                  <td style="font-size:0.8125rem;">Andrea Mora</td>
+                  <td style="font-size:0.8125rem;color:var(--muted);">Asignó rol "Fiscal" + permisos padrón</td>
+                  <td style="font-size:0.75rem;font-family:monospace;color:var(--muted);">201.207.x.x</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="table-pagination">
+              <span>Mostrando 1–25 de 1,432 registros</span>
+              <div class="pagination-btns">
+                <button>‹</button>
+                <button class="active">1</button>
+                <button>2</button>
+                <button>3</button>
+                <button>…</button>
+                <button>58</button>
+                <button>›</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PADRON UPLOAD VIEW ═══ -->
+        <div id="admin-padron-upload" class="view">
+          <div style="max-width:780px;margin:0 auto;">
+            <div style="margin-bottom:2rem;">
+              <div class="swiss-bar"></div>
+              <h2>Cargar padrón estudiantil</h2>
+              <p style="color:var(--muted);font-size:0.875rem;margin-top:0.25rem;">Importá el archivo Excel del DAR para actualizar el padrón. El sistema hace merge inteligente.</p>
+            </div>
+
+            <!-- Drop Zone -->
+            <div class="drop-zone" id="upload-drop-zone" onclick="document.getElementById('file-input').click()">
+              <input type="file" id="file-input" accept=".xlsx,.csv" style="display:none;" onchange="simulateUpload()">
+              <div class="drop-zone-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+              <div style="font-weight:600;margin-bottom:0.25rem;">Arrastrá el archivo aquí o hacé clic para seleccionar</div>
+              <div style="font-size:0.8125rem;color:var(--muted);">Formatos aceptados: .xlsx, .csv — Máximo 50MB</div>
+              <div style="font-size:0.75rem;color:var(--muted-light);margin-top:0.75rem;">
+                Columnas esperadas: <span class="mono" style="font-size:0.6875rem;">carnet · nombre · correo · sede · carrera · grado</span>
+              </div>
+            </div>
+
+            <!-- Upload Progress (hidden by default) -->
+            <div id="upload-progress" style="display:none;margin-top:1.5rem;">
+              <div class="card" style="padding:1.25rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                  <div style="display:flex;align-items:center;gap:0.75rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    <span style="font-weight:600;font-size:0.875rem;" id="upload-status-text">Procesando archivo...</span>
+                  </div>
+                  <span style="font-size:0.8125rem;font-weight:600;color:var(--accent);" id="upload-pct">0%</span>
+                </div>
+                <div class="progress-bar" style="height:6px;">
+                  <div class="progress-bar-fill accent" id="upload-bar" style="width:0%;transition:width 0.6s var(--ease-out);"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Merge Preview (hidden by default) -->
+            <div id="merge-preview" style="display:none;margin-top:1.5rem;">
+              <div class="card" style="padding:0;overflow:hidden;">
+                <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-weight:600;">Resumen del merge</span>
+                  <span class="badge badge-dot badge-scrutinized">Revisión pendiente</span>
+                </div>
+
+                <div class="merge-stat">
+                  <div class="merge-stat-icon" style="background:var(--success-light);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </div>
+                  <div style="flex:1;">
+                    <div class="merge-stat-value" style="color:var(--success);">+342</div>
+                    <div style="font-size:0.8125rem;color:var(--muted);">Estudiantes nuevos por agregar</div>
+                  </div>
+                </div>
+                <div class="merge-stat">
+                  <div class="merge-stat-icon" style="background:var(--error-light);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </div>
+                  <div style="flex:1;">
+                    <div class="merge-stat-value" style="color:var(--error);">−89</div>
+                    <div style="font-size:0.8125rem;color:var(--muted);">Estudiantes a marcar como inactivos (no se eliminan)</div>
+                  </div>
+                </div>
+                <div class="merge-stat">
+                  <div class="merge-stat-icon" style="background:var(--warning-light);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </div>
+                  <div style="flex:1;">
+                    <div class="merge-stat-value" style="color:var(--warning);">~156</div>
+                    <div style="font-size:0.8125rem;color:var(--muted);">Registros actualizados (cambio de carrera, sede, etc.)</div>
+                  </div>
+                </div>
+                <div class="merge-stat" style="background:var(--surface);">
+                  <div class="merge-stat-icon" style="background:var(--surface-raised);border:1px solid var(--border);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  </div>
+                  <div style="flex:1;">
+                    <div class="merge-stat-value">11,247</div>
+                    <div style="font-size:0.8125rem;color:var(--muted);">Total resultante en el padrón activo</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Validation Errors (if any) -->
+              <div class="card" style="margin-top:1rem;border-color:var(--warning);background:var(--warning-light);padding:1rem 1.25rem;">
+                <div style="display:flex;align-items:flex-start;gap:0.75rem;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" style="flex-shrink:0;margin-top:2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <div>
+                    <div style="font-weight:600;font-size:0.875rem;color:#92400E;">3 advertencias encontradas</div>
+                    <div style="font-size:0.8125rem;color:#B45309;margin-top:0.25rem;">
+                      Fila 342: formato de carnet inválido (2028XXX)<br>
+                      Fila 891: correo duplicado (maria.solis@estudiantec.cr)<br>
+                      Fila 1204: sede no reconocida ("Alajuela")
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
+                <button class="btn btn-outline" onclick="resetUpload()">Cancelar</button>
+                <button class="btn btn-accent btn-lg" onclick="confirmMerge()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  Confirmar merge
+                </button>
+              </div>
+            </div>
+
+            <p style="font-size:0.75rem;color:var(--muted-light);margin-top:2rem;text-align:center;">
+              El padrón anterior no se borra — los registros se marcan como inactivos para preservar el historial de votaciones.
+            </p>
+          </div>
+        </div>
+
+        <!-- ═══ SETTINGS VIEW ═══ -->
+        <div id="admin-settings" class="view">
+          <div style="max-width:780px;margin:0 auto;">
+            <div style="margin-bottom:2rem;">
+              <div class="swiss-bar"></div>
+              <h2>Configuración</h2>
+              <p style="color:var(--muted);font-size:0.875rem;margin-top:0.25rem;">Ajustes generales del sistema electoral</p>
+            </div>
+
+            <!-- Authentication Settings -->
+            <div class="card" style="margin-bottom:1rem;">
+              <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.25rem;">
+                <div class="label">Autenticación</div>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Método de autenticación por defecto</div>
+                  <div class="setting-desc">Para nuevas votaciones creadas</div>
+                </div>
+                <select class="input" style="width:auto;min-width:220px;">
+                  <option>Microsoft OAuth (@estudiantec.cr)</option>
+                  <option>Token único por correo</option>
+                  <option>Ambos (votante elige)</option>
+                </select>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Proveedor de correo</div>
+                  <div class="setting-desc">Para envío de tokens y notificaciones</div>
+                </div>
+                <select class="input" style="width:auto;min-width:220px;">
+                  <option>Resend</option>
+                  <option>SendGrid</option>
+                  <option>Supabase Edge Functions</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Voting Defaults -->
+            <div class="card" style="margin-bottom:1rem;">
+              <div class="label" style="margin-bottom:1.25rem;">Valores por defecto de votaciones</div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Voto anónimo (secreto)</div>
+                  <div class="setting-desc">Separación criptográfica identidad-voto activada por defecto</div>
+                </div>
+                <button class="toggle active" onclick="this.classList.toggle('active')"></button>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Incluir "Voto en blanco"</div>
+                  <div class="setting-desc">Agregar automáticamente la opción de voto en blanco</div>
+                </div>
+                <button class="toggle active" onclick="this.classList.toggle('active')"></button>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Incluir "Voto nulo"</div>
+                  <div class="setting-desc">Agregar automáticamente la opción de voto nulo</div>
+                </div>
+                <button class="toggle active" onclick="this.classList.toggle('active')"></button>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Cierre automático de votaciones</div>
+                  <div class="setting-desc">Cerrar al alcanzar la hora de cierre configurada</div>
+                </div>
+                <button class="toggle active" onclick="this.classList.toggle('active')"></button>
+              </div>
+            </div>
+
+            <!-- Monitoring -->
+            <div class="card" style="margin-bottom:1rem;">
+              <div class="label" style="margin-bottom:1.25rem;">Monitor en vivo</div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Intervalo de actualización</div>
+                  <div class="setting-desc">Frecuencia de actualización de participación durante votaciones abiertas</div>
+                </div>
+                <select class="input" style="width:auto;">
+                  <option>Cada 1 minuto</option>
+                  <option selected>Cada 5 minutos</option>
+                  <option>Cada 10 minutos</option>
+                  <option>Cada 15 minutos</option>
+                </select>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Notificaciones por correo</div>
+                  <div class="setting-desc">Avisar al TEE cuando participación supere un umbral</div>
+                </div>
+                <button class="toggle" onclick="this.classList.toggle('active')"></button>
+              </div>
+            </div>
+
+            <!-- System Info -->
+            <div class="card" style="background:var(--surface);border:1px dashed var(--border);">
+              <div class="label" style="margin-bottom:1rem;">Información del sistema</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:0.8125rem;">
+                <div>
+                  <div style="color:var(--muted);">Versión</div>
+                  <div style="font-weight:600;" class="mono">v1.0.0-beta</div>
+                </div>
+                <div>
+                  <div style="color:var(--muted);">Stack</div>
+                  <div style="font-weight:600;">Next.js + Supabase</div>
+                </div>
+                <div>
+                  <div style="color:var(--muted);">Base de datos</div>
+                  <div style="font-weight:600;">PostgreSQL (Supabase)</div>
+                </div>
+                <div>
+                  <div style="color:var(--muted);">Hosting</div>
+                  <div style="font-weight:600;">Vercel Serverless</div>
+                </div>
+                <div>
+                  <div style="color:var(--muted);">Último deploy</div>
+                  <div style="font-weight:600;" class="mono">24 Feb 2026, 08:00</div>
+                </div>
+                <div>
+                  <div style="color:var(--muted);">Estudiantes en padrón</div>
+                  <div style="font-weight:600;">11,247 activos</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ MASS EMAIL VIEW ═══ -->
+        <div id="admin-email" class="view">
+          <div style="max-width:780px;margin:0 auto;">
+            <div style="margin-bottom:2rem;">
+              <div class="swiss-bar"></div>
+              <h2>Correos masivos</h2>
+              <p style="color:var(--muted);font-size:0.875rem;margin-top:0.25rem;">Enviá tokens de acceso, recordatorios o notificaciones a los votantes elegibles de una votación.</p>
+            </div>
+
+            <!-- Step 1: Select Election -->
+            <div class="card" style="margin-bottom:1rem;padding:1.5rem;">
+              <div class="label" style="margin-bottom:1rem;">1 — Seleccionar votación</div>
+              <select class="input" id="email-election-select" onchange="updateEmailRecipients()">
+                <option value="">Elegir una votación...</option>
+                <option value="fitec" data-count="11247">Consejo Ejecutivo FITEC 2026 — Electoral Masiva</option>
+                <option value="pme" data-count="172">PME — Aprobación Acta 007-2026 — Plenario</option>
+                <option value="aetec" data-count="847">JD AETEC Computación — Asociación (Borrador)</option>
+              </select>
+              <div id="email-recipient-count" style="display:none;margin-top:0.75rem;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span id="email-count-text" style="color:var(--muted);">Seleccioná una votación</span>
+              </div>
+            </div>
+
+            <!-- Step 2: Email Template -->
+            <div class="card" style="margin-bottom:1rem;padding:1.5rem;">
+              <div class="label" style="margin-bottom:1rem;">2 — Tipo de correo</div>
+              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.75rem;">
+                <div class="type-card selected" onclick="selectEmailTemplate(this, 'token')">
+                  <div style="margin-bottom:0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                  </div>
+                  <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.25rem;">Enviar token de acceso</div>
+                  <div style="font-size:0.75rem;color:var(--muted);">Token único + link para votar</div>
+                </div>
+                <div class="type-card" onclick="selectEmailTemplate(this, 'reminder')">
+                  <div style="margin-bottom:0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  </div>
+                  <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.25rem;">Recordatorio de votación</div>
+                  <div style="font-size:0.75rem;color:var(--muted);">Recordar que la votación sigue abierta</div>
+                </div>
+                <div class="type-card" onclick="selectEmailTemplate(this, 'opening')">
+                  <div style="margin-bottom:0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  </div>
+                  <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.25rem;">Notificación de apertura</div>
+                  <div style="font-size:0.75rem;color:var(--muted);">Avisar que la votación ya abrió</div>
+                </div>
+                <div class="type-card" onclick="selectEmailTemplate(this, 'custom')">
+                  <div style="margin-bottom:0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </div>
+                  <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.25rem;">Personalizado</div>
+                  <div style="font-size:0.75rem;color:var(--muted);">Redactar mensaje libre</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Preview -->
+            <div class="card" style="margin-bottom:1rem;padding:0;overflow:hidden;">
+              <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                <div class="label">3 — Vista previa del correo</div>
+                <span class="badge badge-dot badge-draft">Borrador</span>
+              </div>
+              <div style="padding:1.5rem;font-size:0.875rem;">
+                <div style="display:grid;grid-template-columns:80px 1fr;gap:0.5rem 1rem;margin-bottom:1.25rem;">
+                  <span style="color:var(--muted);font-weight:500;">De:</span>
+                  <span>Tribunal Electoral Estudiantil &lt;tee@estudiantec.cr&gt;</span>
+                  <span style="color:var(--muted);font-weight:500;">Para:</span>
+                  <span id="email-preview-to">11,247 votantes elegibles</span>
+                  <span style="color:var(--muted);font-weight:500;">Asunto:</span>
+                  <span style="font-weight:600;" id="email-preview-subject">Tu token de acceso — Consejo Ejecutivo FITEC 2026</span>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;font-size:0.8125rem;color:var(--ink-soft);line-height:1.7;">
+                  <p>Estimado/a <strong>{{nombre}}</strong>,</p>
+                  <br>
+                  <p>Tu token de acceso para la votación <strong>"Consejo Ejecutivo FITEC 2026"</strong> es:</p>
+                  <br>
+                  <div style="text-align:center;padding:1rem;background:var(--surface-raised);border:1px dashed var(--border);border-radius:var(--radius-sm);margin:0.5rem 0;">
+                    <span class="mono" style="font-size:1.25rem;font-weight:700;letter-spacing:0.15em;color:var(--ink);">{{TOKEN}}</span>
+                  </div>
+                  <br>
+                  <p>Ingresá a <strong>votacion.tee.estudiantec.cr</strong> con tu carnet y este token para emitir tu voto.</p>
+                  <br>
+                  <p style="color:var(--muted);">— Tribunal Electoral Estudiantil, TEC</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Send Action -->
+            <div class="card" style="padding:1.25rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+                <div style="font-size:0.8125rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:0.25rem 1rem;">
+                  <span><strong id="email-send-count">11,247</strong> destinatarios</span>
+                  <span>·</span>
+                  <span>Proveedor: Resend</span>
+                  <span>·</span>
+                  <span>~2 min estimado</span>
+                </div>
+                <button class="btn btn-accent btn-lg" id="send-email-btn" onclick="sendEmails()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Enviar correos
+                </button>
+              </div>
+              <!-- Progress (hidden) -->
+              <div id="email-send-progress" style="display:none;margin-top:1rem;">
+                <div style="display:flex;justify-content:space-between;font-size:0.8125rem;margin-bottom:0.5rem;">
+                  <span id="email-progress-text" style="font-weight:500;">Enviando...</span>
+                  <span id="email-progress-pct" style="font-weight:600;color:var(--accent);">0%</span>
+                </div>
+                <div class="progress-bar" style="height:8px;">
+                  <div class="progress-bar-fill accent" id="email-progress-bar" style="width:0%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Sends -->
+            <div style="margin-top:2rem;">
+              <h3 style="font-family:var(--font-body);font-weight:600;font-size:1rem;margin-bottom:1rem;">Envíos recientes</h3>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Votación</th>
+                      <th>Tipo</th>
+                      <th>Destinatarios</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="table-row-enter" style="animation-delay:0.05s">
+                      <td class="mono" style="font-size:0.8125rem;">24/02/26 10:02</td>
+                      <td style="font-weight:500;">Consejo Ejecutivo FITEC 2026</td>
+                      <td style="font-size:0.8125rem;">Token de acceso</td>
+                      <td>11,247</td>
+                      <td><span class="badge badge-dot badge-open">Entregados</span></td>
+                    </tr>
+                    <tr class="table-row-enter" style="animation-delay:0.1s">
+                      <td class="mono" style="font-size:0.8125rem;">24/02/26 14:00</td>
+                      <td style="font-weight:500;">Consejo Ejecutivo FITEC 2026</td>
+                      <td style="font-size:0.8125rem;">Recordatorio</td>
+                      <td>6,411</td>
+                      <td><span class="badge badge-dot badge-open">Entregados</span></td>
+                    </tr>
+                    <tr class="table-row-enter" style="animation-delay:0.15s">
+                      <td class="mono" style="font-size:0.8125rem;">24/02/26 09:55</td>
+                      <td style="font-weight:500;">PME — Acta 007-2026</td>
+                      <td style="font-size:0.8125rem;">Token de acceso</td>
+                      <td>172</td>
+                      <td><span class="badge badge-dot badge-open">Entregados</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ GENERATE KEYS VIEW ═══ -->
+        <div id="admin-keys" class="view">
+          <div style="max-width:780px;margin:0 auto;">
+            <div style="margin-bottom:2rem;">
+              <div class="swiss-bar"></div>
+              <h2>Generar llaves de votación</h2>
+              <p style="color:var(--muted);font-size:0.875rem;margin-top:0.25rem;">Generá tokens de acceso únicos para cada votante elegible de una votación específica. Cada token permite votar una sola vez.</p>
+            </div>
+
+            <!-- Select Election -->
+            <div class="card" style="margin-bottom:1rem;padding:1.5rem;">
+              <div class="label" style="margin-bottom:1rem;">Seleccionar votación</div>
+              <select class="input" id="keys-election-select" onchange="updateKeysElection()">
+                <option value="">Elegir una votación...</option>
+                <option value="fitec" data-count="11247" data-type="Electoral Masiva" data-source="Padrón completo">Consejo Ejecutivo FITEC 2026</option>
+                <option value="pme" data-count="172" data-type="Plenario" data-source="Filtrado por asociación">PME — Aprobación Acta 007-2026</option>
+                <option value="aetec" data-count="847" data-type="Asociación" data-source="Filtrado: Ing. Computación, Cartago">JD AETEC Computación (Borrador)</option>
+              </select>
+
+              <!-- Election info (shown on selection) -->
+              <div id="keys-election-info" style="display:none;margin-top:1rem;padding:1rem;background:var(--surface);border-radius:var(--radius-md);">
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
+                  <div>
+                    <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">Tipo</div>
+                    <div style="font-weight:600;font-size:0.875rem;margin-top:0.25rem;" id="keys-type">—</div>
+                  </div>
+                  <div>
+                    <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">Origen votantes</div>
+                    <div style="font-weight:600;font-size:0.875rem;margin-top:0.25rem;" id="keys-source">—</div>
+                  </div>
+                  <div>
+                    <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">Elegibles</div>
+                    <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:500;margin-top:0.125rem;color:var(--accent);" id="keys-count">—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Config -->
+            <div class="card" style="margin-bottom:1rem;padding:1.5rem;" id="keys-config-card">
+              <div class="label" style="margin-bottom:1.25rem;">Configuración de tokens</div>
+              <div style="display:flex;flex-direction:column;gap:1rem;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                  <div class="input-group">
+                    <label>Formato del token</label>
+                    <select class="input" id="keys-format">
+                      <option value="6num">6 dígitos numéricos (ej: 847291)</option>
+                      <option value="8alpha" selected>8 caracteres alfanuméricos (ej: aX7k9mP2)</option>
+                      <option value="uuid">UUID corto (ej: f47ac10b)</option>
+                    </select>
+                  </div>
+                  <div class="input-group">
+                    <label>Expiración</label>
+                    <input type="text" class="input" value="Igual al cierre de la votación" disabled style="background:var(--surface);">
+                  </div>
+                </div>
+                <label style="font-size:0.8125rem;font-weight:600;color:var(--ink-soft);display:flex;align-items:center;gap:0.5rem;">
+                  <input type="checkbox" id="keys-auto-send" style="accent-color:var(--accent);">
+                  Enviar tokens por correo automáticamente al generar
+                </label>
+              </div>
+            </div>
+
+            <!-- Generate Button -->
+            <div id="keys-generate-section" style="text-align:center;padding:1rem 0;">
+              <button class="btn btn-accent btn-lg" id="generate-keys-btn" onclick="generateKeys()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                Generar tokens
+              </button>
+              <!-- Progress (hidden) -->
+              <div id="keys-progress" style="display:none;margin-top:1.5rem;text-align:left;">
+                <div class="card" style="padding:1.25rem;">
+                  <div style="display:flex;justify-content:space-between;font-size:0.8125rem;margin-bottom:0.5rem;">
+                    <span id="keys-progress-text" style="font-weight:500;">Generando tokens...</span>
+                    <span id="keys-progress-pct" style="font-weight:600;color:var(--accent);">0%</span>
+                  </div>
+                  <div class="progress-bar" style="height:8px;">
+                    <div class="progress-bar-fill accent" id="keys-progress-bar" style="width:0%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Results (hidden by default) -->
+            <div id="keys-results" style="display:none;">
+              <!-- Success Card -->
+              <div class="card" style="background:var(--success-light);border-color:#BBF7D0;margin-bottom:1rem;padding:1.25rem;">
+                <div style="display:flex;align-items:center;gap:0.75rem;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <div>
+                    <div style="font-weight:600;color:#065F46;" id="keys-success-text">11,247 tokens generados exitosamente</div>
+                    <div style="font-size:0.8125rem;color:var(--success);">Formato: 8 caracteres alfanuméricos · Expiran: 24 Feb 2026, 6:00 PM</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div style="display:flex;gap:0.75rem;margin-bottom:1.5rem;">
+                <button class="btn btn-outline btn-sm btn-export" onclick="exportTable()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Exportar CSV
+                </button>
+                <button class="btn btn-accent btn-sm" onclick="sendEmails()" id="keys-send-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Enviar por correo
+                </button>
+              </div>
+
+              <!-- Preview Table -->
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Carnet</th>
+                      <th>Nombre</th>
+                      <th>Token</th>
+                      <th>Estado</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="keys-preview-tbody">
+                    <!-- Populated by JS -->
+                  </tbody>
+                </table>
+                <div class="table-pagination">
+                  <span>Mostrando 1–10 de <span id="keys-total-text">11,247</span></span>
+                  <div class="pagination-btns">
+                    <button>‹</button>
+                    <button class="active">1</button>
+                    <button>2</button>
+                    <button>3</button>
+                    <button>…</button>
+                    <button>›</button>
+                  </div>
+                </div>
+              </div>
+
+              <p style="text-align:center;font-size:0.75rem;color:var(--muted-light);margin-top:1.5rem;">
+                Los tokens son de uso único. Cada token solo permite votar una vez en esta votación. Si se regeneran, los anteriores se invalidan.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /main-body -->
+    </div><!-- /main -->
+  </div><!-- /admin-shell -->
+
+  <script>
+    // ═══════════════════════════════════════════
+    // NAVIGATION
+    // ═══════════════════════════════════════════
+    function navigateTo(view) {
+      document.querySelectorAll('.voter-shell, .admin-shell').forEach(el => el.classList.remove('active'));
+
+      switch(view) {
+        case 'voter-login':
+          document.getElementById('voter-login-shell').classList.add('active');
+          break;
+        case 'voter-elections':
+          document.getElementById('voter-elections-shell').classList.add('active');
+          break;
+        case 'voter-booth':
+          document.getElementById('voter-booth-shell').classList.add('active');
+          break;
+        case 'voter-confirm':
+          document.getElementById('voter-confirm-shell').classList.add('active');
+          break;
+        case 'admin':
+          document.getElementById('admin-shell').classList.add('active');
+          break;
+      }
+      window.scrollTo(0, 0);
+    }
+
+    // Admin sidebar navigation
+    function showAdminView(viewId, linkEl) {
+      // Show admin shell
+      document.querySelectorAll('.voter-shell').forEach(el => el.classList.remove('active'));
+      document.getElementById('admin-shell').classList.add('active');
+
+      // Switch view
+      document.querySelectorAll('#admin-shell .view').forEach(v => v.classList.remove('active'));
+      document.getElementById(viewId).classList.add('active');
+
+      // Update sidebar active
+      document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+      if (linkEl) linkEl.classList.add('active');
+
+      // Update header title
+      const titles = {
+        'admin-dashboard': 'Dashboard',
+        'admin-elections': 'Votaciones',
+        'admin-new-election': 'Crear votación',
+        'admin-monitor': 'Monitor en vivo',
+        'admin-scrutiny': 'Escrutinio',
+        'admin-padron': 'Padrón Estudiantil',
+        'admin-padron-upload': 'Cargar padrón',
+        'admin-results': 'Resultados',
+        'admin-team': 'Equipo TEE',
+        'admin-audit': 'Auditoría',
+        'admin-settings': 'Configuración',
+        'admin-email': 'Correos masivos',
+        'admin-keys': 'Generar llaves'
+      };
+      document.getElementById('admin-header-title').textContent = titles[viewId] || 'Dashboard';
+
+      // Populate padron if needed
+      if (viewId === 'admin-padron') populatePadron();
+
+      // Close mobile sidebar
+      closeSidebar();
+    }
+
+    // ═══════════════════════════════════════════
+    // VOTING BOOTH
+    // ═══════════════════════════════════════════
+    function selectOption(el) {
+      document.querySelectorAll('.ballot-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      const btn = document.getElementById('vote-submit-btn');
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+
+    function submitVote() {
+      navigateTo('voter-confirm');
+    }
+
+    // ═══════════════════════════════════════════
+    // SIDEBAR MOBILE
+    // ═══════════════════════════════════════════
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('active');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('active');
+    }
+
+    // ═══════════════════════════════════════════
+    // PADRÓN — Data & Interactions
+    // ═══════════════════════════════════════════
+    const padronData = [];
+    const nombres = ['María Fernanda Solís','Carlos Andrés Méndez','Ana Lucía Rojas','José Fabián Zumbado','Laura Valentina Vargas','Roberto Carlos Castro','Andrea Patricia Mora','Diego Alejandro Ríos','Sofía Elena Jiménez','Manuel Esteban Quesada','Daniela María Torres','Kevin Eduardo Chaves','Valeria Nicole Brenes','Andrés David Fonseca','Gabriela Paola Herrera','Fernando José Araya','Camila Rebeca Villalobos','Sebastián Alberto Navarro','Natalia Cristina Zamora','Luis Antonio Calderón','Paula Alejandra Montero','Ricardo Esteban Alfaro','Mariana Isabel Cordero','Óscar Daniel Elizondo','Tatiana Sofía Ramírez'];
+    const sedes = ['Cartago','Cartago','Cartago','Cartago','Cartago','San José','San José','San José','San Carlos','San Carlos','Limón','Cartago','Cartago','Cartago','San José','San José','Cartago','Cartago','San Carlos','Limón','Cartago','Cartago','San José','Cartago','Cartago'];
+    const carreras = ['Ing. Computación','Administración de Empresas','Ing. Computación','Ing. Computación','Ing. Electrónica','Ing. Producción Industrial','Ing. Mecatrónica','Administración de Empresas','Ing. Computación','Ing. Electrónica','Ing. Producción Industrial','Ing. Computación','Ing. Mecatrónica','Ing. Computación','Administración de Empresas','Ing. Electrónica','Ing. Computación','Ing. Producción Industrial','Ing. Computación','Administración de Empresas','Ing. Mecatrónica','Ing. Computación','Ing. Electrónica','Ing. Computación','Ing. Producción Industrial'];
+    const grados = ['Bachillerato','Bachillerato','Licenciatura','Bachillerato','Bachillerato','Licenciatura','Bachillerato','Bachillerato','Bachillerato','Licenciatura','Bachillerato','Bachillerato','Bachillerato','Licenciatura','Bachillerato','Bachillerato','Bachillerato','Licenciatura','Bachillerato','Bachillerato','Bachillerato','Licenciatura','Bachillerato','Bachillerato','Bachillerato'];
+
+    // Generate mock data
+    for (let i = 0; i < 25; i++) {
+      const year = 2020 + Math.floor(Math.random() * 6);
+      const num = String(Math.floor(Math.random() * 900000) + 100000);
+      padronData.push({
+        carnet: year + num,
+        nombre: nombres[i],
+        correo: nombres[i].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'.').split('.').slice(0,2).join('.') + '@estudiantec.cr',
+        sede: sedes[i],
+        carrera: carreras[i],
+        grado: grados[i]
+      });
+    }
+    padronData.sort((a,b) => a.carnet.localeCompare(b.carnet));
+
+    function populatePadron() {
+      const tbody = document.getElementById('padron-tbody');
+      if (tbody.children.length > 0) return;
+      renderPadronRows(padronData);
+    }
+
+    function renderPadronRows(data) {
+      const tbody = document.getElementById('padron-tbody');
+      tbody.innerHTML = '';
+      data.forEach((s, i) => {
+        const tr = document.createElement('tr');
+        tr.className = 'table-row-enter';
+        tr.style.animationDelay = (i * 0.02) + 's';
+        tr.innerHTML = `
+          <td style="font-weight:500;color:var(--ink);font-family:monospace;font-size:0.8125rem;">${s.carnet}</td>
+          <td style="font-weight:500;">${s.nombre}</td>
+          <td style="font-size:0.8125rem;color:var(--muted);">${s.correo}</td>
+          <td>${s.sede}</td>
+          <td style="font-size:0.8125rem;">${s.carrera}</td>
+          <td style="font-size:0.8125rem;">${s.grado}</td>
+          <td>
+            <button class="btn btn-ghost btn-icon tooltip" data-tip="Editar" style="width:28px;height:28px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterPadron() {
+      const search = document.getElementById('padron-search').value.toLowerCase();
+      const sede = document.getElementById('padron-sede').value;
+      const career = document.getElementById('padron-career').value;
+
+      const filtered = padronData.filter(s => {
+        const matchSearch = !search || s.nombre.toLowerCase().includes(search) || s.carnet.includes(search) || s.correo.toLowerCase().includes(search);
+        const matchSede = !sede || s.sede === sede;
+        const matchCareer = !career || s.carrera === career;
+        return matchSearch && matchSede && matchCareer;
+      });
+
+      renderPadronRows(filtered);
+      document.getElementById('padron-showing').textContent = `Mostrando 1–${filtered.length} de ${filtered.length}`;
+    }
+
+    function sortPadron(field) {
+      padronData.sort((a,b) => a[field].localeCompare(b[field]));
+      renderPadronRows(padronData);
+    }
+
+    function exportTable() {
+      const btn = event.target.closest('.btn-export');
+      const original = btn.innerHTML;
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 0.8s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Exportando...';
+      btn.style.pointerEvents = 'none';
+      setTimeout(() => {
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Listo';
+        btn.style.background = 'var(--success)';
+        btn.style.borderColor = 'var(--success)';
+        btn.style.color = 'white';
+        setTimeout(() => {
+          btn.innerHTML = original;
+          btn.style = '';
+          btn.style.pointerEvents = '';
+        }, 1500);
+      }, 1200);
+    }
+
+    function changePage(n) {
+      document.querySelectorAll('.pagination-btns button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    // Spin keyframe for export
+    const spinStyle = document.createElement('style');
+    spinStyle.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(spinStyle);
+
+    // ═══════════════════════════════════════════
+    // KEYBOARD SHORTCUT — Ctrl+Shift+A for admin
+    // ═══════════════════════════════════════════
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        showAdminView('admin-dashboard', document.querySelector('.sidebar-link'));
+      }
+    });
+
+    // ═══════════════════════════════════════════
+    // RESULTS BAR ANIMATION — Trigger on view
+    // ═══════════════════════════════════════════
+    const resObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('.results-bar-fill').forEach(bar => {
+            const w = bar.style.width;
+            bar.style.width = '0%';
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => { bar.style.width = w; });
+            });
+          });
+          resObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+
+    const resultsView = document.getElementById('admin-results');
+    if (resultsView) resObserver.observe(resultsView);
+
+    // ═══════════════════════════════════════════
+    // STAT COUNTER ANIMATION
+    // ═══════════════════════════════════════════
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const text = el.textContent.replace(/,/g, '');
+          const num = parseFloat(text);
+          if (!isNaN(num) && num > 0 && num === Math.floor(num)) {
+            el.textContent = '0';
+            const duration = 600;
+            const start = performance.now();
+            const fmt = el.dataset.fmt === 'comma';
+            function tick(now) {
+              const p = Math.min((now - start) / duration, 1);
+              const eased = 1 - Math.pow(1 - p, 3);
+              const val = Math.floor(eased * num);
+              el.textContent = fmt ? val.toLocaleString() : val;
+              if (p < 1) requestAnimationFrame(tick);
+              else el.textContent = text.includes(',') ? num.toLocaleString() : String(num);
+            }
+            requestAnimationFrame(tick);
+          }
+          counterObserver.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('.stat-card-value, .login-stat-value').forEach(el => {
+      el.dataset.fmt = 'comma';
+      counterObserver.observe(el);
+    });
+
+    // ═══════════════════════════════════════════
+    // WIZARD — Step Navigation
+    // ═══════════════════════════════════════════
+    function wizardNext(step) {
+      // Hide all panels
+      document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('wizard-step-' + step).classList.add('active');
+
+      // Update step indicators
+      const steps = document.querySelectorAll('.wizard-step');
+      const lines = document.querySelectorAll('.wizard-step-line');
+      steps.forEach((s, i) => {
+        const num = i + 1;
+        s.classList.remove('active', 'completed');
+        if (num < step) s.classList.add('completed');
+        else if (num === step) s.classList.add('active');
+      });
+      lines.forEach((l, i) => {
+        l.classList.remove('completed');
+        if (i < step - 1) l.classList.add('completed');
+      });
+    }
+
+    // ═══════════════════════════════════════════
+    // WIZARD — Type Cards & Radio Labels
+    // ═══════════════════════════════════════════
+    function selectTypeCard(el) {
+      el.parentElement.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    function selectRadioLabel(el) {
+      el.parentElement.querySelectorAll('.radio-label').forEach(r => r.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // ═══════════════════════════════════════════
+    // WIZARD — Add Option
+    // ═══════════════════════════════════════════
+    function addOption() {
+      const list = document.getElementById('options-list');
+      const count = list.children.length + 1;
+      const row = document.createElement('div');
+      row.className = 'option-row';
+      row.style.opacity = '0';
+      row.style.animation = 'fadeInUp 0.3s var(--ease-out) forwards';
+      row.innerHTML = `
+        <div style="display:flex;align-items:center;gap:0.5rem;flex:1;">
+          <span style="font-size:0.75rem;color:var(--muted);font-weight:600;width:20px;">${count}</span>
+          <input type="text" class="input" placeholder="Nombre del candidato/opción" style="flex:1;">
+          <select class="input" style="width:auto;">
+            <option>Candidato</option>
+            <option>A favor</option>
+            <option>En contra</option>
+            <option>Personalizado</option>
+          </select>
+        </div>
+        <button class="btn btn-ghost btn-icon" style="width:28px;height:28px;color:var(--muted);" onclick="this.parentElement.remove()">✕</button>
+      `;
+      list.appendChild(row);
+    }
+
+    // ═══════════════════════════════════════════
+    // WIZARD — Keys Config Toggle
+    // ═══════════════════════════════════════════
+    function toggleKeysConfig() {
+      const cfg = document.getElementById('keys-config');
+      const checkbox = document.getElementById('requires-keys');
+      cfg.style.display = checkbox.checked ? 'block' : 'none';
+    }
+
+    // ═══════════════════════════════════════════
+    // SCRUTINY — Key Submission Animation
+    // ═══════════════════════════════════════════
+    function submitKey() {
+      const input = document.querySelector('#admin-scrutiny input[type="password"]');
+      if (!input.value) return;
+
+      const btn = document.querySelector('#admin-scrutiny .btn-accent');
+      const original = btn.innerHTML;
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 0.6s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+      btn.style.pointerEvents = 'none';
+
+      setTimeout(() => {
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Aceptada';
+        btn.style.background = 'var(--success)';
+        input.value = '';
+        setTimeout(() => {
+          btn.innerHTML = original;
+          btn.style.background = '';
+          btn.style.pointerEvents = '';
+        }, 2000);
+      }, 1200);
+    }
+
+    // ═══════════════════════════════════════════
+    // PADRON UPLOAD — Simulation
+    // ═══════════════════════════════════════════
+    function simulateUpload() {
+      const dropZone = document.getElementById('upload-drop-zone');
+      const progress = document.getElementById('upload-progress');
+      const merge = document.getElementById('merge-preview');
+
+      dropZone.style.display = 'none';
+      progress.style.display = 'block';
+      merge.style.display = 'none';
+
+      const bar = document.getElementById('upload-bar');
+      const pct = document.getElementById('upload-pct');
+      const statusText = document.getElementById('upload-status-text');
+
+      let p = 0;
+      const interval = setInterval(() => {
+        p += Math.random() * 15 + 5;
+        if (p > 100) p = 100;
+        bar.style.width = p + '%';
+        pct.textContent = Math.round(p) + '%';
+
+        if (p >= 40 && p < 70) statusText.textContent = 'Validando registros...';
+        if (p >= 70 && p < 90) statusText.textContent = 'Calculando diferencias...';
+        if (p >= 90) statusText.textContent = 'Generando resumen de merge...';
+
+        if (p >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            progress.style.display = 'none';
+            merge.style.display = 'block';
+            merge.style.opacity = '0';
+            merge.style.animation = 'fadeInUp 0.5s var(--ease-out) forwards';
+          }, 400);
+        }
+      }, 300);
+    }
+
+    function resetUpload() {
+      document.getElementById('upload-drop-zone').style.display = '';
+      document.getElementById('upload-progress').style.display = 'none';
+      document.getElementById('merge-preview').style.display = 'none';
+      document.getElementById('upload-bar').style.width = '0%';
+      document.getElementById('upload-pct').textContent = '0%';
+      document.getElementById('upload-status-text').textContent = 'Procesando archivo...';
+    }
+
+    function confirmMerge() {
+      const btn = event.target.closest('.btn');
+      const original = btn.innerHTML;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 0.8s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Aplicando merge...';
+      btn.style.pointerEvents = 'none';
+      setTimeout(() => {
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Padrón actualizado';
+        btn.style.background = 'var(--success)';
+        setTimeout(() => {
+          showAdminView('admin-padron', document.querySelectorAll('.sidebar-link')[5]);
+        }, 1500);
+      }, 2000);
+    }
+
+    // ═══════════════════════════════════════════
+    // DROP ZONE — Drag & Drop Events
+    // ═══════════════════════════════════════════
+    const dropZone = document.getElementById('upload-drop-zone');
+    if (dropZone) {
+      ['dragenter', 'dragover'].forEach(e => {
+        dropZone.addEventListener(e, (ev) => { ev.preventDefault(); dropZone.classList.add('dragover'); });
+      });
+      ['dragleave', 'drop'].forEach(e => {
+        dropZone.addEventListener(e, (ev) => { ev.preventDefault(); dropZone.classList.remove('dragover'); });
+      });
+      dropZone.addEventListener('drop', () => simulateUpload());
+    }
+
+    // ═══════════════════════════════════════════
+    // EMAIL — Template Selection & Send
+    // ═══════════════════════════════════════════
+    function selectEmailTemplate(el, type) {
+      el.parentElement.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+
+      const subjects = {
+        token: 'Tu token de acceso — Consejo Ejecutivo FITEC 2026',
+        reminder: 'Recordatorio: La votación cierra hoy a las 6:00 PM',
+        opening: 'La votación ya está abierta — Consejo Ejecutivo FITEC 2026',
+        custom: 'Mensaje del Tribunal Electoral Estudiantil'
+      };
+      const subjectEl = document.getElementById('email-preview-subject');
+      if (subjectEl) subjectEl.textContent = subjects[type] || subjects.token;
+    }
+
+    function updateEmailRecipients() {
+      const sel = document.getElementById('email-election-select');
+      const opt = sel.options[sel.selectedIndex];
+      const count = opt.dataset.count || '0';
+      const text = document.getElementById('email-count-text');
+      const sendCount = document.getElementById('email-send-count');
+      const previewTo = document.getElementById('email-preview-to');
+
+      if (sel.value) {
+        text.innerHTML = '<strong style="color:var(--ink);">' + parseInt(count).toLocaleString() + '</strong> votantes elegibles para esta votación';
+        if (sendCount) sendCount.textContent = parseInt(count).toLocaleString();
+        if (previewTo) previewTo.textContent = parseInt(count).toLocaleString() + ' votantes elegibles';
+      } else {
+        text.textContent = 'Seleccioná una votación';
+      }
+    }
+
+    function sendEmails() {
+      const btn = document.getElementById('send-email-btn');
+      const progress = document.getElementById('email-send-progress');
+      const bar = document.getElementById('email-progress-bar');
+      const pct = document.getElementById('email-progress-pct');
+      const progressText = document.getElementById('email-progress-text');
+
+      const sel = document.getElementById('email-election-select');
+      const opt = sel.options[sel.selectedIndex];
+      const total = parseInt(opt?.dataset?.count || '11247');
+
+      btn.style.display = 'none';
+      progress.style.display = 'block';
+
+      let sent = 0;
+      const interval = setInterval(() => {
+        sent += Math.floor(Math.random() * 800 + 400);
+        if (sent > total) sent = total;
+        const p = Math.round((sent / total) * 100);
+        bar.style.width = p + '%';
+        pct.textContent = p + '%';
+        progressText.textContent = 'Enviando ' + sent.toLocaleString() + ' de ' + total.toLocaleString() + '...';
+
+        if (sent >= total) {
+          clearInterval(interval);
+          progressText.innerHTML = '<span style="color:var(--success);font-weight:600;">✓ ' + total.toLocaleString() + ' correos enviados exitosamente</span>';
+          pct.textContent = '100%';
+          pct.style.color = 'var(--success)';
+          bar.classList.remove('accent');
+          bar.style.background = 'var(--success)';
+          setTimeout(() => {
+            btn.style.display = '';
+            progress.style.display = 'none';
+            bar.style.width = '0%';
+            bar.style.background = '';
+            bar.classList.add('accent');
+            pct.style.color = '';
+          }, 3000);
+        }
+      }, 250);
+    }
+
+    // ═══════════════════════════════════════════
+    // KEYS — Election Selection & Generation
+    // ═══════════════════════════════════════════
+    function updateKeysElection() {
+      const sel = document.getElementById('keys-election-select');
+      const opt = sel.options[sel.selectedIndex];
+      const info = document.getElementById('keys-election-info');
+
+      if (sel.value) {
+        info.style.display = 'block';
+        document.getElementById('keys-type').textContent = opt.dataset.type || '—';
+        document.getElementById('keys-source').textContent = opt.dataset.source || '—';
+        document.getElementById('keys-count').textContent = parseInt(opt.dataset.count || 0).toLocaleString();
+      } else {
+        info.style.display = 'none';
+      }
+    }
+
+    function generateKeys() {
+      const sel = document.getElementById('keys-election-select');
+      if (!sel.value) return;
+
+      const opt = sel.options[sel.selectedIndex];
+      const total = parseInt(opt.dataset.count || '11247');
+      const format = document.getElementById('keys-format').value;
+
+      const btn = document.getElementById('generate-keys-btn');
+      const progress = document.getElementById('keys-progress');
+      const bar = document.getElementById('keys-progress-bar');
+      const pct = document.getElementById('keys-progress-pct');
+      const progressText = document.getElementById('keys-progress-text');
+      const results = document.getElementById('keys-results');
+
+      btn.style.display = 'none';
+      progress.style.display = 'block';
+      results.style.display = 'none';
+
+      let generated = 0;
+      const interval = setInterval(() => {
+        generated += Math.floor(Math.random() * 600 + 300);
+        if (generated > total) generated = total;
+        const p = Math.round((generated / total) * 100);
+        bar.style.width = p + '%';
+        pct.textContent = p + '%';
+        progressText.textContent = 'Generando ' + generated.toLocaleString() + ' de ' + total.toLocaleString() + ' tokens...';
+
+        if (generated >= total) {
+          clearInterval(interval);
+          setTimeout(() => {
+            progress.style.display = 'none';
+            btn.style.display = 'none';
+            results.style.display = 'block';
+            results.style.opacity = '0';
+            results.style.animation = 'fadeInUp 0.5s var(--ease-out) forwards';
+
+            document.getElementById('keys-success-text').textContent = total.toLocaleString() + ' tokens generados exitosamente';
+            document.getElementById('keys-total-text').textContent = total.toLocaleString();
+
+            populateKeysPreview(total, format);
+          }, 400);
+        }
+      }, 200);
+    }
+
+    function populateKeysPreview(total, format) {
+      const tbody = document.getElementById('keys-preview-tbody');
+      tbody.innerHTML = '';
+
+      const sampleNames = ['María Fernanda Solís','Carlos Andrés Méndez','Ana Lucía Rojas','José Fabián Zumbado','Laura Valentina Vargas','Diego Alejandro Ríos','Sofía Elena Jiménez','Manuel Esteban Quesada','Daniela María Torres','Kevin Eduardo Chaves'];
+
+      for (let i = 0; i < 10; i++) {
+        const year = 2020 + Math.floor(Math.random() * 6);
+        const carnetMasked = year + '●●●●●●';
+        let token;
+        if (format === '6num') token = String(Math.floor(Math.random() * 900000 + 100000));
+        else if (format === 'uuid') token = Math.random().toString(16).substring(2, 10);
+        else token = Array.from({length: 8}, () => 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*58)]).join('');
+
+        const tr = document.createElement('tr');
+        tr.className = 'table-row-enter';
+        tr.style.animationDelay = (i * 0.03) + 's';
+        tr.innerHTML = `
+          <td style="font-size:0.75rem;color:var(--muted);">${i + 1}</td>
+          <td class="mono" style="font-size:0.8125rem;font-weight:500;">${carnetMasked}</td>
+          <td style="font-weight:500;">${sampleNames[i]}</td>
+          <td><span class="mono" style="font-size:0.8125rem;background:var(--surface);padding:0.25rem 0.5rem;border-radius:var(--radius-sm);letter-spacing:0.05em;">${token}</span></td>
+          <td><span class="badge badge-dot badge-open" style="font-size:0.6875rem;">Generado</span></td>
+          <td><button class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="copyToken(this, '${token}')">Copiar</button></td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function copyToken(btn, token) {
+      navigator.clipboard.writeText(token).catch(() => {});
+      const original = btn.textContent;
+      btn.textContent = '✓ Copiado';
+      btn.style.color = 'var(--success)';
+      setTimeout(() => { btn.textContent = original; btn.style.color = ''; }, 1500);
+    }
+  </script>
+</body>
+</html>
