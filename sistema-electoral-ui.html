@@ -208,25 +208,57 @@
     .badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.375rem;
-      padding: 0.25rem 0.625rem;
+      gap: 0.5rem;
+      padding: 0.375rem 0.875rem;
       border-radius: 100px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      position: relative;
+      overflow: hidden;
     }
     .badge-dot::before {
       content: '';
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: currentColor;
+      flex-shrink: 0;
     }
-    .badge-open { background: #ECFDF5; color: #059669; }
-    .badge-draft { background: #F1F5F9; color: #64748B; }
-    .badge-closed { background: #FEF2F2; color: #B91C1C; }
-    .badge-archived { background: #F5F3FF; color: #7C3AED; }
-    .badge-scrutinized { background: #FFFBEB; color: #D97706; }
+    /* Live pulse for open badges */
+    .badge-open::before {
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+    }
+    .badge-open { 
+      background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); 
+      color: #059669;
+      box-shadow: 0 0 0 1px rgba(5, 150, 105, 0.15), 0 2px 8px rgba(5, 150, 105, 0.1);
+    }
+    .badge-draft { 
+      background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%); 
+      color: #64748B;
+      box-shadow: 0 0 0 1px rgba(100, 116, 139, 0.1);
+    }
+    .badge-closed { 
+      background: linear-gradient(135deg, #FEF2F2 0%, #FECACA 100%); 
+      color: #B91C1C;
+      box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.1);
+    }
+    .badge-archived { 
+      background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%); 
+      color: #7C3AED;
+      box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.1);
+    }
+    .badge-scrutinized { 
+      background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); 
+      color: #D97706;
+      box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.1);
+    }
 
     /* ═══════════════════════════════════════════
        COMPONENTS — Table
@@ -639,38 +671,236 @@
       background: var(--surface-raised);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 1.75rem;
-      margin-bottom: 1rem;
-      transition: all 0.3s var(--ease-out);
+      padding: 0;
+      margin-bottom: 1.25rem;
+      transition: all 0.35s var(--ease-out);
       cursor: pointer;
+      overflow: hidden;
+      position: relative;
+    }
+    .election-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s var(--ease-out);
+    }
+    .election-card:hover::before {
+      transform: scaleX(1);
     }
     .election-card:hover {
       border-color: var(--accent);
-      box-shadow: 0 8px 24px rgba(185,28,28,0.06);
-      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(185,28,28,0.1);
+      transform: translateY(-4px);
+    }
+    .election-card-body {
+      padding: 1.5rem 1.75rem;
     }
     .election-card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.5rem;
     }
-    .election-card-type {
+    .election-card h3 { 
+      margin-bottom: 0.375rem; 
+      font-size: 1.25rem;
+      transition: color 0.2s;
+    }
+    .election-card:hover h3 {
+      color: var(--accent);
+    }
+    .election-card-desc { 
+      color: var(--muted); 
+      font-size: 0.875rem; 
+      line-height: 1.5;
+    }
+
+    /* Election card footer with time info */
+    .election-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.75rem;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      gap: 1rem;
+    }
+
+    /* Countdown timer display */
+    .election-countdown {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+    .countdown-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .countdown-icon.urgent {
+      background: var(--error-light);
+      animation: pulseUrgent 2s ease-in-out infinite;
+    }
+    .countdown-icon.warning {
+      background: var(--warning-light);
+    }
+    .countdown-icon.normal {
+      background: var(--success-light);
+    }
+    .countdown-icon.scheduled {
+      background: var(--surface-sunken);
+    }
+    @keyframes pulseUrgent {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(211, 47, 47, 0); }
+    }
+    .countdown-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+    .countdown-icon.urgent svg { color: var(--error); }
+    .countdown-icon.warning svg { color: var(--warning); }
+    .countdown-icon.normal svg { color: var(--success); }
+    .countdown-icon.scheduled svg { color: var(--muted); }
+
+    .countdown-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .countdown-label {
       font-size: 0.6875rem;
-      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.04em;
       color: var(--muted);
+      font-weight: 500;
     }
-    .election-card h3 { margin-bottom: 0.25rem; font-size: 1.25rem; }
-    .election-card-desc { color: var(--muted); font-size: 0.875rem; margin-bottom: 1.25rem; }
+    .countdown-time {
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      letter-spacing: -0.02em;
+    }
+    .countdown-time.urgent { color: var(--error); }
+    .countdown-time.warning { color: var(--warning); }
+    .countdown-time.normal { color: var(--success); }
+    .countdown-time.scheduled { color: var(--muted); }
+
+    /* Election meta info */
     .election-card-meta {
       display: flex;
-      gap: 1.5rem;
+      gap: 1.25rem;
       font-size: 0.8125rem;
       color: var(--muted);
     }
-    .election-card-meta span { display: flex; align-items: center; gap: 0.375rem; }
+    .election-card-meta span { 
+      display: flex; 
+      align-items: center; 
+      gap: 0.375rem;
+    }
+    .election-card-meta svg {
+      opacity: 0.7;
+    }
+
+    /* Live voter count with animated dot */
+    .voter-count-live {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      background: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(16, 185, 129, 0.05) 100%);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(5, 150, 105, 0.15);
+      color: #059669;
+      font-size: 0.8125rem;
+    }
+    .voter-count-live strong {
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    .voter-count-live svg {
+      opacity: 1;
+      color: #059669;
+    }
+    .voter-count-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: dotPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes dotPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* Scheduled voter count (not live) */
+    .voter-count-scheduled {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      background: var(--surface-sunken);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.8125rem;
+    }
+    .voter-count-scheduled strong {
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--foreground);
+    }
+
+    /* Vote button in card */
+    .election-vote-btn {
+      padding: 0.625rem 1.25rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.25s var(--ease-out);
+      flex-shrink: 0;
+    }
+    .election-vote-btn:hover {
+      background: var(--accent-hover);
+      transform: scale(1.03);
+    }
+    .election-vote-btn svg {
+      transition: transform 0.25s var(--ease-out);
+    }
+    .election-card:hover .election-vote-btn svg {
+      transform: translateX(3px);
+    }
+
+    /* Scheduled/disabled card */
+    .election-card.scheduled {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .election-card.scheduled::before {
+      display: none;
+    }
+    .election-card.scheduled .election-vote-btn {
+      background: var(--muted-light);
+      cursor: default;
+    }
 
     /* ═══════════════════════════════════════════
        VOTER — Voting Booth
@@ -716,6 +946,145 @@
 
     .ballot-body { padding: 1.5rem 2rem 2rem; }
 
+    /* Vote Card - Rectangular card design */
+    .vote-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .vote-card {
+      display: flex;
+      flex-direction: column;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.25s var(--ease-smooth);
+      position: relative;
+      overflow: hidden;
+      background: var(--surface-raised);
+      min-height: 140px;
+    }
+    .vote-card:hover { 
+      border-color: var(--border-strong); 
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .vote-card.selected {
+      border-color: var(--accent);
+      box-shadow: 0 4px 20px rgba(229, 57, 53, 0.15);
+    }
+
+    .vote-card-header {
+      padding: 1rem 1rem 0.75rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      text-align: center;
+    }
+
+    .vote-card-name {
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: var(--ink);
+      line-height: 1.25;
+      text-align: center;
+    }
+
+    .vote-card-desc {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .vote-card-checkbox {
+      height: 48px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      transition: all 0.2s var(--ease-smooth);
+    }
+
+    .vote-card:hover .vote-card-checkbox {
+      background: var(--surface-sunken);
+    }
+
+    .vote-card.selected .vote-card-checkbox {
+      background: var(--accent);
+    }
+
+    .vote-card-x {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-raised);
+      transition: all 0.2s var(--ease-smooth);
+    }
+
+    .vote-card.selected .vote-card-x {
+      background: white;
+      border-color: transparent;
+    }
+
+    .vote-card-x-icon {
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.25s var(--ease-spring);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 1.125rem;
+      font-family: var(--font-body);
+    }
+
+    .vote-card.selected .vote-card-x-icon {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Special vote cards (blank/null) */
+    .vote-cards-special {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      padding-top: 1rem;
+      border-top: 1px dashed var(--border);
+    }
+
+    .vote-card.vote-card-special {
+      min-height: 100px;
+      background: var(--surface);
+    }
+
+    .vote-card.vote-card-special .vote-card-name {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .vote-card.vote-card-special.selected {
+      border-color: var(--muted);
+      background: var(--surface-sunken);
+    }
+
+    .vote-card.vote-card-special.selected .vote-card-checkbox {
+      background: var(--muted);
+    }
+
+    .vote-card.vote-card-special.selected .vote-card-x-icon {
+      color: var(--muted);
+    }
+
+    /* Legacy ballot option styles kept for compatibility */
     .ballot-option {
       display: flex;
       align-items: center;
@@ -788,28 +1157,70 @@
       width: 100%;
       text-align: center;
       padding: 3rem 2rem;
+      animation: confirmFadeIn 0.6s var(--ease-out) forwards;
+    }
+
+    @keyframes confirmFadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .stamp {
-      width: 96px;
-      height: 96px;
+      width: 88px;
+      height: 88px;
       border-radius: 50%;
       background: var(--success-light);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 1.5rem;
-      animation: stampIn 0.5s var(--ease-spring);
+      margin: 0 auto 1.75rem;
+      animation: stampPop 0.7s var(--ease-spring) 0.2s both;
+      position: relative;
     }
-    @keyframes stampIn {
-      0% { transform: scale(0) rotate(-45deg); opacity: 0; }
-      60% { transform: scale(1.15) rotate(5deg); }
-      100% { transform: scale(1) rotate(0); opacity: 1; }
+    .stamp::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border: 2px solid var(--success);
+      border-radius: 50%;
+      opacity: 0;
+      animation: stampRing 0.8s var(--ease-out) 0.4s forwards;
     }
-    .stamp svg { width: 40px; height: 40px; color: var(--success); }
+    @keyframes stampPop {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes stampRing {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { opacity: 0.6; }
+      100% { transform: scale(1); opacity: 0.3; }
+    }
+    .stamp svg { 
+      width: 36px; 
+      height: 36px; 
+      color: var(--success);
+      animation: checkDraw 0.5s var(--ease-out) 0.5s both;
+    }
+    @keyframes checkDraw {
+      from { stroke-dasharray: 50; stroke-dashoffset: 50; opacity: 0; }
+      to { stroke-dasharray: 50; stroke-dashoffset: 0; opacity: 1; }
+    }
 
-    .confirmation-card h2 { margin-bottom: 0.5rem; }
-    .confirmation-card p { color: var(--muted); margin-bottom: 2rem; line-height: 1.7; }
+    .confirmation-card h2 { 
+      margin-bottom: 0.75rem; 
+      animation: textSlideUp 0.5s var(--ease-out) 0.4s both;
+    }
+    .confirmation-card p { 
+      color: var(--muted); 
+      margin-bottom: 2rem; 
+      line-height: 1.7;
+      animation: textSlideUp 0.5s var(--ease-out) 0.5s both;
+    }
+    @keyframes textSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     .receipt {
       background: var(--surface);
@@ -819,16 +1230,29 @@
       text-align: left;
       font-size: 0.875rem;
       margin-bottom: 2rem;
+      animation: receiptSlide 0.5s var(--ease-out) 0.6s both;
+    }
+    @keyframes receiptSlide {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .receipt-row {
       display: flex;
       justify-content: space-between;
-      padding: 0.5rem 0;
+      padding: 0.625rem 0;
       border-bottom: 1px solid var(--border);
     }
     .receipt-row:last-child { border-bottom: none; }
     .receipt-label { color: var(--muted); }
     .receipt-value { font-weight: 600; }
+
+    .confirmation-card .btn {
+      animation: btnFadeIn 0.5s var(--ease-out) 0.75s both;
+    }
+    @keyframes btnFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     /* ═══════════════════════════════════════════
        ADMIN — Dashboard Stats
@@ -1502,66 +1926,106 @@
         <p style="color: var(--muted); margin-top: 0.5rem;">Seleccioná una votación para emitir tu voto.</p>
       </div>
 
+      <!-- Election 1: Urgent (closing soon) -->
       <div class="election-card" onclick="navigateTo('voter-booth')" style="opacity:0; animation: fadeInUp 0.5s var(--ease-out) 0.2s forwards;">
-        <div class="election-card-header">
-          <div>
-            <div class="election-card-type">Electoral Masiva</div>
-            <h3>Elección Consejo Ejecutivo FITEC 2026</h3>
+        <div class="election-card-body">
+          <div class="election-card-header">
+            <div>
+              <h3>Elección Consejo Ejecutivo FITEC 2026</h3>
+              <p class="election-card-desc">Postulaciones a la presidencia del Consejo Ejecutivo de la Federación de Estudiantes del TEC.</p>
+            </div>
+            <span class="badge badge-dot badge-open">En vivo</span>
           </div>
-          <span class="badge badge-dot badge-open">Abierta</span>
         </div>
-        <p class="election-card-desc">Postulaciones a la presidencia del Consejo Ejecutivo de la Federación de Estudiantes del TEC.</p>
-        <div class="election-card-meta">
-          <span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            Cierra hoy 6:00 PM
-          </span>
-          <span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            11,247 elegibles
-          </span>
-          <span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            3 candidatos
-          </span>
+        <div class="election-card-footer">
+          <div class="election-countdown">
+            <div class="countdown-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div class="countdown-text">
+              <span class="countdown-label">Cierra en</span>
+              <span class="countdown-time" id="countdown-1">02:34:15</span>
+            </div>
+          </div>
+          <div class="election-card-meta">
+            <span class="voter-count-live">
+              <span class="voter-count-dot"></span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <strong>11,247</strong> votando
+            </span>
+          </div>
+          <button class="election-vote-btn">
+            Votar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
         </div>
       </div>
 
-      <div class="election-card" style="opacity:0; animation: fadeInUp 0.5s var(--ease-out) 0.3s forwards;">
-        <div class="election-card-header">
-          <div>
-            <div class="election-card-type">Plenario</div>
-            <h3>PME — Aprobación de Acta 007-2026</h3>
+      <!-- Election 2: Warning (less urgent) -->
+      <div class="election-card" onclick="navigateTo('voter-booth')" style="opacity:0; animation: fadeInUp 0.5s var(--ease-out) 0.3s forwards;">
+        <div class="election-card-body">
+          <div class="election-card-header">
+            <div>
+              <h3>PME — Aprobación de Acta 007-2026</h3>
+              <p class="election-card-desc">Aprobación del acta de la sesión ordinaria 007-2026 del Plenario del Movimiento Estudiantil.</p>
+            </div>
+            <span class="badge badge-dot badge-open">En vivo</span>
           </div>
-          <span class="badge badge-dot badge-open">Abierta</span>
         </div>
-        <p class="election-card-desc">Aprobación del acta de la sesión ordinaria 007-2026 del Plenario del Movimiento Estudiantil.</p>
-        <div class="election-card-meta">
-          <span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            Cierra en 45 min
-          </span>
-          <span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            172 elegibles
-          </span>
+        <div class="election-card-footer">
+          <div class="election-countdown">
+            <div class="countdown-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div class="countdown-text">
+              <span class="countdown-label">Cierra en</span>
+              <span class="countdown-time" id="countdown-2">00:45:30</span>
+            </div>
+          </div>
+          <div class="election-card-meta">
+            <span class="voter-count-live">
+              <span class="voter-count-dot"></span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <strong>172</strong> votando
+            </span>
+          </div>
+          <button class="election-vote-btn">
+            Votar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
         </div>
       </div>
 
-      <div class="election-card" style="opacity: 0.5; pointer-events: none; opacity:0; animation: fadeInUp 0.5s var(--ease-out) 0.4s forwards;">
-        <div class="election-card-header">
-          <div>
-            <div class="election-card-type">Asociación</div>
-            <h3>Junta Directiva — AETEC Computación</h3>
+      <!-- Election 3: Scheduled (not yet open) -->
+      <div class="election-card scheduled" style="opacity:0; animation: fadeInUp 0.5s var(--ease-out) 0.4s forwards;">
+        <div class="election-card-body">
+          <div class="election-card-header">
+            <div>
+              <h3>Junta Directiva — AETEC Computación</h3>
+              <p class="election-card-desc">Elección de la junta directiva de la Asociación de Estudiantes de Ingeniería en Computación.</p>
+            </div>
+            <span class="badge badge-dot badge-draft">Programada</span>
           </div>
-          <span class="badge badge-dot badge-draft">Programada</span>
         </div>
-        <p class="election-card-desc">Elección de la junta directiva de la Asociación de Estudiantes de Ingeniería en Computación.</p>
-        <div class="election-card-meta">
-          <span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            Abre 28 Feb, 8:00 AM
-          </span>
+        <div class="election-card-footer">
+          <div class="election-countdown">
+            <div class="countdown-icon scheduled">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="countdown-text">
+              <span class="countdown-label">Abre en</span>
+              <span class="countdown-time scheduled">3 días</span>
+            </div>
+          </div>
+          <div class="election-card-meta">
+            <span class="voter-count-scheduled">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <strong>847</strong> elegibles
+            </span>
+          </div>
+          <button class="election-vote-btn" disabled>
+            Próximamente
+          </button>
         </div>
       </div>
     </div>
@@ -1585,41 +2049,73 @@
     <div class="voting-booth guilloche-bg">
       <div class="ballot">
         <div class="ballot-header">
-          <div class="label">Electoral Masiva</div>
           <h2>Consejo Ejecutivo FITEC 2026</h2>
           <p>Seleccioná un candidato para emitir tu voto</p>
         </div>
         <div class="ballot-body">
-          <div class="ballot-option" onclick="selectOption(this)">
-            <div class="ballot-radio"></div>
-            <div>
-              <div class="ballot-option-label">María Fernanda Solís</div>
-              <div class="ballot-option-sub">Ingeniería en Producción Industrial — Cartago</div>
+          <!-- Candidate vote cards -->
+          <div class="vote-cards-grid">
+            <div class="vote-card" onclick="selectVoteCard(this)">
+              <div class="vote-card-header">
+                <div class="vote-card-name">María Fernanda Solís</div>
+                <div class="vote-card-desc">Ingeniería en Producción Industrial — Cartago</div>
+              </div>
+              <div class="vote-card-checkbox">
+                <div class="vote-card-x">
+                  <span class="vote-card-x-icon">✕</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="ballot-option" onclick="selectOption(this)">
-            <div class="ballot-radio"></div>
-            <div>
-              <div class="ballot-option-label">Carlos Andrés Méndez</div>
-              <div class="ballot-option-sub">Administración de Empresas — San José</div>
+
+            <div class="vote-card" onclick="selectVoteCard(this)">
+              <div class="vote-card-header">
+                <div class="vote-card-name">Carlos Andrés Méndez</div>
+                <div class="vote-card-desc">Administración de Empresas — San José</div>
+              </div>
+              <div class="vote-card-checkbox">
+                <div class="vote-card-x">
+                  <span class="vote-card-x-icon">✕</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="ballot-option" onclick="selectOption(this)">
-            <div class="ballot-radio"></div>
-            <div>
-              <div class="ballot-option-label">Ana Lucía Rojas</div>
-              <div class="ballot-option-sub">Ingeniería en Computación — Cartago</div>
+
+            <div class="vote-card" onclick="selectVoteCard(this)">
+              <div class="vote-card-header">
+                <div class="vote-card-name">Ana Lucía Rojas</div>
+                <div class="vote-card-desc">Ingeniería en Computación — Cartago</div>
+              </div>
+              <div class="vote-card-checkbox">
+                <div class="vote-card-x">
+                  <span class="vote-card-x-icon">✕</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div style="margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px dashed var(--border);">
-            <div class="ballot-option" onclick="selectOption(this)">
-              <div class="ballot-radio"></div>
-              <div><div class="ballot-option-label" style="color: var(--muted);">Voto en blanco</div></div>
+          <!-- Special vote cards (blank and null) -->
+          <div class="vote-cards-special">
+            <div class="vote-card vote-card-special" onclick="selectVoteCard(this)">
+              <div class="vote-card-header">
+                <div class="vote-card-name">Voto en blanco</div>
+                <div class="vote-card-desc">No seleccionar ningún candidato</div>
+              </div>
+              <div class="vote-card-checkbox">
+                <div class="vote-card-x">
+                  <span class="vote-card-x-icon">✕</span>
+                </div>
+              </div>
             </div>
-            <div class="ballot-option" onclick="selectOption(this)">
-              <div class="ballot-radio"></div>
-              <div><div class="ballot-option-label" style="color: var(--muted);">Voto nulo</div></div>
+
+            <div class="vote-card vote-card-special" onclick="selectVoteCard(this)">
+              <div class="vote-card-header">
+                <div class="vote-card-name">Voto nulo</div>
+                <div class="vote-card-desc">Anular mi voto intencionalmente</div>
+              </div>
+              <div class="vote-card-checkbox">
+                <div class="vote-card-x">
+                  <span class="vote-card-x-icon">✕</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1660,10 +2156,6 @@
           <div class="receipt-row">
             <span class="receipt-label">Votación</span>
             <span class="receipt-value">Consejo Ejecutivo FITEC 2026</span>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-label">Hash de verificación</span>
-            <span class="receipt-value" style="font-family: monospace; font-size: 0.75rem;">a7f3…c92d</span>
           </div>
           <div class="receipt-row">
             <span class="receipt-label">Fecha y hora</span>
@@ -1763,7 +2255,7 @@
       <div class="sidebar-footer">
         <div class="sidebar-avatar">AP</div>
         <div>
-          <div class="sidebar-user-name">Alden Portugués</div>
+          <div class="sidebar-user-name">Aldden Portuguez</div>
           <div class="sidebar-user-role">Presidente TEE</div>
         </div>
       </div>
@@ -1866,7 +2358,7 @@
               <div class="activity-item">
                 <div class="activity-dot" style="background: var(--success);"></div>
                 <div>
-                  <div class="activity-text"><strong>Alden Portugués</strong> abrió la votación "Consejo Ejecutivo FITEC 2026"</div>
+                  <div class="activity-text"><strong>Aldden Portuguez</strong> abrió la votación "Consejo Ejecutivo FITEC 2026"</div>
                   <div class="activity-time">Hace 4 horas</div>
                 </div>
               </div>
@@ -1887,7 +2379,7 @@
               <div class="activity-item">
                 <div class="activity-dot" style="background: #7C3AED;"></div>
                 <div>
-                  <div class="activity-text"><strong>Alden Portugués</strong> asignó rol "Fiscal" a Andrea Mora</div>
+                  <div class="activity-text"><strong>Aldden Portuguez</strong> asignó rol "Fiscal" a Andrea Mora</div>
                   <div class="activity-time">Hace 1 semana</div>
                 </div>
               </div>
@@ -2184,7 +2676,7 @@
               <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
                 <div class="sidebar-avatar" style="width:44px;height:44px;background:var(--accent);font-size:0.875rem;">AP</div>
                 <div>
-                  <div style="font-weight:600;">Alden Portugués</div>
+                  <div style="font-weight:600;">Aldden Portuguez</div>
                   <div style="font-size:0.8125rem;color:var(--muted);">Presidente</div>
                 </div>
               </div>
@@ -2292,23 +2784,6 @@
                     <label>Descripción (opcional)</label>
                     <input type="text" class="input" placeholder="Ej: Postulaciones a la Vicepresidencia del Directorio...">
                   </div>
-                  <div class="input-group">
-                    <label>Tipo de votación</label>
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;">
-                      <div class="type-card selected" onclick="selectTypeCard(this)">
-                        <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.25rem;">Electoral Masiva</div>
-                        <div style="font-size:0.75rem;color:var(--muted);">Todo el padrón vota</div>
-                      </div>
-                      <div class="type-card" onclick="selectTypeCard(this)">
-                        <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.25rem;">Plenario</div>
-                        <div style="font-size:0.75rem;color:var(--muted);">Subconjunto del padrón</div>
-                      </div>
-                      <div class="type-card" onclick="selectTypeCard(this)">
-                        <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.25rem;">Interna</div>
-                        <div style="font-size:0.75rem;color:var(--muted);">Solo directorio TEE</div>
-                      </div>
-                    </div>
-                  </div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
                     <div class="input-group">
                       <label>Fecha y hora de apertura</label>
@@ -2377,8 +2852,8 @@
               <div class="card" style="padding:2rem;">
                 <div style="display:flex;flex-direction:column;gap:1.25rem;">
                   <div class="input-group">
-                    <label>Candidatos / Opciones de voto</label>
-                    <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">Agregá los candidatos o las opciones que aparecerán en la boleta.</p>
+                    <label>Opciones de voto</label>
+                    <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">Agregá las opciones que aparecerán en la boleta.</p>
 
                     <div id="options-list" style="display:flex;flex-direction:column;gap:0.5rem;">
                       <div class="option-row">
@@ -2472,7 +2947,7 @@
                     <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
                       <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8125rem;">
                         <div class="sidebar-avatar" style="width:24px;height:24px;background:var(--accent);font-size:0.625rem;">AP</div>
-                        Alden P.
+                        Aldden P.
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                       </div>
                       <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8125rem;">
@@ -2669,7 +3144,7 @@
                 <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:var(--success-light);">
                   <div class="sidebar-avatar" style="width:36px;height:36px;background:var(--accent);font-size:0.75rem;">AP</div>
                   <div style="flex:1;">
-                    <div style="font-weight:500;font-size:0.875rem;">Alden Portugués</div>
+                    <div style="font-weight:500;font-size:0.875rem;">Aldden Portuguez</div>
                     <div style="font-size:0.75rem;color:var(--success);">Llave ingresada — 24 Feb, 18:12</div>
                   </div>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -2778,7 +3253,7 @@
                 </tr>
                 <tr class="table-row-enter" style="animation-delay:0.1s">
                   <td style="font-size:0.8125rem;font-family:monospace;white-space:nowrap;">24/02/26 10:00:00</td>
-                  <td style="font-weight:500;">Alden Portugués</td>
+                  <td style="font-weight:500;">Aldden Portuguez</td>
                   <td><span class="badge badge-open" style="font-size:0.6875rem;">OPEN_ELECTION</span></td>
                   <td style="font-size:0.8125rem;">Consejo Ejecutivo FITEC</td>
                   <td style="font-size:0.8125rem;color:var(--muted);">Votación abierta 8AM-6PM</td>
@@ -2794,7 +3269,7 @@
                 </tr>
                 <tr class="table-row-enter" style="animation-delay:0.2s">
                   <td style="font-size:0.8125rem;font-family:monospace;white-space:nowrap;">18/02/26 09:12:45</td>
-                  <td style="font-weight:500;">Alden Portugués</td>
+                  <td style="font-weight:500;">Aldden Portuguez</td>
                   <td><span class="badge" style="background:#F5F3FF;color:#7C3AED;font-size:0.6875rem;">MODIFY_PERMISSIONS</span></td>
                   <td style="font-size:0.8125rem;">Andrea Mora</td>
                   <td style="font-size:0.8125rem;color:var(--muted);">Asignó rol "Fiscal" + permisos padrón</td>
@@ -3445,6 +3920,17 @@
       btn.style.opacity = '1';
     }
 
+    function selectVoteCard(el) {
+      // Deselect all vote cards
+      document.querySelectorAll('.vote-card').forEach(card => card.classList.remove('selected'));
+      // Select clicked card
+      el.classList.add('selected');
+      // Enable submit button
+      const btn = document.getElementById('vote-submit-btn');
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+
     function submitVote() {
       navigateTo('voter-confirm');
     }
@@ -3462,6 +3948,67 @@
       document.getElementById('sidebar').classList.remove('open');
       document.getElementById('sidebar-overlay').classList.remove('active');
     }
+
+    // ═══════════════════════════════════════════
+    // COUNTDOWN TIMERS
+    // ═══════════════════════════════════════════
+    const countdownTimers = [
+      { id: 'countdown-1', seconds: 2 * 3600 + 34 * 60 + 15 },
+      { id: 'countdown-2', seconds: 45 * 60 + 30 }
+    ];
+
+    function formatTime(totalSeconds) {
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function getUrgencyClass(seconds) {
+      if (seconds < 30 * 60) return 'urgent'; // Less than 30 min
+      if (seconds < 2 * 3600) return 'warning'; // Less than 2 hours
+      return 'normal'; // More than 2 hours
+    }
+
+    function updateTimerDisplay(timer) {
+      const el = document.getElementById(timer.id);
+      if (!el) return;
+      
+      el.textContent = formatTime(timer.seconds);
+      const urgency = getUrgencyClass(timer.seconds);
+      const parent = el.closest('.election-countdown');
+      const icon = parent?.querySelector('.countdown-icon');
+      
+      // Update text color
+      el.classList.remove('urgent', 'warning', 'normal');
+      el.classList.add(urgency);
+      
+      // Update icon color
+      if (icon) {
+        icon.classList.remove('urgent', 'warning', 'normal');
+        icon.classList.add(urgency);
+      }
+    }
+
+    function updateCountdowns() {
+      countdownTimers.forEach(timer => {
+        if (timer.seconds > 0) {
+          timer.seconds--;
+          updateTimerDisplay(timer);
+        }
+      });
+    }
+
+    // Initialize countdown displays on page load
+    function initCountdowns() {
+      countdownTimers.forEach(timer => updateTimerDisplay(timer));
+    }
+
+    // Run initialization
+    initCountdowns();
+
+    // Start countdown interval
+    setInterval(updateCountdowns, 1000);
 
     // ═══════════════════════════════════════════
     // PADRÓN — Data & Interactions
