@@ -260,6 +260,65 @@
       box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.1);
     }
 
+    /* Traffic Light Status Indicator */
+    .status-light {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.5rem 0.875rem;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .status-light-dots {
+      display: flex;
+      gap: 4px;
+    }
+    .status-light-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: all 0.3s ease;
+    }
+    /* Active state - green light on */
+    .status-light.active .status-light-dot:nth-child(3) {
+      background: #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+      animation: lightGlow 2s ease-in-out infinite;
+    }
+    .status-light.active {
+      color: #059669;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    /* Scheduled state - yellow light on */
+    .status-light.scheduled .status-light-dot:nth-child(2) {
+      background: #f59e0b;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+    }
+    .status-light.scheduled {
+      color: #d97706;
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+    /* Closed state - red light on */
+    .status-light.closed .status-light-dot:nth-child(1) {
+      background: #ef4444;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    }
+    .status-light.closed {
+      color: #dc2626;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    @keyframes lightGlow {
+      0%, 100% { box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); }
+      50% { box-shadow: 0 0 16px rgba(16, 185, 129, 0.9), 0 0 24px rgba(16, 185, 129, 0.4); }
+    }
+
     /* ═══════════════════════════════════════════
        COMPONENTS — Table
        ═══════════════════════════════════════════ */
@@ -673,30 +732,19 @@
       border-radius: var(--radius-lg);
       padding: 0;
       margin-bottom: 1.25rem;
-      transition: all 0.35s var(--ease-out);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
       cursor: pointer;
       overflow: hidden;
       position: relative;
-    }
-    .election-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: var(--accent);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.4s var(--ease-out);
-    }
-    .election-card:hover::before {
-      transform: scaleX(1);
+      transform-style: preserve-3d;
+      perspective: 1000px;
     }
     .election-card:hover {
-      border-color: var(--accent);
-      box-shadow: 0 12px 32px rgba(185,28,28,0.1);
-      transform: translateY(-4px);
+      transform: translateY(-8px) rotateX(2deg) scale(1.02);
+      box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.08),
+        0 8px 16px rgba(0, 0, 0, 0.04),
+        0 0 0 1px rgba(0, 0, 0, 0.03);
     }
     .election-card-body {
       padding: 1.5rem 1.75rem;
@@ -710,10 +758,6 @@
     .election-card h3 { 
       margin-bottom: 0.375rem; 
       font-size: 1.25rem;
-      transition: color 0.2s;
-    }
-    .election-card:hover h3 {
-      color: var(--accent);
     }
     .election-card-desc { 
       color: var(--muted); 
@@ -809,56 +853,6 @@
     }
     .election-card-meta svg {
       opacity: 0.7;
-    }
-
-    /* Live voter count with animated dot */
-    .voter-count-live {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.375rem 0.75rem;
-      background: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(16, 185, 129, 0.05) 100%);
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(5, 150, 105, 0.15);
-      color: #059669;
-      font-size: 0.8125rem;
-    }
-    .voter-count-live strong {
-      font-weight: 700;
-      font-family: var(--font-mono);
-    }
-    .voter-count-live svg {
-      opacity: 1;
-      color: #059669;
-    }
-    .voter-count-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #10b981;
-      animation: dotPulse 1.5s ease-in-out infinite;
-    }
-    @keyframes dotPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.8); }
-    }
-
-    /* Scheduled voter count (not live) */
-    .voter-count-scheduled {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.375rem 0.75rem;
-      background: var(--surface-sunken);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 0.8125rem;
-    }
-    .voter-count-scheduled strong {
-      font-weight: 700;
-      font-family: var(--font-mono);
-      color: var(--foreground);
     }
 
     /* Vote button in card */
@@ -1934,7 +1928,14 @@
               <h3>Elección Consejo Ejecutivo FITEC 2026</h3>
               <p class="election-card-desc">Postulaciones a la presidencia del Consejo Ejecutivo de la Federación de Estudiantes del TEC.</p>
             </div>
-            <span class="badge badge-dot badge-open">En vivo</span>
+            <div class="status-light active">
+              <div class="status-light-dots">
+                <span class="status-light-dot"></span>
+                <span class="status-light-dot"></span>
+                <span class="status-light-dot"></span>
+              </div>
+              Activo
+            </div>
           </div>
         </div>
         <div class="election-card-footer">
@@ -1946,13 +1947,6 @@
               <span class="countdown-label">Cierra en</span>
               <span class="countdown-time" id="countdown-1">02:34:15</span>
             </div>
-          </div>
-          <div class="election-card-meta">
-            <span class="voter-count-live">
-              <span class="voter-count-dot"></span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              <strong>11,247</strong> votando
-            </span>
           </div>
           <button class="election-vote-btn">
             Votar
@@ -1969,7 +1963,14 @@
               <h3>PME — Aprobación de Acta 007-2026</h3>
               <p class="election-card-desc">Aprobación del acta de la sesión ordinaria 007-2026 del Plenario del Movimiento Estudiantil.</p>
             </div>
-            <span class="badge badge-dot badge-open">En vivo</span>
+            <div class="status-light active">
+              <div class="status-light-dots">
+                <span class="status-light-dot"></span>
+                <span class="status-light-dot"></span>
+                <span class="status-light-dot"></span>
+              </div>
+              Activo
+            </div>
           </div>
         </div>
         <div class="election-card-footer">
@@ -1981,13 +1982,6 @@
               <span class="countdown-label">Cierra en</span>
               <span class="countdown-time" id="countdown-2">00:45:30</span>
             </div>
-          </div>
-          <div class="election-card-meta">
-            <span class="voter-count-live">
-              <span class="voter-count-dot"></span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              <strong>172</strong> votando
-            </span>
           </div>
           <button class="election-vote-btn">
             Votar
@@ -2004,7 +1998,14 @@
               <h3>Junta Directiva — AETEC Computación</h3>
               <p class="election-card-desc">Elección de la junta directiva de la Asociación de Estudiantes de Ingeniería en Computación.</p>
             </div>
-            <span class="badge badge-dot badge-draft">Programada</span>
+            <div class="status-light scheduled">
+              <div class="status-light-dots">
+                <span class="status-light-dot"></span>
+                <span class="status-light-dot"></span>
+                <span class="status-light-dot"></span>
+              </div>
+              Programado
+            </div>
           </div>
         </div>
         <div class="election-card-footer">
@@ -2016,12 +2017,6 @@
               <span class="countdown-label">Abre en</span>
               <span class="countdown-time scheduled">3 días</span>
             </div>
-          </div>
-          <div class="election-card-meta">
-            <span class="voter-count-scheduled">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              <strong>847</strong> elegibles
-            </span>
           </div>
           <button class="election-vote-btn" disabled>
             Próximamente
