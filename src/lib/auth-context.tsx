@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           method: 'POST',
           body: JSON.stringify({ idToken: tokenResponse.idToken }),
         });
-        console.log('[Auth] Backend validated:', authResponse.user?.email);
+        console.log('[Auth] Backend validated:', authResponse.user?.email, 'role:', authResponse.user?.role);
 
         localStorage.setItem('tee_token', authResponse.token);
         localStorage.setItem('tee_user', JSON.stringify(authResponse.user));

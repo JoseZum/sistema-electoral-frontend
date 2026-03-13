@@ -57,8 +57,8 @@ export default function PadronPage() {
       const res = await apiClient<StudentsResponse>(
         `/api/users/students?${params.toString()}`
       );
-      setStudents(res.data);
-      setTotal(res.total);
+      setStudents(res?.data || []);
+      setTotal(res?.total || 0);
     } catch (err) {
       console.error('Error fetching students:', err);
     } finally {

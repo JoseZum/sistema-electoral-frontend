@@ -35,7 +35,7 @@ export default function StudentTable({ students, onSaveStudent }: StudentTablePr
     }
   };
 
-  const sorted = [...students].sort((a, b) => {
+  const sorted = [...(students || [])].sort((a, b) => {
     const valA = (a[sortKey] ?? '').toLowerCase();
     const valB = (b[sortKey] ?? '').toLowerCase();
     const cmp = valA < valB ? -1 : valA > valB ? 1 : 0;
