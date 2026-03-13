@@ -24,13 +24,15 @@ interface StudentsResponse {
 
 const PAGE_SIZE = 25;
 
-const SEDES = ['Cartago', 'San Jose', 'San Carlos', 'Limon', 'Alajuela'];
+const SEDES = ['CARTAGO', 'SAN JOSE', 'SAN CARLOS', 'LIMON', 'ALAJUELA'];
 const CAREERS = [
-  'Ingenieria en Computacion',
-  'Ingenieria en Electronica',
-  'Ingenieria en Produccion Industrial',
-  'Administracion de Empresas',
-  'Ingenieria en Mecatronica',
+  'Ingeniería en Computación',
+  'Ingeniería en Electrónica',
+  'Ingeniería en Producción Industrial',
+  'Administración de Empresas',
+  'Ingeniería en Mecatrónica',
+  'Arquitectura y Urbanismo',
+  'Educación Técnica'
 ];
 
 export default function PadronPage() {
