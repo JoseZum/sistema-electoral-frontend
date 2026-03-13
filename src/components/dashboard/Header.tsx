@@ -10,6 +10,7 @@ const pageTitles: Record<string, string> = {
   '/padron': 'Padron Estudiantil',
   '/padron/cargar': 'Cargar Padron',
   '/admin-manager': 'Admin Manager',
+  '/auditoria': 'Audit Log',
 };
 
 export default function Header({ onToggleSidebar }: HeaderProps) {

@@ -8,6 +8,10 @@ import ImportResult from '@/components/padron/ImportResult';
 
 interface ImportResponse {
   total: number;
+  new: number;
+  updated: number;
+  reactivated: number;
+  deactivated: number;
 }
 
 export default function CargarPadronPage() {
@@ -113,7 +117,7 @@ export default function CargarPadronPage() {
       )}
 
       {/* Result */}
-      {result && <ImportResult total={result.total} onReset={handleReset} />}
+      {result && <ImportResult summary={result} onReset={handleReset} />}
 
       <p
         style={{

@@ -652,9 +652,12 @@ body {
   align-items: center;
   gap: 0.375rem;
   padding: 0.25rem 0.625rem;
-  border-radius: 100px;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
 .badge-dot::before {
@@ -662,17 +665,15 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  animation: badgePulse 2s infinite;
+  flex-shrink: 0;
 }
 
-.badge-scrutinized {
-  background: var(--warning-light);
-  color: var(--warning);
-}
-
-.badge-scrutinized::before {
-  background: var(--warning);
-}
+.badge-open::before { background: #10B981; animation: badgePulse 2s ease-in-out infinite; }
+.badge-scheduled::before { background: #3B82F6; }
+.badge-draft::before { background: #94A3B8; }
+.badge-closed::before { background: #EF4444; }
+.badge-archived::before { background: #8B5CF6; }
+.badge-scrutinized::before { background: #F59E0B; }
 
 /* ─── Mono ─── */
 .mono {
