@@ -1,7 +1,33 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 import LoginCard from '@/components/auth/LoginCard';
 import LoginInfoPanel from '@/components/auth/LoginInfoPanel';
 
 export default function LoginPage() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user?.role === 'admin') {
+      router.replace('/padron');
+    }
+  }, [isLoading, isAuthenticated, user, router]);
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p style={{ color: 'var(--muted)' }}>Cargando...</p>
+      </main>
+    );
+  }
+
+  if (isAuthenticated && user?.role === 'admin') {
+    return null;
+  }
+
   return (
     <main className="min-h-screen flex">
       {/* Left Column — Login Form */}
