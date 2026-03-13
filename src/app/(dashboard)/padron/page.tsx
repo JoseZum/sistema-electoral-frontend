@@ -26,13 +26,43 @@ const PAGE_SIZE = 25;
 
 const SEDES = ['CARTAGO', 'SAN JOSE', 'SAN CARLOS', 'LIMON', 'ALAJUELA'];
 const CAREERS = [
-  'Ingeniería en Computación',
-  'Ingeniería en Electrónica',
-  'Ingeniería en Producción Industrial',
   'Administración de Empresas',
-  'Ingeniería en Mecatrónica',
+  'Administración de Empresas énfasis Administración Financiera',
+  'Administración de Empresas énfasis en Contaduría Pública',
+  'Administración de Empresas énfasis en Mercadeo',
+  'Administración de Empresas énfasis en Recursos Humanos',
+  'Administración de Tecnologías de Información',
   'Arquitectura y Urbanismo',
-  'Educación Técnica'
+  'Diplomado en Producción Industrial',
+  'Educación Técnica',
+  'Enseñanza de la Matemática con Entornos Tecnológicos',
+  'Gestión de Turismo Rural Sostenible',
+  'Gestión del Turismo Sostenible',
+  'Gestión en Sostenibilidad Turística',
+  'Ingeniería Agrícola',
+  'Ingeniería Ambiental',
+  'Ingeniería Forestal',
+  'Ingeniería Forestal énfasis en Conservación y Restauración de Ecosistemas Forestales',
+  'Ingeniería Forestal énfasis en Manejo y Producción Forestal',
+  'Ingeniería en Agronegocios',
+  'Ingeniería en Agronomía',
+  'Ingeniería en Biotecnología',
+  'Ingeniería en Computación',
+  'Ingeniería en Computadores',
+  'Ingeniería en Construcción',
+  'Ingeniería en Diseño Industrial con énfasis en Comunicación Visual',
+  'Ingeniería en Diseño Industrial con énfasis en Desarrollo de Productos',
+  'Ingeniería en Electrónica',
+  'Ingeniería en Mantenimiento Industrial',
+  'Ingeniería en Materiales',
+  'Ingeniería en Materiales énfasis en Metalurgia',
+  'Ingeniería en Materiales énfasis en Microelectrónica',
+  'Ingeniería en Producción Industrial',
+  'Ingeniería en Seguridad Laboral e Higiene Ambiental',
+  'Licenciatura en Administración de Tecnología de Información',
+  'Licenciatura en Ingeniería Física',
+  'Licenciatura en Ingeniería Mecatrónica',
+  'Seguridad e Higiene Ocupacional'
 ];
 
 export default function PadronPage() {
