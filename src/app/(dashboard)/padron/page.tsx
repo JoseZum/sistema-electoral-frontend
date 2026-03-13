@@ -18,10 +18,8 @@ interface Student {
 }
 
 interface StudentsResponse {
-  data: Student[];
+  students: Student[];
   total: number;
-  page: number;
-  limit: number;
 }
 
 const PAGE_SIZE = 25;
@@ -57,7 +55,7 @@ export default function PadronPage() {
       const res = await apiClient<StudentsResponse>(
         `/api/users/students?${params.toString()}`
       );
-      setStudents(res?.data || []);
+      setStudents(res?.students || []);
       setTotal(res?.total || 0);
     } catch (err) {
       console.error('Error fetching students:', err);
