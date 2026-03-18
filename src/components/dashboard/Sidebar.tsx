@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -198,11 +199,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       />
       <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-brand">
-          <div className="sidebar-brand-icon">T</div>
-          <div>
-            <div className="sidebar-brand-text">TEE Admin</div>
-            <div className="sidebar-brand-sub">Panel Administrativo</div>
-          </div>
+          <Image
+            src="/logo-blanco.png"
+            alt="Tribunal Electoral Estudiantil"
+            width={220}
+            height={82}
+            priority
+            className="sidebar-brand-logo"
+          />
         </div>
 
         <nav className="sidebar-nav">

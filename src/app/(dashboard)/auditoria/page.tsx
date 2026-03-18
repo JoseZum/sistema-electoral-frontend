@@ -9,7 +9,7 @@ interface AuditLog {
   actor_carnet: string | null;
   action: string;
   resource_type: string;
-  resource_id: string;
+  resource_id: string | null;
   details: Record<string, unknown> | null;
   ip_address: string | null;
   created_at: string;
@@ -30,6 +30,7 @@ const RESOURCE_LABELS: Record<string, { label: string; color: string; bg: string
   election_voter: { label: 'Votante', color: '#0891b2', bg: '#ecfeff' },
   vote: { label: 'Voto', color: 'var(--success)', bg: 'var(--success-light)' },
   scrutiny_key: { label: 'Llave', color: '#d97706', bg: 'var(--warning-light)' },
+  padron: { label: 'Padron', color: '#64748b', bg: '#f8fafc' },
   padron_upload: { label: 'Padron', color: '#64748b', bg: '#f8fafc' },
 };
 
@@ -63,7 +64,15 @@ function formatDate(dateStr: string): string {
 }
 
 const PAGE_SIZE = 30;
-const RESOURCE_TYPES = ['student', 'admin', 'election', 'election_option', 'election_voter', 'vote', 'scrutiny_key', 'padron_upload'];
+const RESOURCE_TYPES = ['student', 'admin', 'election', 'election_option', 'election_voter', 'vote', 'scrutiny_key', 'padron', 'padron_upload'];
+
+function formatResourceId(resourceId: string | null) {
+  if (!resourceId || resourceId.trim().length === 0) {
+    return 'Sin recurso';
+  }
+
+  return resourceId.length > 8 ? resourceId.slice(0, 8) : resourceId;
+}
 
 export default function AuditPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -230,7 +239,7 @@ export default function AuditPage() {
                         {op.label}
                       </span>
                       <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted-light)' }}>
-                        {log.resource_id.slice(0, 8)}
+                        {formatResourceId(log.resource_id)}
                       </span>
                     </div>
                     {log.actor_carnet && (
