@@ -232,12 +232,14 @@ export default function CrearEleccionPage() {
       if (includeNull) allOptions.push({ label: 'Voto nulo', option_type: 'NULL_VOTE' });
 
       for (let i = 0; i < allOptions.length; i += 1) {
+        const matchingOption = options.find((option) => option.label === allOptions[i].label);
         await apiClient(`/api/elections/${electionId}/options`, {
           method: 'POST',
           body: JSON.stringify({
             label: allOptions[i].label,
             option_type: allOptions[i].option_type,
             display_order: i + 1,
+            description: matchingOption?.description || undefined,
           }),
         });
       }
@@ -256,10 +258,10 @@ export default function CrearEleccionPage() {
         body: JSON.stringify(populateBody),
       });
 
-      if (!asDraft && form.start_time) {
+      if (!asDraft) {
         await apiClient(`/api/elections/${electionId}/status`, {
           method: 'PUT',
-          body: JSON.stringify({ status: 'SCHEDULED' }),
+          body: JSON.stringify({ status: 'AUTO' }),
         });
       }
 

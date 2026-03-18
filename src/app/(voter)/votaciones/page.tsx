@@ -23,11 +23,12 @@ function useCountdown(endTime: string | null) {
       const hours = Math.floor(diff / 3_600_000);
       const mins = Math.floor((diff % 3_600_000) / 60_000);
       const secs = Math.floor((diff % 60_000) / 1000);
+      const totalSeconds = Math.floor(diff / 1000);
 
       setText(`${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`);
 
-      if (hours < 1) setUrgency('urgent');
-      else if (hours < 6) setUrgency('warning');
+      if (totalSeconds < 30 * 60) setUrgency('urgent');
+      else if (totalSeconds < 2 * 3_600) setUrgency('warning');
       else setUrgency('normal');
     }
 
@@ -84,8 +85,8 @@ function ElectionCard({ election }: { election: VoterElection }) {
         </div>
       </div>
       <div className="election-card-footer">
-        <div className="election-countdown">
-          <div className={`countdown-icon ${isOpen ? urgency : 'scheduled-icon'}`}>
+          <div className="election-countdown">
+          <div className={`countdown-icon ${isOpen ? urgency : 'scheduled'}`}>
             {isOpen ? (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />
@@ -102,7 +103,7 @@ function ElectionCard({ election }: { election: VoterElection }) {
           </div>
           <div className="countdown-text">
             <span className="countdown-label">{isOpen ? 'Cierra en' : 'Abre en'}</span>
-            <span className={`countdown-time ${isOpen ? urgency : ''}`}>
+            <span className={`countdown-time ${isOpen ? urgency : 'scheduled'}`}>
               {isOpen ? countdown : getScheduledText()}
             </span>
           </div>

@@ -843,6 +843,7 @@ body {
 .countdown-icon.urgent { background: var(--error-light); animation: pulseUrgent 2s ease-in-out infinite; }
 .countdown-icon.warning { background: var(--warning-light); }
 .countdown-icon.normal { background: var(--success-light); }
+.countdown-icon.scheduled,
 .countdown-icon.scheduled-icon { background: var(--surface-sunken); }
 
 @keyframes pulseUrgent {
@@ -854,6 +855,7 @@ body {
 .countdown-icon.urgent svg { color: var(--error); }
 .countdown-icon.warning svg { color: var(--warning); }
 .countdown-icon.normal svg { color: var(--success); }
+.countdown-icon.scheduled svg,
 .countdown-icon.scheduled-icon svg { color: var(--muted); }
 
 .countdown-text { display: flex; flex-direction: column; }
@@ -873,6 +875,7 @@ body {
 .countdown-time.urgent { color: var(--error); }
 .countdown-time.warning { color: var(--warning); }
 .countdown-time.normal { color: var(--success); }
+.countdown-time.scheduled { color: var(--muted); }
 
 /* ─── Vote Button ─── */
 .election-vote-btn {
