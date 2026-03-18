@@ -11,8 +11,12 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user?.role === 'admin') {
-      router.replace('/padron');
+    if (!isLoading && isAuthenticated) {
+      if (user?.role === 'admin') {
+        router.replace('/padron');
+      } else {
+        router.replace('/votaciones');
+      }
     }
   }, [isLoading, isAuthenticated, user, router]);
 
@@ -24,7 +28,7 @@ export default function LoginPage() {
     );
   }
 
-  if (isAuthenticated && user?.role === 'admin') {
+  if (isAuthenticated) {
     return null;
   }
 

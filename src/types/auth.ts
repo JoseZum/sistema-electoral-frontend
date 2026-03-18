@@ -5,6 +5,7 @@ export interface User {
   role: string;
   sede: string;
   career: string;
+  teeMemberId?: string;
 }
 
 export interface AuthState {

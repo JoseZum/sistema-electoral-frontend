@@ -8,8 +8,8 @@ const config: Config = {
     extend: {
       colors: {
         ink: {
-          DEFAULT: '#141414',
-          soft: '#333333',
+          DEFAULT: '#1B365D',
+          soft: '#2B4E7A',
         },
         surface: {
           DEFAULT: '#FAF9F7',
@@ -17,10 +17,10 @@ const config: Config = {
           sunken: '#F0EEEB',
         },
         accent: {
-          DEFAULT: '#E53935',
-          hover: '#C62828',
-          light: '#FFF5F5',
-          glow: 'rgba(229, 57, 53, 0.07)',
+          DEFAULT: '#BE1E2D',
+          hover: '#981824',
+          light: '#FDF1F2',
+          glow: 'rgba(190, 30, 45, 0.07)',
         },
         muted: {
           DEFAULT: '#666666',
@@ -31,16 +31,16 @@ const config: Config = {
           strong: '#CCCCCC',
         },
         success: {
-          DEFAULT: '#0D7C46',
-          light: '#ECFDF5',
+          DEFAULT: '#1B365D',
+          light: '#F0F4F8',
         },
         warning: {
-          DEFAULT: '#B45309',
-          light: '#FFFBEB',
+          DEFAULT: '#666666',
+          light: '#F5F5F5',
         },
         error: {
-          DEFAULT: '#D32F2F',
-          light: '#FFF5F5',
+          DEFAULT: '#BE1E2D',
+          light: '#FDF1F2',
         },
       },
       fontFamily: {
@@ -55,10 +55,10 @@ const config: Config = {
         xl: '24px',
       },
       boxShadow: {
-        sm: '0 1px 2px rgba(12,18,32,0.04)',
-        md: '0 4px 12px rgba(12,18,32,0.06)',
-        lg: '0 12px 32px rgba(12,18,32,0.08)',
-        xl: '0 24px 48px rgba(12,18,32,0.12)',
+        sm: '0 1px 2px rgba(27,54,93,0.04)',
+        md: '0 4px 12px rgba(27,54,93,0.06)',
+        lg: '0 12px 32px rgba(27,54,93,0.08)',
+        xl: '0 24px 48px rgba(27,54,93,0.12)',
       },
     },
   },
