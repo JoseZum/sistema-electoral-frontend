@@ -1,11 +1,11 @@
 export interface User {
+  studentId: string;
   carnet: string;
   fullName: string;
   email: string;
   role: string;
   sede: string;
   career: string;
-  teeMemberId?: string;
 }
 
 export interface AuthState {

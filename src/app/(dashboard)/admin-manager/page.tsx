@@ -147,8 +147,7 @@ export default function AdminManagerPage() {
             Admin Manager
           </h2>
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            {admins.length} administrador{admins.length !== 1 ? 'es' : ''} activo
-            {admins.length !== 1 ? 's' : ''}
+            {admins.length} administrador{admins.length !== 1 ? 'es' : ''}
           </p>
         </div>
         <button
