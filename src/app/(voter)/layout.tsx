@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -33,8 +34,14 @@ export default function VoterLayout({
       {/* Voter Header */}
       <header className="voter-header">
         <a className="voter-brand" href="/votaciones">
-          <div className="voter-brand-icon">T</div>
-          TEE Votacion
+          <Image
+            src="/logo-color.png"
+            alt="Tribunal Electoral Estudiantil"
+            width={96}
+            height={96}
+            priority
+            className="voter-brand-logo"
+          />
         </a>
         <div className="voter-user">
           <span>{user?.fullName}</span>
@@ -51,7 +58,7 @@ export default function VoterLayout({
           </div>
         </div>
       </header>
-      {children}
+      <main className="voter-main">{children}</main>
     </div>
   );
 }

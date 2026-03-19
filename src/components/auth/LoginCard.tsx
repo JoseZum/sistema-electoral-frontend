@@ -4,10 +4,9 @@ import AuthError from './AuthError';
 
 export default function LoginCard() {
   return (
-    <div className="max-w-[400px] w-full animate-fadeInUp">
+      <div className="max-w-[400px] w-full animate-fadeInUp">
       {/* Overline */}
-      <div className="flex items-center gap-3 text-xs font-semibold tracking-[0.1em] uppercase text-accent mb-4">
-        <span className="block w-8 h-px bg-accent" />
+      <div className="overline" style={{ marginBottom: '1rem' }}>
         Tribunal Electoral Estudiantil
       </div>
 
