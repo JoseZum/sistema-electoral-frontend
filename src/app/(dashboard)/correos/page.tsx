@@ -5,7 +5,7 @@ import { apiClient } from '@/lib/api-client';
 
 
 export default function CorreosMasivosPage() {
-    const [selectedTemplate, setSelectedTemplate] = useState<string>('token');
+    const [selectedTemplate, setSelectedTemplate] = useState<string>('reminder');
     const [customMessage, setCustomMessage] = useState('');
 
     const [elections, setElections] = useState<any[]>([]);
@@ -43,12 +43,28 @@ export default function CorreosMasivosPage() {
         setSelectedTemplate(type);
     };
 
-    const sendEmails = () => {
-        // TODO: conectar con backend
-        console.log({
-            template: selectedTemplate,
-            message: customMessage,
-        });
+    const sendEmails = async () => {
+        if (!selectedElectionId) {
+            alert('Selecciona una votación primero');
+            return;
+        }
+
+        try {
+            const response = await apiClient('/api/notifications/send', {
+                method: 'POST',
+                body: JSON.stringify({
+                    electionId: selectedElectionId,
+                    emailType: selectedTemplate === 'opening' ? 'open' : selectedTemplate,
+                    message: customMessage,
+                }),
+            });
+
+            console.log('Respuesta:', response);
+            alert('Correos enviados correctamente');
+        } catch (err) {
+            console.error('Error enviando correos:', err);
+            alert('Error al enviar correos');
+        }
     };
 
     return (
