@@ -9,8 +9,15 @@ interface VotesByHour {
     count: number;
 }
 
+interface VotersBySede {
+    sede: string;
+    total_voters: number;
+    votes_cast: number;
+}
+
 interface MonitoringData {
-    votesByHour: VotesByHour[];
+    votesByHour: VotesByHour[],
+    votersBySede: VotersBySede[];
 }
 
 export default function MonitorPage() {
@@ -188,21 +195,46 @@ export default function MonitorPage() {
                                 })()}
                             </div>
 
-                        {/* PARTICIPACIÓN POR SEDE (SIMPLIFICADO O REMOVIDO) */}
-                        <div style={cardStyle}>
-                            <p style={subtitle}>ESTADO DE LA URNA</p>
-                            <div style={{ textAlign: 'center', padding: '1rem' }}>
-                                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-                                    {selectedElection.is_anonymous ? 'ANÓNIMA' : 'NOMINAL'}
-                                </div>
-                                <p style={{ color: '#888', fontSize: '0.8rem' }}>
-                                    Metodo: {selectedElection.auth_method}
-                                </p>
-                                <div style={{ marginTop: '1rem', color: '#2e7d32', fontWeight: 'bold' }}>
-                                    ✓ Integridad Verificada
+                            {/* PARTICIPACIÓN POR SEDE (SIMPLIFICADO O REMOVIDO) */}
+                            {/* VOTANTES POR SEDE */}
+                            <div style={cardStyle}>
+                                <p style={subtitle}>PARTICIPACIÓN POR SEDE</p>
+
+                                <div style={{ marginTop: '1rem' }}>
+                                    {selectedElection?.is_anonymous ? (
+                                        <div style={placeholderChart}>
+                                            No disponible en votaciones anónimas
+                                        </div>
+                                    ) : loadingStats ? (
+                                        <p>Cargando sedes...</p>
+                                    ) : monitoringData?.votersBySede?.length ? (
+                                        monitoringData.votersBySede.map((sede, idx) => {
+                                            const percent = sede.total_voters === 0
+                                                ? 0
+                                                : (sede.votes_cast / sede.total_voters) * 100;
+
+                                            return (
+                                                <div key={idx} style={{ marginBottom: '0.8rem' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                        <span style={{ fontWeight: '500' }}>{sede.sede}</span>
+                                                        <span style={{ fontSize: '0.8rem', color: '#666' }}>
+                                                            {sede.votes_cast}/{sede.total_voters}
+                                                        </span>
+                                                    </div>
+
+                                                    <div style={{ fontSize: '0.85rem', color: '#444', marginTop: '2px' }}>
+                                                        {percent.toFixed(1)}% participación
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div style={placeholderChart}>
+                                            Sin datos por sede
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        </div>
                     </div>
 
                     {/* INFO ADICIONAL */}
