@@ -103,7 +103,7 @@ export default function AdminManagerPage() {
         method: 'POST',
         body: JSON.stringify({
           students_id: student.id,
-          position_title: 'Miembro TEE',
+          position_title: 'Administrador',
           role: 'admin',
         }),
       });

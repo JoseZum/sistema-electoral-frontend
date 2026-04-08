@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
+import { useAuth } from '@/lib/auth-context';
 import type { VoterElection } from '@/types/elections';
 
 function useCountdown(endTime: string | null) {
@@ -130,6 +131,8 @@ function ElectionCard({ election }: { election: VoterElection }) {
 }
 
 export default function VotacionesPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [elections, setElections] = useState<VoterElection[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -152,9 +155,36 @@ export default function VotacionesPage() {
   return (
     <div className="voter-content">
       <div style={{ marginBottom: '2.5rem' }}>
-        <div className="overline" style={{ marginBottom: '0.75rem' }}>Votaciones disponibles</div>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem' }}>Tus elecciones activas</h2>
-        <p style={{ color: 'var(--muted)', marginTop: '0.5rem' }}>Selecciona una votacion para emitir tu voto.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div className="overline" style={{ marginBottom: '0.75rem' }}>Votaciones disponibles</div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem' }}>Tus elecciones activas</h2>
+            <p style={{ color: 'var(--muted)', marginTop: '0.5rem' }}>Selecciona una votacion para emitir tu voto.</p>
+          </div>
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => router.push('/padron')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                color: 'var(--text)',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+              Panel Admin
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
