@@ -84,11 +84,6 @@ export default function VotingBoothPage() {
 
   async function handleSubmitVote() {
     if (!selectedOption || !election) return;
-    if (election.is_anonymous && !voteToken) {
-      setError('Primero debes validar tu código de acceso');
-      return;
-    }
-
     try {
       setStage('submitting');
       setError(null);
@@ -97,10 +92,6 @@ export default function VotingBoothPage() {
         electionId: electionId,
         optionId: selectedOption,
       };
-
-      if (election.is_anonymous) {
-        castBody.token = voteToken as string;
-      }
 
       await apiClient<CastVoteResponse>('/api/voting/cast', {
         method: 'POST',
@@ -198,8 +189,8 @@ export default function VotingBoothPage() {
     (o) => o.option_type === 'BLANK' || o.option_type === 'NULL_VOTE'
   );
 
-  const hasAnonymousAccess = !election.is_anonymous || voteToken !== null;
-  const canSubmit = selectedOption !== null && stage === 'voting' && hasAnonymousAccess;
+  const hasAnonymousAccess = true;
+  const canSubmit = selectedOption !== null && stage === 'voting';
 
   return (
     <>
@@ -260,46 +251,6 @@ export default function VotingBoothPage() {
           </div>
 
           <div className="ballot-body">
-            {election.is_anonymous && (
-              <div className={`access-code-panel ${voteToken ? 'validated' : ''}`}>
-                <div>
-                  <div className="label" style={{ marginBottom: '0.4rem' }}>Acceso anónimo</div>
-                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', marginBottom: '0.35rem' }}>
-                    Validá tu código de acceso
-                  </h3>
-                  <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>
-                    Ingresá el código de 6 dígitos asociado a tu carnet para desbloquear esta boleta.
-                  </p>
-                </div>
-
-                <div className="access-code-form">
-                  <input
-                    className="input access-code-input"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    placeholder="123456"
-                    value={accessCode}
-                    disabled={isRedeemingCode || voteToken !== null}
-                    onChange={(event) => setAccessCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                  />
-
-                  {voteToken ? (
-                    <span className="badge badge-dot badge-open" style={{ fontSize: '0.8125rem' }}>
-                      Código validado
-                    </span>
-                  ) : (
-                    <button
-                      className="btn btn-outline"
-                      disabled={isRedeemingCode || accessCode.replace(/\D/g, '').length !== 6}
-                      onClick={handleRedeemAccessCode}
-                    >
-                      {isRedeemingCode ? 'Validando...' : 'Validar código'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Regular vote cards */}
             <div className={`vote-cards-grid ${hasAnonymousAccess ? '' : 'vote-cards-locked'}`}>

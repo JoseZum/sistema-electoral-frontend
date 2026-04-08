@@ -734,7 +734,7 @@ export default function AuditPage() {
             <h2 className="audit-hero-title">Registro de actividad</h2>
             <p className="audit-hero-sub">
               Toda acción importante queda registrada automáticamente. Aquí puedes ver
-              <em> quién hizo qué</em> y <em>cuándo</em>, sin tecnicismos.
+              <em> quién hizo qué</em> y <em>cuándo</em>.
             </p>
           </div>
           <div className="audit-hero-meta">
