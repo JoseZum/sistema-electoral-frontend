@@ -14,12 +14,16 @@ interface Student {
 
 interface EditStudentModalProps {
   student: Student;
+  sedes: string[];
+  careers: string[];
   onSave: (id: string, data: Partial<Student>) => Promise<void>;
   onCancel: () => void;
 }
 
 export default function EditStudentModal({
   student,
+  sedes,
+  careers,
   onSave,
   onCancel,
 }: EditStudentModalProps) {
@@ -35,6 +39,8 @@ export default function EditStudentModal({
     setSaving(true);
     try {
       await onSave(student.id, form);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'No se pudo guardar el estudiante');
     } finally {
       setSaving(false);
     }
@@ -61,20 +67,32 @@ export default function EditStudentModal({
         </span>
       </td>
       <td style={{ padding: '0.5rem' }}>
-        <input
+        <select
           className="input"
           style={{ width: '100%', padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }}
           value={form.sede}
           onChange={(e) => setForm((f) => ({ ...f, sede: e.target.value }))}
-        />
+        >
+          {sedes.map((sede) => (
+            <option key={sede} value={sede}>
+              {sede}
+            </option>
+          ))}
+        </select>
       </td>
       <td style={{ padding: '0.5rem' }}>
-        <input
+        <select
           className="input"
           style={{ width: '100%', padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }}
           value={form.career}
           onChange={(e) => setForm((f) => ({ ...f, career: e.target.value }))}
-        />
+        >
+          {careers.map((career) => (
+            <option key={career} value={career}>
+              {career}
+            </option>
+          ))}
+        </select>
       </td>
       <td style={{ padding: '0.5rem' }}>
         <input

@@ -8,6 +8,7 @@ interface AdminWithStudent {
   students_id: string;
   position_title: string;
   role: string;
+  created_at: string;
   carnet: string;
   full_name: string;
   email: string;
@@ -69,6 +70,13 @@ export default function AdminManagerPage() {
     }
   }, [modalOpen]);
 
+  const protectedAdminId = admins.reduce<string | null>((oldestId, admin) => {
+    if (!oldestId) return admin.id;
+    const oldest = admins.find((item) => item.id === oldestId);
+    if (!oldest) return admin.id;
+    return new Date(admin.created_at) < new Date(oldest.created_at) ? admin.id : oldestId;
+  }, null);
+
   const handleSearch = (value: string) => {
     setSearchQuery(value);
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -97,6 +105,10 @@ export default function AdminManagerPage() {
   };
 
   const handleAddAdmin = async (student: Student) => {
+    if (!window.confirm(`¿Deseas convertir a ${student.full_name} en administrador?`)) {
+      return;
+    }
+
     setAdding(student.id);
     try {
       await apiClient('/api/users/admins', {
@@ -113,22 +125,40 @@ export default function AdminManagerPage() {
       inputRef.current?.focus();
     } catch (err) {
       console.error('Error adding admin:', err);
+      alert(err instanceof Error ? err.message : 'No se pudo agregar el administrador');
     } finally {
       setAdding(null);
     }
   };
 
-  const handleRemoveAdmin = async (adminId: string) => {
-    setRemoving(adminId);
+  const handleRemoveAdmin = async (admin: AdminWithStudent) => {
+    if (!window.confirm(`¿Deseas revocar el acceso de administrador a ${admin.full_name}?`)) {
+      return;
+    }
+
+    setRemoving(admin.id);
     try {
-      await apiClient(`/api/users/admins/${adminId}`, { method: 'DELETE' });
+      await apiClient(`/api/users/admins/${admin.id}`, { method: 'DELETE' });
       await fetchAdmins();
     } catch (err) {
       console.error('Error removing admin:', err);
+      alert(err instanceof Error ? err.message : 'No se pudo eliminar el administrador');
     } finally {
       setRemoving(null);
     }
   };
+
+  const getRemoveDisabledReason = (admin: AdminWithStudent) => {
+    if (admins.length <= 1) {
+      return 'Debe quedar al menos un administrador';
+    }
+    if (admin.id === protectedAdminId) {
+      return 'El primer administrador no se puede eliminar';
+    }
+    return null;
+  };
+
+  const isProtectedAdmin = (admin: AdminWithStudent) => admin.id === protectedAdminId;
 
   return (
     <div className="view-enter" style={{ maxWidth: '960px', margin: '0 auto' }}>
@@ -219,7 +249,11 @@ export default function AdminManagerPage() {
               </tr>
             </thead>
             <tbody>
-              {admins.map((admin, i) => (
+              {admins.map((admin, i) => {
+                const removeDisabledReason = getRemoveDisabledReason(admin);
+                const removeDisabled = Boolean(removeDisabledReason) || removing === admin.id;
+
+                return (
                 <tr
                   key={admin.id}
                   className="table-row-enter"
@@ -249,7 +283,24 @@ export default function AdminManagerPage() {
                           .join('')
                           .toUpperCase()}
                       </div>
-                      <span style={{ fontWeight: 600 }}>{admin.full_name}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 600 }}>{admin.full_name}</span>
+                        {isProtectedAdmin(admin) && (
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              padding: '0.2rem 0.45rem',
+                              borderRadius: '100px',
+                              fontSize: '0.6875rem',
+                              fontWeight: 700,
+                              background: 'var(--surface-sunken)',
+                              color: 'var(--ink-soft)',
+                            }}
+                          >
+                            Primer admin
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>{admin.carnet}</td>
@@ -273,10 +324,10 @@ export default function AdminManagerPage() {
                   <td>
                     <button
                       className="btn btn-ghost btn-sm"
-                      style={{ padding: '0.25rem 0.5rem', color: 'var(--error)' }}
-                      onClick={() => handleRemoveAdmin(admin.id)}
-                      disabled={removing === admin.id}
-                      title="Revocar acceso"
+                      style={{ padding: '0.25rem 0.5rem', color: removeDisabled ? 'var(--muted)' : 'var(--error)' }}
+                      onClick={() => handleRemoveAdmin(admin)}
+                      disabled={removeDisabled}
+                      title={removeDisabledReason || 'Revocar acceso'}
                     >
                       {removing === admin.id ? (
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
@@ -291,7 +342,8 @@ export default function AdminManagerPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

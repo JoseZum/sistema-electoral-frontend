@@ -19,9 +19,11 @@ type SortDir = 'asc' | 'desc';
 interface StudentTableProps {
   students: Student[];
   onSaveStudent: (id: string, data: Partial<Student>) => Promise<void>;
+  sedes: string[];
+  careers: string[];
 }
 
-export default function StudentTable({ students, onSaveStudent }: StudentTableProps) {
+export default function StudentTable({ students, onSaveStudent, sedes, careers }: StudentTableProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('carnet');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -86,6 +88,8 @@ export default function StudentTable({ students, onSaveStudent }: StudentTablePr
               {editingId === student.id ? (
                 <EditStudentModal
                   student={student}
+                  sedes={sedes}
+                  careers={careers}
                   onSave={handleSave}
                   onCancel={() => setEditingId(null)}
                 />

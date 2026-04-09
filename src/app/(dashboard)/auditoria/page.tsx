@@ -18,6 +18,7 @@ interface AuditLog {
   id: string;
   actor_id: string | null;
   actor_carnet: string | null;
+  actor_name?: string | null;
   action: string;
   resource_type: string;
   resource_id: string | null;
@@ -834,8 +835,22 @@ export default function AuditPage() {
                     const meta = resourceMeta(log.resource_type);
                     const category = findCategoryForResource(log.resource_type);
                     const isExpanded = expandedId === log.id;
-                    const actor = log.actor_carnet || 'Sistema';
-                    const isSystem = !log.actor_carnet;
+                    const actorName = log.actor_name?.trim();
+                    const actorCarnet = log.actor_carnet?.trim();
+                    const actor = actorName || actorCarnet || 'Sistema';
+                    const actorTitle = actorName && actorCarnet
+                      ? `${actorName} · ${actorCarnet}`
+                      : actor;
+                    const actorAvatar = actorName
+                      ? actorName
+                          .split(' ')
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map((part) => part[0])
+                          .join('')
+                          .toUpperCase()
+                      : (actorCarnet || '?').slice(-2).toUpperCase();
+                    const isSystem = !actorName && !actorCarnet;
 
                     return (
                       <li
@@ -861,7 +876,7 @@ export default function AuditPage() {
                           <div className="audit-event-top">
                             <span
                               className={`audit-actor ${isSystem ? 'is-system' : ''}`}
-                              title={actor}
+                              title={actorTitle}
                             >
                               {isSystem ? (
                                 <>
@@ -871,7 +886,7 @@ export default function AuditPage() {
                               ) : (
                                 <>
                                   <span className="audit-actor-avatar">
-                                    {actor.slice(-2)}
+                                    {actorAvatar}
                                   </span>
                                   {actor}
                                 </>

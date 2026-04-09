@@ -22,57 +22,37 @@ interface StudentsResponse {
   total: number;
 }
 
-const PAGE_SIZE = 25;
+interface StudentCatalogResponse {
+  sedes: string[];
+  careers: string[];
+}
 
-const SEDES = ['CARTAGO', 'SAN JOSE', 'SAN CARLOS', 'LIMON', 'ALAJUELA'];
-const CAREERS = [
-  'Administración de Empresas',
-  'Administración de Empresas énfasis Administración Financiera',
-  'Administración de Empresas énfasis en Contaduría Pública',
-  'Administración de Empresas énfasis en Mercadeo',
-  'Administración de Empresas énfasis en Recursos Humanos',
-  'Administración de Tecnologías de Información',
-  'Arquitectura y Urbanismo',
-  'Diplomado en Producción Industrial',
-  'Educación Técnica',
-  'Enseñanza de la Matemática con Entornos Tecnológicos',
-  'Gestión de Turismo Rural Sostenible',
-  'Gestión del Turismo Sostenible',
-  'Gestión en Sostenibilidad Turística',
-  'Ingeniería Agrícola',
-  'Ingeniería Ambiental',
-  'Ingeniería Forestal',
-  'Ingeniería Forestal énfasis en Conservación y Restauración de Ecosistemas Forestales',
-  'Ingeniería Forestal énfasis en Manejo y Producción Forestal',
-  'Ingeniería en Agronegocios',
-  'Ingeniería en Agronomía',
-  'Ingeniería en Biotecnología',
-  'Ingeniería en Computación',
-  'Ingeniería en Computadores',
-  'Ingeniería en Construcción',
-  'Ingeniería en Diseño Industrial con énfasis en Comunicación Visual',
-  'Ingeniería en Diseño Industrial con énfasis en Desarrollo de Productos',
-  'Ingeniería en Electrónica',
-  'Ingeniería en Mantenimiento Industrial',
-  'Ingeniería en Materiales',
-  'Ingeniería en Materiales énfasis en Metalurgia',
-  'Ingeniería en Materiales énfasis en Microelectrónica',
-  'Ingeniería en Producción Industrial',
-  'Ingeniería en Seguridad Laboral e Higiene Ambiental',
-  'Licenciatura en Administración de Tecnología de Información',
-  'Licenciatura en Ingeniería Física',
-  'Licenciatura en Ingeniería Mecatrónica',
-  'Seguridad e Higiene Ocupacional'
-];
+const PAGE_SIZE = 25;
 
 export default function PadronPage() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [catalog, setCatalog] = useState<StudentCatalogResponse>({
+    sedes: [],
+    careers: [],
+  });
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [sede, setSede] = useState('');
   const [career, setCareer] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const fetchCatalog = useCallback(async () => {
+    try {
+      const res = await apiClient<StudentCatalogResponse>('/api/users/students/catalog');
+      setCatalog({
+        sedes: res?.sedes || [],
+        careers: res?.careers || [],
+      });
+    } catch (err) {
+      console.error('Error fetching student catalog:', err);
+    }
+  }, []);
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
@@ -100,6 +80,10 @@ export default function PadronPage() {
     fetchStudents();
   }, [fetchStudents]);
 
+  useEffect(() => {
+    fetchCatalog();
+  }, [fetchCatalog]);
+
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setPage(1);
@@ -120,27 +104,29 @@ export default function PadronPage() {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    await fetchStudents();
+    await Promise.all([fetchStudents(), fetchCatalog()]);
   };
 
   const handleExport = () => {
     const headers = ['Carnet', 'Nombre', 'Correo', 'Sede', 'Carrera', 'Grado'];
-    const rows = students.map((s) => [
-      s.carnet,
-      s.full_name,
-      s.email,
-      s.sede,
-      s.career,
-      s.degree_level,
+    const rows = students.map((student) => [
+      student.carnet,
+      student.full_name,
+      student.email,
+      student.sede,
+      student.career,
+      student.degree_level,
     ]);
 
-    const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
+    const csv = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${cell}"`).join(','))
+      .join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `padron_estudiantil_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `padron_estudiantil_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
     URL.revokeObjectURL(url);
   };
 
@@ -148,7 +134,6 @@ export default function PadronPage() {
 
   return (
     <div className="view-enter">
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -214,7 +199,6 @@ export default function PadronPage() {
         </div>
       </div>
 
-      {/* Filters */}
       <StudentFilters
         search={search}
         sede={sede}
@@ -222,11 +206,10 @@ export default function PadronPage() {
         onSearchChange={handleSearchChange}
         onSedeChange={handleSedeChange}
         onCareerChange={handleCareerChange}
-        sedes={SEDES}
-        careers={CAREERS}
+        sedes={catalog.sedes}
+        careers={catalog.careers}
       />
 
-      {/* Table */}
       {loading ? (
         <div
           style={{
@@ -238,10 +221,14 @@ export default function PadronPage() {
           Cargando...
         </div>
       ) : (
-        <StudentTable students={students} onSaveStudent={handleSaveStudent} />
+        <StudentTable
+          students={students}
+          onSaveStudent={handleSaveStudent}
+          sedes={catalog.sedes}
+          careers={catalog.careers}
+        />
       )}
 
-      {/* Pagination */}
       {totalPages > 0 && (
         <Pagination
           currentPage={page}
