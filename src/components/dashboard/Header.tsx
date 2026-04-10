@@ -15,6 +15,9 @@ const pageTitles: Record<string, string> = {
   '/elecciones': 'Votaciones',
   '/elecciones/crear': 'Crear Votacion',
   '/resultados': 'Resultados',
+  '/generar-llaves' : 'Generar LLaves',
+  '/escrutinio': 'Escrutinio',
+  '/escrutinio/agregar-llaves': 'Agregar Llaves',
 };
 
 export default function Header({ onToggleSidebar }: HeaderProps) {
