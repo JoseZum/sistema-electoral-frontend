@@ -4,7 +4,7 @@ export interface Election {
   description: string | null;
   status: 'DRAFT' | 'SCHEDULED' | 'OPEN' | 'CLOSED' | 'SCRUTINIZED' | 'ARCHIVED';
   is_anonymous: boolean;
-  auth_method: string;
+  auth_method: 'MICROSOFT';
   voter_source: 'FULL_PADRON' | 'FILTERED' | 'MANUAL';
   voter_filter: Record<string, unknown> | null;
   start_time: string | null;

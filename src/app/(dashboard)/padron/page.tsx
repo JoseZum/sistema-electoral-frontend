@@ -11,7 +11,6 @@ interface Student {
   id: string;
   carnet: string;
   full_name: string;
-  email: string;
   sede: string;
   career: string;
   degree_level: string;
@@ -108,11 +107,10 @@ export default function PadronPage() {
   };
 
   const handleExport = () => {
-    const headers = ['Carnet', 'Nombre', 'Correo', 'Sede', 'Carrera', 'Grado'];
+    const headers = ['Carnet', 'Nombre', 'Sede', 'Carrera', 'Grado'];
     const rows = students.map((student) => [
       student.carnet,
       student.full_name,
-      student.email,
       student.sede,
       student.career,
       student.degree_level,

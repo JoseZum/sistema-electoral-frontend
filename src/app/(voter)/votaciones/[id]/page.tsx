@@ -3,15 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
-import { useAuth } from '@/lib/auth-context';
 import type { VoterElectionDetail } from '@/types/elections';
 
 type VoteStage = 'loading' | 'voting' | 'confirm-dialog' | 'submitting' | 'success' | 'error';
-
-interface VoteTokenResponse {
-  token: string;
-  expires_info: string;
-}
 
 interface CastVoteResponse {
   message: string;
@@ -21,22 +15,16 @@ export default function VotingBoothPage() {
   const params = useParams();
   const router = useRouter();
   const electionId = params.id as string;
-  const { user } = useAuth();
 
   const [election, setElection] = useState<VoterElectionDetail | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [stage, setStage] = useState<VoteStage>('loading');
   const [error, setError] = useState<string | null>(null);
-  const [accessCode, setAccessCode] = useState('');
-  const [voteToken, setVoteToken] = useState<string | null>(null);
-  const [isRedeemingCode, setIsRedeemingCode] = useState(false);
 
   const fetchElection = useCallback(async () => {
     try {
       const data = await apiClient<VoterElectionDetail>(`/api/voting/elections/${electionId}`);
       setElection(data);
-      setVoteToken(null);
-      setAccessCode('');
 
       if (data.has_voted) {
         setStage('success');
@@ -52,35 +40,6 @@ export default function VotingBoothPage() {
   useEffect(() => {
     fetchElection();
   }, [fetchElection]);
-
-  async function handleRedeemAccessCode() {
-    if (!election?.is_anonymous) return;
-
-    try {
-      setIsRedeemingCode(true);
-      setError(null);
-
-      const normalizedCode = accessCode.replace(/\D/g, '').slice(0, 6);
-      const tokenRes = await apiClient<VoteTokenResponse>(
-        `/api/voting/elections/${electionId}/token`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            code: normalizedCode,
-            carnet: user?.carnet,
-          }),
-        }
-      );
-
-      setVoteToken(tokenRes.token);
-      setAccessCode(normalizedCode);
-    } catch (err) {
-      setVoteToken(null);
-      setError(err instanceof Error ? err.message : 'No se pudo validar el código');
-    } finally {
-      setIsRedeemingCode(false);
-    }
-  }
 
   async function handleSubmitVote() {
     if (!selectedOption || !election) return;
@@ -189,7 +148,6 @@ export default function VotingBoothPage() {
     (o) => o.option_type === 'BLANK' || o.option_type === 'NULL_VOTE'
   );
 
-  const hasAnonymousAccess = true;
   const canSubmit = selectedOption !== null && stage === 'voting';
 
   return (
@@ -253,16 +211,12 @@ export default function VotingBoothPage() {
           <div className="ballot-body">
 
             {/* Regular vote cards */}
-            <div className={`vote-cards-grid ${hasAnonymousAccess ? '' : 'vote-cards-locked'}`}>
+            <div className="vote-cards-grid">
               {regularOptions.map((option) => (
                 <div
                   key={option.id}
                   className={`vote-card ${selectedOption === option.id ? 'selected' : ''}`}
-                  onClick={() => {
-                    if (hasAnonymousAccess) {
-                      setSelectedOption(option.id);
-                    }
-                  }}
+                  onClick={() => setSelectedOption(option.id)}
                 >
                   <div className="vote-card-header">
                     <div className="vote-card-name">{option.label}</div>
@@ -278,16 +232,12 @@ export default function VotingBoothPage() {
 
             {/* Special vote cards (blank/null) */}
             {specialOptions.length > 0 && (
-              <div className={`vote-cards-special ${hasAnonymousAccess ? '' : 'vote-cards-locked'}`}>
+              <div className="vote-cards-special">
                 {specialOptions.map((option) => (
                   <div
                     key={option.id}
                     className={`vote-card vote-card-special ${selectedOption === option.id ? 'selected' : ''}`}
-                    onClick={() => {
-                      if (hasAnonymousAccess) {
-                        setSelectedOption(option.id);
-                      }
-                    }}
+                    onClick={() => setSelectedOption(option.id)}
                   >
                     <div className="vote-card-header">
                       <div className="vote-card-name">

@@ -6,7 +6,6 @@ interface Student {
   id: string;
   carnet: string;
   full_name: string;
-  email: string;
   sede: string;
   career: string;
   degree_level: string;
@@ -60,11 +59,6 @@ export default function EditStudentModal({
           value={form.full_name}
           onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
         />
-      </td>
-      <td style={{ padding: '0.5rem' }}>
-        <span style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-          {student.email}
-        </span>
       </td>
       <td style={{ padding: '0.5rem' }}>
         <select

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import type { Election } from '@/types/elections';
 
 // Interfaces para tipado
 interface VotesByHour {
@@ -17,13 +18,13 @@ interface VotersBySede {
 
 interface MonitoringData {
     votesByHour: VotesByHour[],
-    votersBySede: VotersBySede[];
+    votersBySede?: VotersBySede[];
 }
 
 export default function MonitorPage() {
-    const [elections, setElections] = useState<any[]>([]);
+    const [elections, setElections] = useState<Election[]>([]);
     const [selectedElectionId, setSelectedElectionId] = useState('');
-    const [selectedElection, setSelectedElection] = useState<any | null>(null);
+    const [selectedElection, setSelectedElection] = useState<Election | null>(null);
     const [monitoringData, setMonitoringData] = useState<MonitoringData | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadingStats, setLoadingStats] = useState(false);
@@ -32,7 +33,7 @@ export default function MonitorPage() {
     useEffect(() => {
         async function fetchElections() {
             try {
-                const data = await apiClient('/api/elections');
+                const data = await apiClient<Election[]>('/api/elections');
                 // IMPORTANTE: Aquí puedes filtrar o mostrar todas. 
                 // Si syncAutomaticStatuses las cierra, asegúrate que el API las siga enviando.
                 setElections(data);
@@ -55,7 +56,7 @@ export default function MonitorPage() {
         async function fetchStats() {
             setLoadingStats(true);
             try {
-                const data = await apiClient(`/api/elections/${selectedElectionId}/monitoring`);
+                const data = await apiClient<MonitoringData>(`/api/elections/${selectedElectionId}/monitoring`);
                 console.log("DATOS RECIBIDOS:", data);
                 setMonitoringData(data);
             } catch (err) {
@@ -83,7 +84,7 @@ export default function MonitorPage() {
         return total === 0 ? 0 : (votes / total) * 100;
     };
 
-    const getTimeRemaining = (endTime: string | undefined) => {
+    const getTimeRemaining = (endTime: string | null | undefined) => {
         if (!endTime) return '—';
         const now = new Date();
         const end = new Date(endTime);
@@ -265,7 +266,7 @@ function Info({ label, value }: { label: string; value: any }) {
     );
 }
 
-function format(date: string) {
+function format(date: string | null | undefined) {
     return date ? new Date(date).toLocaleString() : '—';
 }
 

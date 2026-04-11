@@ -7,13 +7,12 @@ interface Student {
   id: string;
   carnet: string;
   full_name: string;
-  email: string;
   sede: string;
   career: string;
   degree_level: string;
 }
 
-type SortKey = 'carnet' | 'full_name' | 'email' | 'sede' | 'career' | 'degree_level';
+type SortKey = 'carnet' | 'full_name' | 'sede' | 'career' | 'degree_level';
 type SortDir = 'asc' | 'desc';
 
 interface StudentTableProps {
@@ -47,7 +46,6 @@ export default function StudentTable({ students, onSaveStudent, sedes, careers }
   const columns: { key: SortKey; label: string }[] = [
     { key: 'carnet', label: 'Carnet' },
     { key: 'full_name', label: 'Nombre' },
-    { key: 'email', label: 'Correo' },
     { key: 'sede', label: 'Sede' },
     { key: 'career', label: 'Carrera' },
     { key: 'degree_level', label: 'Grado' },
@@ -97,7 +95,6 @@ export default function StudentTable({ students, onSaveStudent, sedes, careers }
                 <>
                   <td>{student.carnet}</td>
                   <td>{student.full_name}</td>
-                  <td>{student.email}</td>
                   <td>{student.sede}</td>
                   <td>{student.career}</td>
                   <td>{student.degree_level}</td>
@@ -126,7 +123,7 @@ export default function StudentTable({ students, onSaveStudent, sedes, careers }
           ))}
           {sorted.length === 0 && (
             <tr>
-              <td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted)' }}>
+              <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted)' }}>
                 No se encontraron estudiantes
               </td>
             </tr>

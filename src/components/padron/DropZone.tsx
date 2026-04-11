@@ -80,7 +80,7 @@ export default function DropZone({ onFileSelected, disabled }: DropZoneProps) {
       >
         Columnas esperadas:{' '}
         <span className="mono" style={{ fontSize: '0.6875rem' }}>
-          carnet &middot; nombre &middot; correo &middot; sede &middot; carrera &middot; grado
+          carnet &middot; nombre &middot; dato institucional &middot; sede &middot; carrera &middot; grado
         </span>
       </div>
     </div>

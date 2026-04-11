@@ -255,7 +255,6 @@ const FIELD_LABELS: Record<string, string> = {
   carnet: 'carnet',
   full_name: 'nombre completo',
   name: 'nombre',
-  email: 'correo',
   phone: 'teléfono',
   title: 'título',
   description: 'descripción',
@@ -389,7 +388,7 @@ function buildNarrative(log: AuditLog): Narrative {
       };
     }
     case 'student.update': {
-      const fields = Object.keys(changes).filter((k) => k !== 'updated_at');
+      const fields = Object.keys(changes).filter((k) => k !== 'updated_at' && k !== 'email');
       const carnet = (newRow.carnet as string | undefined) || log.resource_id || '';
       return {
         lead: 'actualizó al estudiante',
@@ -435,7 +434,7 @@ function buildNarrative(log: AuditLog): Narrative {
           opBadge,
         };
       }
-      const fields = Object.keys(changes).filter((k) => k !== 'updated_at');
+      const fields = Object.keys(changes).filter((k) => k !== 'updated_at' && k !== 'email');
       return {
         lead: 'actualizó la elección',
         subject: `«${title}»`,
@@ -495,7 +494,7 @@ function buildNarrative(log: AuditLog): Narrative {
       };
     }
     case 'admin.update': {
-      const fields = Object.keys(changes).filter((k) => k !== 'updated_at');
+      const fields = Object.keys(changes).filter((k) => k !== 'updated_at' && k !== 'email');
       return {
         lead: 'actualizó al administrador',
         subject: log.resource_id || '',
@@ -1050,7 +1049,7 @@ function EventDetail({ log, narrative }: { log: AuditLog; narrative: Narrative }
       string,
       unknown
     >;
-    const keys = Object.keys(changes).filter((k) => k !== 'updated_at');
+    const keys = Object.keys(changes).filter((k) => k !== 'updated_at' && k !== 'email');
 
     if (keys.length === 0) {
       return (
@@ -1091,6 +1090,7 @@ function EventDetail({ log, narrative }: { log: AuditLog; narrative: Narrative }
       'id',
       'created_at',
       'updated_at',
+      'email',
       'password_hash',
       'token',
       'ciphertext',

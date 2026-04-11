@@ -24,7 +24,6 @@ interface Student {
   id: string;
   carnet: string;
   full_name: string;
-  email: string;
   sede: string;
   career: string;
 }
@@ -510,7 +509,7 @@ export default function CrearEleccionPage() {
                     <input
                       type="text"
                       className="input"
-                      placeholder="Nombre, carnet o correo..."
+                      placeholder="Nombre o carnet..."
                       value={manualSearch}
                       onChange={(event) => setManualSearch(event.target.value)}
                       style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
@@ -612,7 +611,7 @@ export default function CrearEleccionPage() {
                             <div style={{ minWidth: 0, flex: 1 }}>
                               <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{student.full_name}</div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                                {student.carnet} · {student.email}
+                                {student.carnet}
                               </div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--muted-light)' }}>
                                 {student.sede} · {student.career}
@@ -689,7 +688,7 @@ export default function CrearEleccionPage() {
                             <div style={{ minWidth: 0, flex: 1 }}>
                               <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{student.full_name}</div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                                {student.carnet} · {student.email}
+                                {student.carnet}
                               </div>
                             </div>
 

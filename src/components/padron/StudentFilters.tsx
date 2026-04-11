@@ -46,7 +46,7 @@ export default function StudentFilters({
           ref={inputRef}
           type="text"
           className="search-input"
-          placeholder="Buscar por carnet, nombre o correo..."
+          placeholder="Buscar por carnet o nombre..."
           defaultValue={search}
           onChange={(e) => handleSearchInput(e.target.value)}
         />

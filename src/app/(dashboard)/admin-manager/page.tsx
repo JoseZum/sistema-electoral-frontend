@@ -11,7 +11,6 @@ interface AdminWithStudent {
   created_at: string;
   carnet: string;
   full_name: string;
-  email: string;
   sede: string;
   career: string;
 }
@@ -20,7 +19,6 @@ interface Student {
   id: string;
   carnet: string;
   full_name: string;
-  email: string;
   sede: string;
   career: string;
 }
@@ -242,7 +240,6 @@ export default function AdminManagerPage() {
               <tr>
                 <th>Nombre</th>
                 <th>Carnet</th>
-                <th>Correo</th>
                 <th>Sede</th>
                 <th>Cargo</th>
                 <th style={{ width: '80px' }}></th>
@@ -304,7 +301,6 @@ export default function AdminManagerPage() {
                     </div>
                   </td>
                   <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>{admin.carnet}</td>
-                  <td>{admin.email}</td>
                   <td>{admin.sede}</td>
                   <td>
                     <span
@@ -425,7 +421,7 @@ export default function AdminManagerPage() {
                   ref={inputRef}
                   type="text"
                   className="input"
-                  placeholder="Nombre, carnet o correo..."
+                  placeholder="Nombre o carnet..."
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
                   style={{ width: '100%', paddingLeft: '2.5rem' }}
@@ -539,7 +535,7 @@ export default function AdminManagerPage() {
                           {student.full_name}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                          {student.carnet} &middot; {student.email} &middot; {student.sede}
+                          {student.carnet} &middot; {student.sede}
                         </div>
                       </div>
                     </div>
