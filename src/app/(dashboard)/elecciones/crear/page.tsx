@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
-import { type ImmediateDurationUnit, getImmediateDurationMinutes } from '@/components/elections/ImmediateStartConfig';
+import ImmediateStartConfig, {
+  formatImmediateDuration,
+  getImmediateDurationMinutes,
+  type ImmediateDurationUnit,
+} from '@/components/elections/ImmediateStartConfig';
 import TagSelector from '@/components/tags/TagSelector';
 
 interface ElectionForm {
@@ -22,6 +26,7 @@ interface ElectionForm {
 }
 
 interface OptionForm {
+  id: string;
   label: string;
   description: string;
 }
@@ -44,17 +49,154 @@ interface StudentCatalogResponse {
   careers: string[];
 }
 
-const STEPS = ['Informacion', 'Votantes', 'Opciones', 'Seguridad'];
+const SECTION_ITEMS = [
+  { id: 'informacion', label: 'Informacion', description: 'Detalles y horario' },
+  { id: 'votantes', label: 'Votantes', description: 'Padron elegible' },
+  { id: 'opciones', label: 'Opciones', description: 'Boleta electoral' },
+  { id: 'seguridad', label: 'Seguridad', description: 'Privacidad y escrutinio' },
+] as const;
+
+type SectionId = (typeof SECTION_ITEMS)[number]['id'];
+
+const VOTER_SOURCE_OPTIONS: Array<{
+  value: ElectionForm['voter_source'];
+  title: string;
+  description: string;
+  badge: string;
+}> = [
+  {
+    value: 'FULL_PADRON',
+    title: 'Padron completo',
+    description: 'Todos los estudiantes activos del padron pueden votar.',
+    badge: 'General',
+  },
+  {
+    value: 'FILTERED',
+    title: 'Filtrar por sede o carrera',
+    description: 'Acota la participacion usando filtros reales cargados en el sistema.',
+    badge: 'Segmentado',
+  },
+  {
+    value: 'MANUAL',
+    title: 'Seleccion manual',
+    description: 'Busca personas del padron y agregalas una por una.',
+    badge: 'Curado',
+  },
+  {
+    value: 'TAG',
+    title: 'Grupo por tag',
+    description: 'Usa una tag guardada para definir rapidamente quienes pueden votar.',
+    badge: 'Reutilizable',
+  },
+];
+
 const DEFAULT_IMMEDIATE_DURATION_VALUE = '15';
 const DEFAULT_IMMEDIATE_DURATION_UNIT: ImmediateDurationUnit = 'minutes';
+
+function isScheduledWindowValid(startTime: string, endTime: string) {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return false;
+  }
+
+  return end > start;
+}
+
+function getVoterSummary(form: ElectionForm, selectedStudents: Student[]) {
+  switch (form.voter_source) {
+    case 'FULL_PADRON':
+      return 'Padron completo';
+    case 'FILTERED':
+      if (form.voter_filter_sede || form.voter_filter_career) {
+        return 'Padron filtrado';
+      }
+      return 'Sin filtros, equivale al padron completo';
+    case 'MANUAL':
+      return selectedStudents.length > 0
+        ? `${selectedStudents.length} persona${selectedStudents.length === 1 ? '' : 's'} seleccionada${selectedStudents.length === 1 ? '' : 's'}`
+        : 'Seleccion manual pendiente';
+    case 'TAG':
+      return form.tag_id ? 'Tag seleccionada' : 'Falta seleccionar la tag';
+    default:
+      return 'Sin definir';
+  }
+}
+
+function SelectionCard({
+  selected,
+  badge,
+  title,
+  description,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  badge: string;
+  title: string;
+  description: string;
+  onClick: () => void;
+  children?: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      className={`create-election-choice-card ${selected ? 'selected' : ''}`}
+      onClick={onClick}
+      aria-pressed={selected}
+    >
+      <div className="create-election-choice-card__header">
+        <span className="create-election-choice-card__badge">{badge}</span>
+        <span className="create-election-choice-card__indicator" aria-hidden="true" />
+      </div>
+      <div className="create-election-choice-card__title">{title}</div>
+      <div className="create-election-choice-card__description">{description}</div>
+      {children ? <div className="create-election-choice-card__footer">{children}</div> : null}
+    </button>
+  );
+}
+
+function ToggleCard({
+  checked,
+  title,
+  description,
+  onChange,
+}: {
+  checked: boolean;
+  title: string;
+  description: string;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className={`create-election-toggle-card ${checked ? 'selected' : ''}`}>
+      <div className="create-election-toggle-card__copy">
+        <div className="create-election-toggle-card__title">{title}</div>
+        <div className="create-election-toggle-card__description">{description}</div>
+      </div>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        aria-label={title}
+      />
+    </label>
+  );
+}
 
 export default function CrearEleccionPage() {
   const router = useRouter();
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const [step, setStep] = useState(1);
+  const optionCounterRef = useRef(2);
+  const sectionRefs = useRef<Record<SectionId, HTMLElement | null>>({
+    informacion: null,
+    votantes: null,
+    opciones: null,
+    seguridad: null,
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<SectionId>('informacion');
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalog, setCatalog] = useState<StudentCatalogResponse>({ sedes: [], careers: [] });
   const [manualSearch, setManualSearch] = useState('');
@@ -78,8 +220,8 @@ export default function CrearEleccionPage() {
   });
 
   const [options, setOptions] = useState<OptionForm[]>([
-    { label: '', description: '' },
-    { label: '', description: '' },
+    { id: 'option-1', label: '', description: '' },
+    { id: 'option-2', label: '', description: '' },
   ]);
 
   const [includeBlank, setIncludeBlank] = useState(true);
@@ -115,6 +257,38 @@ export default function CrearEleccionPage() {
   useEffect(() => {
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((first, second) => second.intersectionRatio - first.intersectionRatio);
+
+        if (visibleEntries.length === 0) {
+          return;
+        }
+
+        const nextSection = visibleEntries[0].target.getAttribute('data-section-id') as SectionId | null;
+        if (nextSection) {
+          setActiveSection(nextSection);
+        }
+      },
+      {
+        rootMargin: '-18% 0px -52% 0px',
+        threshold: [0.15, 0.35, 0.6],
+      }
+    );
+
+    SECTION_ITEMS.forEach(({ id }) => {
+      const node = sectionRefs.current[id];
+      if (node) observer.observe(node);
+    });
+
+    return () => {
+      observer.disconnect();
     };
   }, []);
 
@@ -167,28 +341,73 @@ export default function CrearEleccionPage() {
     };
   }, [form.voter_filter_career, form.voter_filter_sede, form.voter_source, manualSearch, selectedStudents]);
 
+  function setSectionRef(sectionId: SectionId, node: HTMLElement | null) {
+    sectionRefs.current[sectionId] = node;
+  }
+
+  function scrollToSection(sectionId: SectionId) {
+    setActiveSection(sectionId);
+    sectionRefs.current[sectionId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   function updateForm<K extends keyof ElectionForm>(key: K, value: ElectionForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
   function setVoterSource(source: ElectionForm['voter_source']) {
     setError(null);
-    updateForm('voter_source', source);
-    if (source !== 'TAG') {
-      updateForm('tag_id', null);
-    }
+    setForm((prev) => ({
+      ...prev,
+      voter_source: source,
+      tag_id: source === 'TAG' ? prev.tag_id : null,
+    }));
+  }
+
+  function handleScheduleChange(next: {
+    startTime?: string;
+    endTime?: string;
+    startsImmediately?: boolean;
+    durationValue?: string;
+    durationUnit?: ImmediateDurationUnit;
+  }) {
+    setError(null);
+    setForm((prev) => {
+      const nextForm: ElectionForm = {
+        ...prev,
+        start_immediately: next.startsImmediately ?? prev.start_immediately,
+        start_time: next.startTime ?? prev.start_time,
+        end_time: next.endTime ?? prev.end_time,
+        immediate_duration_value: next.durationValue ?? prev.immediate_duration_value,
+        immediate_duration_unit: next.durationUnit ?? prev.immediate_duration_unit,
+      };
+
+      if (next.startsImmediately === true) {
+        nextForm.start_time = '';
+        nextForm.end_time = '';
+        if (!nextForm.immediate_duration_value) {
+          nextForm.immediate_duration_value = DEFAULT_IMMEDIATE_DURATION_VALUE;
+        }
+      }
+
+      return nextForm;
+    });
   }
 
   function addOption() {
-    setOptions((prev) => [...prev, { label: '', description: '' }]);
+    optionCounterRef.current += 1;
+    setOptions((prev) => [...prev, { id: `option-${optionCounterRef.current}`, label: '', description: '' }]);
   }
 
   function removeOption(index: number) {
-    setOptions((prev) => prev.filter((_, i) => i !== index));
+    setOptions((prev) => prev.filter((_, currentIndex) => currentIndex !== index));
   }
 
   function updateOption(index: number, field: keyof OptionForm, value: string) {
-    setOptions((prev) => prev.map((option, i) => (i === index ? { ...option, [field]: value } : option)));
+    setOptions((prev) =>
+      prev.map((option, currentIndex) => (
+        currentIndex === index ? { ...option, [field]: value } : option
+      ))
+    );
   }
 
   function addManualStudent(student: Student) {
@@ -199,23 +418,37 @@ export default function CrearEleccionPage() {
     setSelectedStudents((prev) => prev.filter((student) => student.id !== studentId));
   }
 
-  function nextStep() {
-    if (step < 4) setStep(step + 1);
-  }
-
-  function prevStep() {
-    if (step > 1) setStep(step - 1);
-  }
-
-  async function handleSubmit(asDraft: boolean) {
+  async function handleSubmit() {
     try {
       setSaving(true);
       setError(null);
+
+      const trimmedTitle = form.title.trim();
+      const candidateOptions = options
+        .map((option) => ({
+          label: option.label.trim(),
+          description: option.description.trim(),
+        }))
+        .filter((option) => option.label);
+
+      const uniqueCandidateLabels = new Set(candidateOptions.map((option) => option.label.toLowerCase()));
       const immediateMinutes = form.start_immediately
         ? getImmediateDurationMinutes(form.immediate_duration_value, form.immediate_duration_unit)
         : null;
 
-      if (!asDraft && form.voter_source === 'MANUAL' && selectedStudents.length === 0) {
+      if (!trimmedTitle) {
+        throw new Error('Escribe un titulo para la votacion');
+      }
+
+      if (candidateOptions.length < 2) {
+        throw new Error('Agrega al menos 2 opciones de voto');
+      }
+
+      if (uniqueCandidateLabels.size !== candidateOptions.length) {
+        throw new Error('Las opciones de voto no pueden repetirse');
+      }
+
+      if (form.voter_source === 'MANUAL' && selectedStudents.length === 0) {
         throw new Error('Selecciona al menos una persona del padron para una votacion manual');
       }
 
@@ -227,19 +460,19 @@ export default function CrearEleccionPage() {
         throw new Error('Selecciona una duracion valida para el inicio inmediato');
       }
 
-      if (!form.start_immediately && !asDraft) {
+      if (!form.start_immediately) {
         if (!form.start_time || !form.end_time) {
           throw new Error('Selecciona la fecha y hora de apertura y cierre');
         }
 
-        if (new Date(form.end_time) <= new Date(form.start_time)) {
+        if (!isScheduledWindowValid(form.start_time, form.end_time)) {
           throw new Error('La fecha de cierre debe ser posterior a la fecha de apertura');
         }
       }
 
       const electionData: Record<string, unknown> = {
-        title: form.title,
-        description: form.description || null,
+        title: trimmedTitle,
+        description: form.description.trim() || null,
         is_anonymous: form.is_anonymous,
         voter_source: form.voter_source,
         tag_id: form.voter_source === 'TAG' ? form.tag_id : null,
@@ -248,8 +481,8 @@ export default function CrearEleccionPage() {
       };
 
       if (!form.start_immediately) {
-        electionData.start_time = form.start_time || null;
-        electionData.end_time = form.end_time || null;
+        electionData.start_time = form.start_time;
+        electionData.end_time = form.end_time;
       }
 
       if (form.voter_source === 'FILTERED') {
@@ -265,22 +498,28 @@ export default function CrearEleccionPage() {
       });
 
       const electionId = created.id;
-      const allOptions: Array<{ label: string; option_type: string }> = options
-        .filter((option) => option.label.trim())
-        .map((option) => ({ label: option.label, option_type: 'CANDIDATE' }));
+      const allOptions: Array<{ label: string; option_type: string; description?: string }> = candidateOptions.map((option) => ({
+        label: option.label,
+        description: option.description || undefined,
+        option_type: 'CANDIDATE',
+      }));
 
-      if (includeBlank) allOptions.push({ label: 'Voto en blanco', option_type: 'BLANK' });
-      if (includeNull) allOptions.push({ label: 'Voto nulo', option_type: 'NULL_VOTE' });
+      if (includeBlank) {
+        allOptions.push({ label: 'Voto en blanco', option_type: 'BLANK' });
+      }
 
-      for (let i = 0; i < allOptions.length; i += 1) {
-        const matchingOption = options.find((option) => option.label === allOptions[i].label);
+      if (includeNull) {
+        allOptions.push({ label: 'Voto nulo', option_type: 'NULL_VOTE' });
+      }
+
+      for (let index = 0; index < allOptions.length; index += 1) {
         await apiClient(`/api/elections/${electionId}/options`, {
           method: 'POST',
           body: JSON.stringify({
-            label: allOptions[i].label,
-            option_type: allOptions[i].option_type,
-            display_order: i + 1,
-            description: matchingOption?.description || undefined,
+            label: allOptions[index].label,
+            option_type: allOptions[index].option_type,
+            display_order: index + 1,
+            description: allOptions[index].description,
           }),
         });
       }
@@ -302,12 +541,10 @@ export default function CrearEleccionPage() {
         body: JSON.stringify(populateBody),
       });
 
-      if (!asDraft) {
-        await apiClient(`/api/elections/${electionId}/status`, {
-          method: 'PUT',
-          body: JSON.stringify({ status: 'AUTO' }),
-        });
-      }
+      await apiClient(`/api/elections/${electionId}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'AUTO' }),
+      });
 
       router.push('/elecciones');
     } catch (err) {
@@ -317,287 +554,159 @@ export default function CrearEleccionPage() {
     }
   }
 
+  const candidateOptionsCount = options.filter((option) => option.label.trim()).length;
+  const scheduleIsValid = !form.start_immediately && Boolean(form.start_time && form.end_time)
+    ? isScheduledWindowValid(form.start_time, form.end_time)
+    : false;
+  const immediateSummary = formatImmediateDuration(form.immediate_duration_value, form.immediate_duration_unit);
+
+  const sectionStates: Record<SectionId, { complete: boolean; summary: string }> = {
+    informacion: {
+      complete: Boolean(form.title.trim()) && (form.start_immediately ? Boolean(immediateSummary) : scheduleIsValid),
+      summary: form.start_immediately
+        ? (immediateSummary ? `Inmediata por ${immediateSummary}` : 'Falta definir la duracion')
+        : (scheduleIsValid ? 'Programada con apertura y cierre' : 'Falta configurar el horario'),
+    },
+    votantes: {
+      complete: form.voter_source === 'MANUAL'
+        ? selectedStudents.length > 0
+        : form.voter_source === 'TAG'
+          ? Boolean(form.tag_id)
+          : true,
+      summary: getVoterSummary(form, selectedStudents),
+    },
+    opciones: {
+      complete: candidateOptionsCount >= 2,
+      summary: `${candidateOptionsCount} opcion${candidateOptionsCount === 1 ? '' : 'es'} configurada${candidateOptionsCount === 1 ? '' : 's'}`,
+    },
+    seguridad: {
+      complete: true,
+      summary: form.is_anonymous ? 'Voto anonimo activado' : 'Voto identificable',
+    },
+  };
+
+  const completionCount = SECTION_ITEMS.filter((section) => sectionStates[section.id].complete).length;
+
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <div className="overline" style={{ marginBottom: '0.75rem' }}>Nueva votacion</div>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem' }}>Crear proceso electoral</h2>
-        <p style={{ color: 'var(--muted)', marginTop: '0.25rem', fontSize: '0.875rem' }}>
-          Configura los detalles de la votacion paso a paso.
-        </p>
-      </div>
+    <div className="create-election-page">
+      <div className="card create-election-hero">
+        <div className="create-election-hero__content">
+          <div>
+            <div className="overline create-election-hero__overline">Nueva votacion</div>
+            <h2 className="create-election-hero__title">Crear proceso electoral</h2>
+            <p className="create-election-hero__description">
+              Configura toda la votacion en una sola vista. Usa la navegacion lateral para saltar entre
+              bloques sin perder contexto.
+            </p>
+          </div>
 
-      <div className="wizard-steps">
-        {STEPS.map((label, index) => {
-          const stepNum = index + 1;
-          const isActive = step === stepNum;
-          const isCompleted = step > stepNum;
-
-          return (
-            <div key={label} style={{ display: 'contents' }}>
-              {index > 0 && <div className={`wizard-step-line ${isCompleted ? 'completed' : ''}`} />}
-              <div className={`wizard-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}>
-                <div className="wizard-step-num">{isCompleted ? 'OK' : stepNum}</div>
-                <div className="wizard-step-label">{label}</div>
-              </div>
+          <div className="create-election-hero__stats">
+            <div className="create-election-hero__stat">
+              <span>Progreso</span>
+              <strong>{completionCount}/4</strong>
             </div>
-          );
-        })}
+            <div className="create-election-hero__stat">
+              <span>Opciones</span>
+              <strong>{candidateOptionsCount}</strong>
+            </div>
+            <div className="create-election-hero__stat">
+              <span>Votantes</span>
+              <strong>{form.voter_source === 'MANUAL' ? selectedStudents.length : 'Auto'}</strong>
+            </div>
+            <div className="create-election-hero__stat">
+              <span>Modalidad</span>
+              <strong>{form.start_immediately ? 'Inmediata' : 'Programada'}</strong>
+            </div>
+          </div>
+        </div>
       </div>
 
       {error && (
-        <div
-          style={{
-            padding: '0.75rem 1rem',
-            background: 'var(--error-light)',
-            border: '1px solid var(--error)',
-            borderRadius: 'var(--radius-sm)',
-            marginBottom: '1.5rem',
-            fontSize: '0.875rem',
-            color: 'var(--error)',
-          }}
-        >
+        <div className="create-election-error">
           {error}
         </div>
       )}
 
-      {step === 1 && (
-        <div className="card" style={{ padding: '2rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div className="input-group">
-              <label>Titulo de la votacion</label>
-              <input
-                type="text"
-                className="input"
-                placeholder="Ej: Eleccion Consejo Ejecutivo FITEC 2026"
-                value={form.title}
-                onChange={(event) => updateForm('title', event.target.value)}
-              />
+      <div className="create-election-layout">
+        <div className="create-election-main">
+          <section
+            id="informacion"
+            data-section-id="informacion"
+            ref={(node) => setSectionRef('informacion', node)}
+            className="card create-election-section"
+          >
+            <div className="create-election-section__header">
+              <div className="create-election-section__eyebrow">1. Informacion</div>
+              <h3 className="create-election-section__title">Define la base del proceso electoral</h3>
+              <p className="create-election-section__description">
+                Titulo, descripcion y modo de apertura. Solo eliges una modalidad: programada o inmediata.
+              </p>
             </div>
 
-            <div className="input-group">
-              <label>Descripcion (opcional)</label>
-              <input
-                type="text"
-                className="input"
-                placeholder="Ej: Postulaciones a la Vicepresidencia del Directorio..."
-                value={form.description}
-                onChange={(event) => updateForm('description', event.target.value)}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+            <div className="create-election-field-stack">
               <div className="input-group">
-                <label>Fecha y hora de apertura</label>
+                <label>Titulo de la votacion</label>
                 <input
-                  type="datetime-local"
+                  type="text"
                   className="input"
-                  value={form.start_time}
-                  disabled={form.start_immediately}
-                  onChange={(event) => updateForm('start_time', event.target.value)}
+                  placeholder="Ej: Eleccion Consejo Ejecutivo FITEC 2026"
+                  value={form.title}
+                  onChange={(event) => updateForm('title', event.target.value)}
                 />
               </div>
+
               <div className="input-group">
-                <label>Fecha y hora de cierre</label>
+                <label>Descripcion</label>
                 <input
-                  type="datetime-local"
+                  type="text"
                   className="input"
-                  value={form.end_time}
-                  disabled={form.start_immediately}
-                  onChange={(event) => updateForm('end_time', event.target.value)}
+                  placeholder="Ej: Postulaciones a la Vicepresidencia del Directorio"
+                  value={form.description}
+                  onChange={(event) => updateForm('description', event.target.value)}
                 />
               </div>
+
+              <ImmediateStartConfig
+                startTime={form.start_time}
+                endTime={form.end_time}
+                startsImmediately={form.start_immediately}
+                durationValue={form.immediate_duration_value}
+                durationUnit={form.immediate_duration_unit}
+                onChange={handleScheduleChange}
+              />
+            </div>
+          </section>
+          <section
+            id="votantes"
+            data-section-id="votantes"
+            ref={(node) => setSectionRef('votantes', node)}
+            className="card create-election-section"
+          >
+            <div className="create-election-section__header">
+              <div className="create-election-section__eyebrow">2. Votantes</div>
+              <h3 className="create-election-section__title">Define quien puede participar</h3>
+              <p className="create-election-section__description">
+                Escoge una sola estrategia para construir el padron elegible.
+              </p>
             </div>
 
-            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={form.start_immediately}
-                    onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        start_immediately: event.target.checked,
-                        immediate_duration_value: prev.immediate_duration_value || DEFAULT_IMMEDIATE_DURATION_VALUE,
-                        immediate_duration_unit: prev.immediate_duration_unit || DEFAULT_IMMEDIATE_DURATION_UNIT,
-                        start_time: event.target.checked ? '' : prev.start_time,
-                        end_time: event.target.checked ? '' : prev.end_time,
-                      }))
-                    }
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                  Iniciar cuando se cree
-                </label>
-                <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.375rem', marginLeft: '1.5rem' }}>
-                  Define una duración corta en minutos. La votación empezará al publicarse y correrá ese tiempo.
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 180px) minmax(180px, 220px)', gap: '0.75rem', alignItems: 'end' }}>
-                  <div className="input-group">
-                    <label>Duracion</label>
-                    <select
-                      className="input"
-                      value={form.immediate_duration_value}
-                      disabled={!form.start_immediately}
-                      onChange={(event) => updateForm('immediate_duration_value', event.target.value)}
-                    >
-                      {(form.immediate_duration_unit === 'minutes'
-                        ? Array.from({ length: 59 }, (_, index) => index + 1)
-                        : form.immediate_duration_unit === 'hours'
-                          ? Array.from({ length: 24 }, (_, index) => index + 1)
-                          : Array.from({ length: 30 }, (_, index) => index + 1)
-                      ).map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="input-group">
-                    <label>Unidad</label>
-                    <select
-                      className="input"
-                      value={form.immediate_duration_unit}
-                      disabled={!form.start_immediately}
-                      onChange={(event) => {
-                        const nextUnit = event.target.value as ImmediateDurationUnit;
-                        const nextOptions = nextUnit === 'minutes'
-                          ? Array.from({ length: 59 }, (_, index) => index + 1)
-                          : nextUnit === 'hours'
-                            ? Array.from({ length: 24 }, (_, index) => index + 1)
-                            : Array.from({ length: 30 }, (_, index) => index + 1);
-                        const currentValue = Number(form.immediate_duration_value);
-
-                        setForm((prev) => ({
-                          ...prev,
-                          immediate_duration_unit: nextUnit,
-                          immediate_duration_value: nextOptions.includes(currentValue)
-                            ? prev.immediate_duration_value
-                            : String(nextOptions[0]),
-                        }));
-                      }}
-                    >
-                      <option value="minutes">Minutos</option>
-                      <option value="hours">Horas</option>
-                      <option value="days">Dias</option>
-                    </select>
-                  </div>
-                </div>
-
-                {form.start_immediately && (
-                  <p style={{ fontSize: '0.75rem', color: 'var(--muted)', margin: 0 }}>
-                    La votacion se iniciara apenas se cree y tendra una duracion de{' '}
-                    {form.immediate_duration_value}{' '}
-                    {form.immediate_duration_unit === 'minutes'
-                      ? Number(form.immediate_duration_value) === 1 ? 'minuto' : 'minutos'
-                      : form.immediate_duration_unit === 'hours'
-                        ? Number(form.immediate_duration_value) === 1 ? 'hora' : 'horas'
-                        : Number(form.immediate_duration_value) === 1 ? 'dia' : 'dias'}
-                    .
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div className="card" style={{ padding: '2rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div className="input-group">
-              <label>Origen de los votantes</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <div
-                  className={`radio-label ${form.voter_source === 'FULL_PADRON' ? 'selected' : ''}`}
-                  onClick={() => setVoterSource('FULL_PADRON')}
+            <div className="create-election-choice-grid">
+              {VOTER_SOURCE_OPTIONS.map((option) => (
+                <SelectionCard
+                  key={option.value}
+                  selected={form.voter_source === option.value}
+                  badge={option.badge}
+                  title={option.title}
+                  description={option.description}
+                  onClick={() => setVoterSource(option.value)}
                 >
-                  <input
-                    type="radio"
-                    name="voter-source"
-                    checked={form.voter_source === 'FULL_PADRON'}
-                    readOnly
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Padron completo</div>
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-                      Todos los estudiantes activos del padron pueden votar.
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  className={`radio-label ${form.voter_source === 'FILTERED' ? 'selected' : ''}`}
-                  onClick={() => setVoterSource('FILTERED')}
-                >
-                  <input
-                    type="radio"
-                    name="voter-source"
-                    checked={form.voter_source === 'FILTERED'}
-                    readOnly
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Filtrar por sede o carrera</div>
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-                      Usa las carreras y sedes reales cargadas en la base de datos.
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  className={`radio-label ${form.voter_source === 'MANUAL' ? 'selected' : ''}`}
-                  onClick={() => setVoterSource('MANUAL')}
-                >
-                  <input
-                    type="radio"
-                    name="voter-source"
-                    checked={form.voter_source === 'MANUAL'}
-                    readOnly
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Seleccion manual</div>
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-                      Busca personas del padron y agregalas una por una, igual que en Admin Manager.
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  className={`radio-label ${form.voter_source === 'TAG' ? 'selected' : ''}`}
-                  onClick={() => setVoterSource('TAG')}
-                >
-                  <input
-                    type="radio"
-                    name="voter-source"
-                    checked={form.voter_source === 'TAG'}
-                    readOnly
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Tag del padrón</div>
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-                      Usa un grupo guardado de personas del padrón para definir quién puede votar.
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  {form.voter_source === option.value ? 'Seleccionado' : 'Haz clic para usar esta opcion'}
+                </SelectionCard>
+              ))}
             </div>
 
             {(form.voter_source === 'FILTERED' || form.voter_source === 'MANUAL') && (
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '1rem',
-                }}
-              >
+              <div className="create-election-field-grid">
                 <div className="input-group">
                   <label>Sede</label>
                   <select
@@ -639,27 +748,19 @@ export default function CrearEleccionPage() {
                 value={form.tag_id}
                 onChange={(tagId) => updateForm('tag_id', tagId)}
                 allowClear={false}
-                helperText="Selecciona el grupo que se usará como padrón elegible para esta votación."
+                helperText="Selecciona el grupo que se usara como padron elegible para esta votacion."
               />
             )}
 
             {form.voter_source === 'FILTERED' && (
-              <div
-                style={{
-                  padding: '0.875rem 1rem',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)',
-                  background: 'var(--surface)',
-                  fontSize: '0.8125rem',
-                  color: 'var(--muted)',
-                }}
-              >
-                Puedes combinar sede y carrera. Si dejas ambos filtros vacios, la eleccion usara el padron completo.
+              <div className="create-election-helper">
+                Puedes combinar sede y carrera. Si ambos filtros quedan vacios, la votacion usara el
+                padron completo.
               </div>
             )}
 
             {form.voter_source === 'MANUAL' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="create-election-manual-stack">
                 <div className="input-group">
                   <label>Buscar personas del padron</label>
                   <div style={{ position: 'relative' }}>
@@ -678,7 +779,7 @@ export default function CrearEleccionPage() {
                     <input
                       type="text"
                       className="input"
-                      placeholder="Nombre o carnet..."
+                      placeholder="Nombre o carnet"
                       value={manualSearch}
                       onChange={(event) => setManualSearch(event.target.value)}
                       style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
@@ -703,91 +804,46 @@ export default function CrearEleccionPage() {
                       </svg>
                     )}
                   </div>
-                  <p style={{ fontSize: '0.8125rem', color: 'var(--muted)', marginTop: '0.5rem' }}>
+                  <p className="create-election-inline-help">
                     Busca igual que en Admin Manager. Tambien puedes filtrar antes por sede o carrera.
                   </p>
                 </div>
 
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                    gap: '1rem',
-                  }}
-                >
-                  <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                    <div
-                      style={{
-                        padding: '1rem 1.25rem',
-                        borderBottom: '1px solid var(--border)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
+                <div className="create-election-results-grid">
+                  <div className="card create-election-list-card">
+                    <div className="create-election-list-card__header">
                       <div>
-                        <div style={{ fontWeight: 600 }}>Resultados</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Personas encontradas en el padron</div>
+                        <div className="create-election-list-card__title">Resultados</div>
+                        <div className="create-election-list-card__subtitle">Personas encontradas en el padron</div>
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{manualResults.length}</div>
+                      <div className="create-election-list-card__count">{manualResults.length}</div>
                     </div>
 
-                    <div style={{ minHeight: 240, maxHeight: 360, overflowY: 'auto' }}>
+                    <div className="create-election-list-card__body">
                       {manualSearch.trim().length < 2 ? (
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '2.5rem 1rem',
-                            color: 'var(--muted)',
-                            textAlign: 'center',
-                          }}
-                        >
-                          <p style={{ fontSize: '0.875rem' }}>Escribe al menos 2 caracteres para buscar</p>
+                        <div className="create-election-empty-state">
+                          <p>Escribe al menos 2 caracteres para buscar</p>
                         </div>
                       ) : manualResults.length === 0 && !manualSearching ? (
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '2.5rem 1rem',
-                            color: 'var(--muted)',
-                            textAlign: 'center',
-                          }}
-                        >
-                          <p style={{ fontSize: '0.875rem' }}>No se encontraron estudiantes</p>
-                          <p style={{ fontSize: '0.75rem', color: 'var(--muted-light)' }}>
-                            Ajusta la busqueda o cambia los filtros
+                        <div className="create-election-empty-state">
+                          <p>No se encontraron estudiantes</p>
+                          <p className="create-election-empty-state__sub">
+                            Ajusta la busqueda o cambia los filtros.
                           </p>
                         </div>
                       ) : (
                         manualResults.map((student) => (
-                          <div
-                            key={student.id}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: '0.75rem',
-                              padding: '0.875rem 1.25rem',
-                              borderBottom: '1px solid var(--border)',
-                            }}
-                          >
+                          <div key={student.id} className="create-election-person-row">
                             <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{student.full_name}</div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                                {student.carnet}
-                              </div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--muted-light)' }}>
-                                {student.sede} · {student.career}
+                              <div className="create-election-person-row__name">{student.full_name}</div>
+                              <div className="create-election-person-row__meta">{student.carnet}</div>
+                              <div className="create-election-person-row__submeta">
+                                {student.sede} | {student.career}
                               </div>
                             </div>
 
                             <button
+                              type="button"
                               className="btn btn-accent btn-sm"
                               onClick={() => addManualStudent(student)}
                               style={{ flexShrink: 0 }}
@@ -804,64 +860,35 @@ export default function CrearEleccionPage() {
                     </div>
                   </div>
 
-                  <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                    <div
-                      style={{
-                        padding: '1rem 1.25rem',
-                        borderBottom: '1px solid var(--border)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
+                  <div className="card create-election-list-card">
+                    <div className="create-election-list-card__header">
                       <div>
-                        <div style={{ fontWeight: 600 }}>Seleccionadas</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                          Personas que podran ver y votar esta eleccion
+                        <div className="create-election-list-card__title">Seleccionadas</div>
+                        <div className="create-election-list-card__subtitle">
+                          Personas que podran votar en esta eleccion
                         </div>
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{selectedStudents.length}</div>
+                      <div className="create-election-list-card__count">{selectedStudents.length}</div>
                     </div>
 
-                    <div style={{ minHeight: 240, maxHeight: 360, overflowY: 'auto' }}>
+                    <div className="create-election-list-card__body">
                       {selectedStudents.length === 0 ? (
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '2.5rem 1rem',
-                            color: 'var(--muted)',
-                            textAlign: 'center',
-                          }}
-                        >
-                          <p style={{ fontSize: '0.875rem' }}>Todavia no has agregado personas</p>
-                          <p style={{ fontSize: '0.75rem', color: 'var(--muted-light)' }}>
-                            Usa la busqueda para seleccionar votantes individuales
+                        <div className="create-election-empty-state">
+                          <p>Todavia no has agregado personas</p>
+                          <p className="create-election-empty-state__sub">
+                            Usa la busqueda para seleccionar votantes individuales.
                           </p>
                         </div>
                       ) : (
                         selectedStudents.map((student) => (
-                          <div
-                            key={student.id}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: '0.75rem',
-                              padding: '0.875rem 1.25rem',
-                              borderBottom: '1px solid var(--border)',
-                            }}
-                          >
+                          <div key={student.id} className="create-election-person-row">
                             <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{student.full_name}</div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                                {student.carnet}
-                              </div>
+                              <div className="create-election-person-row__name">{student.full_name}</div>
+                              <div className="create-election-person-row__meta">{student.carnet}</div>
                             </div>
 
                             <button
+                              type="button"
                               className="btn btn-ghost btn-sm"
                               onClick={() => removeManualStudent(student.id)}
                               style={{ color: 'var(--error)', flexShrink: 0 }}
@@ -876,156 +903,197 @@ export default function CrearEleccionPage() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div className="card" style={{ padding: '2rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div className="input-group">
-              <label>Opciones de voto</label>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--muted)', marginBottom: '0.75rem' }}>
-                Agrega las opciones que apareceran en la boleta.
+          </section>
+          <section
+            id="opciones"
+            data-section-id="opciones"
+            ref={(node) => setSectionRef('opciones', node)}
+            className="card create-election-section"
+          >
+            <div className="create-election-section__header">
+              <div className="create-election-section__eyebrow">3. Opciones</div>
+              <h3 className="create-election-section__title">Construye la boleta</h3>
+              <p className="create-election-section__description">
+                Agrega las opciones de voto y activa las variantes especiales si las necesitas.
               </p>
+            </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {options.map((option, index) => (
-                  <div key={index} className="option-row">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 600, width: 20 }}>
-                        {index + 1}
-                      </span>
-                      <input
-                        type="text"
-                        className="input"
-                        placeholder="Nombre candidato"
-                        value={option.label}
-                        onChange={(event) => updateOption(index, 'label', event.target.value)}
-                        style={{ flex: 1 }}
-                      />
-                      <input
-                        type="text"
-                        className="input"
-                        placeholder="Descripcion (Opcional)"
-                        value={option.description}
-                        onChange={(event) => updateOption(index, 'description', event.target.value)}
-                        style={{ flex: 2 }}
-                      />
-                    </div>
-
+            <div className="create-election-option-stack">
+              {options.map((option, index) => (
+                <div key={option.id} className="create-election-option-card">
+                  <div className="create-election-option-card__header">
+                    <div className="create-election-option-card__index">Opcion {index + 1}</div>
                     {options.length > 2 && (
                       <button
-                        className="btn btn-ghost"
+                        type="button"
+                        className="btn btn-ghost btn-sm"
                         onClick={() => removeOption(index)}
-                        style={{ width: 28, height: 28, color: 'var(--muted)', padding: 0 }}
+                        style={{ color: 'var(--muted)' }}
                       >
-                        X
+                        Quitar
                       </button>
                     )}
                   </div>
-                ))}
+
+                  <div className="create-election-field-grid">
+                    <div className="input-group">
+                      <label>Nombre</label>
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="Ej: Candidatura A"
+                        value={option.label}
+                        onChange={(event) => updateOption(index, 'label', event.target.value)}
+                      />
+                    </div>
+
+                    <div className="input-group">
+                      <label>Descripcion</label>
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="Descripcion corta opcional"
+                        value={option.description}
+                        onChange={(event) => updateOption(index, 'description', event.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={addOption}
+              style={{ alignSelf: 'flex-start' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Agregar opcion
+            </button>
+
+            <div className="create-election-toggle-grid">
+              <ToggleCard
+                checked={includeBlank}
+                title='Incluir "Voto en blanco"'
+                description="Agrega una alternativa explicita para emitir voto en blanco."
+                onChange={setIncludeBlank}
+              />
+              <ToggleCard
+                checked={includeNull}
+                title='Incluir "Voto nulo"'
+                description="Agrega una opcion para contemplar votos anulados en la boleta."
+                onChange={setIncludeNull}
+              />
+            </div>
+          </section>
+
+          <section
+            id="seguridad"
+            data-section-id="seguridad"
+            ref={(node) => setSectionRef('seguridad', node)}
+            className="card create-election-section"
+          >
+            <div className="create-election-section__header">
+              <div className="create-election-section__eyebrow">4. Seguridad</div>
+              <h3 className="create-election-section__title">Ajusta privacidad y escrutinio</h3>
+              <p className="create-election-section__description">
+                Mantiene visible la configuracion sensible de la votacion antes de publicarla.
+              </p>
+            </div>
+
+            <div className="create-election-toggle-grid">
+              <ToggleCard
+                checked={form.is_anonymous}
+                title="Voto anonimo"
+                description="Separa criptograficamente la identidad del votante del voto emitido."
+                onChange={(checked) => updateForm('is_anonymous', checked)}
+              />
+              <ToggleCard
+                checked={requiresKeys}
+                title="Requiere llaves de escrutinio"
+                description="Los resultados se revelan cuando se alcanzan las llaves necesarias."
+                onChange={setRequiresKeys}
+              />
+            </div>
+          </section>
+
+          <div className="card create-election-submit-card">
+            <div>
+              <div className="create-election-submit-card__title">Listo para crear la votacion</div>
+              <div className="create-election-submit-card__description">
+                Revisa el resumen lateral. Si algo falta, salta al bloque correspondiente y ajustalo.
               </div>
-
-              <button className="btn btn-outline btn-sm" onClick={addOption} style={{ marginTop: '0.75rem', alignSelf: 'flex-start' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Agregar opcion
-              </button>
             </div>
-
-            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-              <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={includeBlank}
-                  onChange={(event) => setIncludeBlank(event.target.checked)}
-                  style={{ accentColor: 'var(--accent)' }}
-                />
-                Incluir &quot;Voto en blanco&quot;
-              </label>
-              <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={includeNull}
-                  onChange={(event) => setIncludeNull(event.target.checked)}
-                  style={{ accentColor: 'var(--accent)' }}
-                />
-                Incluir &quot;Voto nulo&quot;
-              </label>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {step === 4 && (
-        <div className="card" style={{ padding: '2rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div>
-              <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={form.is_anonymous}
-                  onChange={(event) => updateForm('is_anonymous', event.target.checked)}
-                  style={{ accentColor: 'var(--accent)' }}
-                />
-                Voto anonimo (secreto)
-              </label>
-              <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.375rem', marginLeft: '1.5rem' }}>
-                El voto se separa criptograficamente de la identidad del votante.
-              </p>
-            </div>
-
-            <div>
-              <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={requiresKeys}
-                  onChange={(event) => setRequiresKeys(event.target.checked)}
-                  style={{ accentColor: 'var(--accent)' }}
-                />
-                Requiere llaves de escrutinio
-              </label>
-              <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.375rem', marginLeft: '1.5rem' }}>
-                Los resultados solo se revelan cuando la mayoria del directorio ingresa su llave.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem' }}>
-        <div>
-          {step === 1 ? (
-            <button className="btn btn-outline" onClick={() => handleSubmit(true)} disabled={saving || !form.title.trim()}>
-              Guardar como borrador
-            </button>
-          ) : (
-            <button className="btn btn-outline" onClick={prevStep}>
-              Anterior
-            </button>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          {step > 1 && (
-            <button className="btn btn-outline" onClick={() => handleSubmit(true)} disabled={saving || !form.title.trim()}>
-              Guardar como borrador
-            </button>
-          )}
-
-          {step < 4 ? (
-            <button className="btn btn-accent" onClick={nextStep} disabled={step === 1 && !form.title.trim()}>
-              Siguiente
-            </button>
-          ) : (
-            <button className="btn btn-accent" onClick={() => handleSubmit(false)} disabled={saving}>
+            <button type="button" className="btn btn-accent" onClick={handleSubmit} disabled={saving}>
               {saving ? 'Creando...' : 'Crear votacion'}
             </button>
-          )}
+          </div>
         </div>
+
+        <aside className="create-election-sidebar">
+          <div className="card create-election-sidebar-card">
+            <div className="create-election-sidebar-card__header">
+              <div className="overline">Navegacion</div>
+              <p>Salta a cualquier bloque del formulario.</p>
+            </div>
+
+            <div className="create-election-nav-list">
+              {SECTION_ITEMS.map((section, index) => (
+                <button
+                  key={section.id}
+                  type="button"
+                  className={`create-election-nav-item ${activeSection === section.id ? 'active' : ''} ${sectionStates[section.id].complete ? 'complete' : ''}`}
+                  onClick={() => scrollToSection(section.id)}
+                >
+                  <div className="create-election-nav-item__index">
+                    {sectionStates[section.id].complete ? 'OK' : index + 1}
+                  </div>
+                  <div className="create-election-nav-item__copy">
+                    <div className="create-election-nav-item__label">{section.label}</div>
+                    <div className="create-election-nav-item__description">{section.description}</div>
+                    <div className="create-election-nav-item__summary">{sectionStates[section.id].summary}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="card create-election-sidebar-card">
+            <div className="create-election-sidebar-card__header">
+              <div className="overline">Resumen</div>
+              <p>Estado actual de la configuracion.</p>
+            </div>
+
+            <div className="create-election-summary-list">
+              <div className="create-election-summary-item">
+                <span>Titulo</span>
+                <strong>{form.title.trim() || 'Pendiente'}</strong>
+              </div>
+              <div className="create-election-summary-item">
+                <span>Horario</span>
+                <strong>{sectionStates.informacion.summary}</strong>
+              </div>
+              <div className="create-election-summary-item">
+                <span>Padron</span>
+                <strong>{sectionStates.votantes.summary}</strong>
+              </div>
+              <div className="create-election-summary-item">
+                <span>Boleta</span>
+                <strong>
+                  {candidateOptionsCount} opcion{candidateOptionsCount === 1 ? '' : 'es'}
+                </strong>
+              </div>
+              <div className="create-election-summary-item">
+                <span>Privacidad</span>
+                <strong>{form.is_anonymous ? 'Anonima' : 'No anonima'}</strong>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );

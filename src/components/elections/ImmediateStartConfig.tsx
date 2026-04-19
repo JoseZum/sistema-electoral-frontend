@@ -69,107 +69,125 @@ export default function ImmediateStartConfig({
   const summary = formatImmediateDuration(durationValue, durationUnit);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-        <div className="input-group">
-          <label>Fecha y hora de apertura</label>
-          <input
-            type="datetime-local"
-            className="input"
-            value={startTime}
-            onChange={(event) => onChange({ startTime: event.target.value })}
-            disabled={startsImmediately}
-          />
-        </div>
-        <div className="input-group">
-          <label>Fecha y hora de cierre</label>
-          <input
-            type="datetime-local"
-            className="input"
-            value={endTime}
-            onChange={(event) => onChange({ endTime: event.target.value })}
-            disabled={startsImmediately}
-          />
+    <div className="schedule-mode-grid">
+      <div className={`schedule-mode-card ${!startsImmediately ? 'selected' : ''}`}>
+        <button
+          type="button"
+          className="schedule-mode-card__select"
+          onClick={() => onChange({ startsImmediately: false })}
+          aria-pressed={!startsImmediately}
+        >
+          <div className="schedule-mode-card__header">
+            <div>
+              <div className="schedule-mode-card__eyebrow">Programada</div>
+              <div className="schedule-mode-card__title">Elegir apertura y cierre</div>
+            </div>
+            <span className="schedule-mode-card__indicator" aria-hidden="true" />
+          </div>
+          <p className="schedule-mode-card__description">
+            Define una ventana exacta para abrir y cerrar la votacion.
+          </p>
+        </button>
+
+        <div className="schedule-mode-card__body">
+          <div className="create-election-field-grid">
+            <div className="input-group">
+              <label>Fecha y hora de apertura</label>
+              <input
+                type="datetime-local"
+                className="input"
+                value={startTime}
+                onChange={(event) => onChange({ startTime: event.target.value })}
+                disabled={startsImmediately}
+              />
+            </div>
+            <div className="input-group">
+              <label>Fecha y hora de cierre</label>
+              <input
+                type="datetime-local"
+                className="input"
+                value={endTime}
+                onChange={(event) => onChange({ endTime: event.target.value })}
+                disabled={startsImmediately}
+              />
+            </div>
+          </div>
+          <p className="schedule-mode-card__summary">
+            {!startsImmediately
+              ? 'La votacion seguira el calendario que definas en estos campos.'
+              : 'Selecciona esta card si necesitas programar la apertura y el cierre.'}
+          </p>
         </div>
       </div>
 
-      <div
-        style={{
-          padding: '1rem 1.1rem',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-md)',
-          background: startsImmediately ? 'var(--accent-light)' : 'var(--surface)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.75rem',
-        }}
-      >
-        <label
-          style={{
-            fontSize: '0.8125rem',
-            fontWeight: 600,
-            color: 'var(--ink-soft)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
+      <div className={`schedule-mode-card ${startsImmediately ? 'selected' : ''}`}>
+        <button
+          type="button"
+          className="schedule-mode-card__select"
+          onClick={() => onChange({ startsImmediately: true })}
+          aria-pressed={startsImmediately}
         >
-          <input
-            type="checkbox"
-            checked={startsImmediately}
-            onChange={(event) => onChange({ startsImmediately: event.target.checked })}
-            style={{ accentColor: 'var(--accent)' }}
-          />
-          Iniciar cuando se cree
-        </label>
+          <div className="schedule-mode-card__header">
+            <div>
+              <div className="schedule-mode-card__eyebrow">Rapida</div>
+              <div className="schedule-mode-card__title">Iniciar cuando se cree</div>
+            </div>
+            <span className="schedule-mode-card__indicator" aria-hidden="true" />
+          </div>
+          <p className="schedule-mode-card__description">
+            Util para votaciones express que deben abrirse en cuanto se publiquen.
+          </p>
+        </button>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 180px) minmax(180px, 220px)', gap: '0.75rem', alignItems: 'end' }}>
-          <div className="input-group">
-            <label>Duracion</label>
-            <select
-              className="input"
-              value={durationValue}
-              onChange={(event) => onChange({ durationValue: event.target.value })}
-              disabled={!startsImmediately}
-            >
-              {options.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+        <div className="schedule-mode-card__body">
+          <div className="create-election-field-grid">
+            <div className="input-group">
+              <label>Duracion</label>
+              <select
+                className="input"
+                value={durationValue}
+                onChange={(event) => onChange({ durationValue: event.target.value })}
+                disabled={!startsImmediately}
+              >
+                {options.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="input-group">
+              <label>Unidad</label>
+              <select
+                className="input"
+                value={durationUnit}
+                onChange={(event) => {
+                  const nextUnit = event.target.value as ImmediateDurationUnit;
+                  const nextOptions = DURATION_OPTIONS[nextUnit];
+                  const currentValue = Number(durationValue);
+                  const nextValue = nextOptions.includes(currentValue) ? durationValue : String(nextOptions[0]);
+
+                  onChange({
+                    durationUnit: nextUnit,
+                    durationValue: nextValue,
+                  });
+                }}
+                disabled={!startsImmediately}
+              >
+                <option value="minutes">Minutos</option>
+                <option value="hours">Horas</option>
+                <option value="days">Dias</option>
+              </select>
+            </div>
           </div>
 
-          <div className="input-group">
-            <label>Unidad</label>
-            <select
-              className="input"
-              value={durationUnit}
-              onChange={(event) => {
-                const nextUnit = event.target.value as ImmediateDurationUnit;
-                const nextOptions = DURATION_OPTIONS[nextUnit];
-                const currentValue = Number(durationValue);
-                const nextValue = nextOptions.includes(currentValue) ? durationValue : String(nextOptions[0]);
-
-                onChange({
-                  durationUnit: nextUnit,
-                  durationValue: nextValue,
-                });
-              }}
-              disabled={!startsImmediately}
-            >
-              <option value="minutes">Minutos</option>
-              <option value="hours">Horas</option>
-              <option value="days">Dias</option>
-            </select>
-          </div>
+          <p className="schedule-mode-card__summary">
+            {startsImmediately && summary
+              ? `La votacion se iniciara apenas se cree y durara ${summary}.`
+              : 'Selecciona esta opcion si la votacion debe iniciar de inmediato.'}
+          </p>
         </div>
-
-        <p style={{ fontSize: '0.75rem', color: 'var(--muted)', margin: 0 }}>
-          {startsImmediately && summary
-            ? `La votacion se iniciara apenas se cree y tendra una duracion de ${summary}.`
-            : 'Si activas esta opcion, la votacion se abrira al publicarse y correra por la duracion seleccionada.'}
-        </p>
       </div>
     </div>
   );
