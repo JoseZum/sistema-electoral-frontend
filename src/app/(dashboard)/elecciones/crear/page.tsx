@@ -3,14 +3,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
+import TagSelector from '@/components/tags/TagSelector';
 
 interface ElectionForm {
   title: string;
   description: string;
   is_anonymous: boolean;
-  voter_source: 'FULL_PADRON' | 'FILTERED' | 'MANUAL';
+  voter_source: 'FULL_PADRON' | 'FILTERED' | 'MANUAL' | 'TAG';
   voter_filter_sede: string;
   voter_filter_career: string;
+  tag_id: string | null;
+  start_immediately: boolean;
+  immediate_minutes: string;
   start_time: string;
   end_time: string;
 }
@@ -61,6 +65,9 @@ export default function CrearEleccionPage() {
     voter_source: 'FULL_PADRON',
     voter_filter_sede: '',
     voter_filter_career: '',
+    tag_id: null,
+    start_immediately: false,
+    immediate_minutes: '',
     start_time: '',
     end_time: '',
   });
@@ -162,6 +169,9 @@ export default function CrearEleccionPage() {
   function setVoterSource(source: ElectionForm['voter_source']) {
     setError(null);
     updateForm('voter_source', source);
+    if (source !== 'TAG') {
+      updateForm('tag_id', null);
+    }
   }
 
   function addOption() {
@@ -201,14 +211,31 @@ export default function CrearEleccionPage() {
         throw new Error('Selecciona al menos una persona del padron para una votacion manual');
       }
 
+      if (form.voter_source === 'TAG' && !form.tag_id) {
+        throw new Error('Selecciona una tag para la votacion');
+      }
+
+      if (form.start_immediately) {
+        const minutes = Number(form.immediate_minutes);
+        if (!Number.isInteger(minutes) || minutes <= 0 || minutes > 1440) {
+          throw new Error('Indica cuantos minutos durara la votacion inmediata');
+        }
+      }
+
       const electionData: Record<string, unknown> = {
         title: form.title,
         description: form.description || null,
         is_anonymous: form.is_anonymous,
         voter_source: form.voter_source,
-        start_time: form.start_time || null,
-        end_time: form.end_time || null,
+        tag_id: form.voter_source === 'TAG' ? form.tag_id : null,
+        starts_immediately: form.start_immediately,
+        immediate_minutes: form.start_immediately ? Number(form.immediate_minutes) : null,
       };
+
+      if (!form.start_immediately) {
+        electionData.start_time = form.start_time || null;
+        electionData.end_time = form.end_time || null;
+      }
 
       if (form.voter_source === 'FILTERED') {
         const filter: Record<string, string> = {};
@@ -250,6 +277,9 @@ export default function CrearEleccionPage() {
       }
       if (form.voter_source === 'MANUAL') {
         populateBody.student_ids = selectedStudents.map((student) => student.id);
+      }
+      if (form.voter_source === 'TAG' && form.tag_id) {
+        populateBody.tag_id = form.tag_id;
       }
 
       await apiClient(`/api/elections/${electionId}/voters/populate`, {
@@ -348,6 +378,7 @@ export default function CrearEleccionPage() {
                   type="datetime-local"
                   className="input"
                   value={form.start_time}
+                  disabled={form.start_immediately}
                   onChange={(event) => updateForm('start_time', event.target.value)}
                 />
               </div>
@@ -357,7 +388,47 @@ export default function CrearEleccionPage() {
                   type="datetime-local"
                   className="input"
                   value={form.end_time}
+                  disabled={form.start_immediately}
                   onChange={(event) => updateForm('end_time', event.target.value)}
+                />
+              </div>
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.start_immediately}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        start_immediately: event.target.checked,
+                        immediate_minutes: event.target.checked ? prev.immediate_minutes : '',
+                        start_time: event.target.checked ? '' : prev.start_time,
+                        end_time: event.target.checked ? '' : prev.end_time,
+                      }))
+                    }
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                  Iniciar cuando se cree
+                </label>
+                <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.375rem', marginLeft: '1.5rem' }}>
+                  Define una duración corta en minutos. La votación empezará al publicarse y correrá ese tiempo.
+                </p>
+              </div>
+
+              <div className="input-group" style={{ maxWidth: 240 }}>
+                <label>Minutos de inicio inmediato</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="1440"
+                  className="input"
+                  placeholder="15"
+                  value={form.immediate_minutes}
+                  disabled={!form.start_immediately}
+                  onChange={(event) => updateForm('immediate_minutes', event.target.value)}
                 />
               </div>
             </div>
@@ -427,6 +498,25 @@ export default function CrearEleccionPage() {
                     </div>
                   </div>
                 </div>
+
+                <div
+                  className={`radio-label ${form.voter_source === 'TAG' ? 'selected' : ''}`}
+                  onClick={() => setVoterSource('TAG')}
+                >
+                  <input
+                    type="radio"
+                    name="voter-source"
+                    checked={form.voter_source === 'TAG'}
+                    readOnly
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Tag del padrón</div>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
+                      Usa un grupo guardado de personas del padrón para definir quién puede votar.
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -472,6 +562,15 @@ export default function CrearEleccionPage() {
                   </select>
                 </div>
               </div>
+            )}
+
+            {form.voter_source === 'TAG' && (
+              <TagSelector
+                value={form.tag_id}
+                onChange={(tagId) => updateForm('tag_id', tagId)}
+                allowClear={false}
+                helperText="Selecciona el grupo que se usará como padrón elegible para esta votación."
+              />
             )}
 
             {form.voter_source === 'FILTERED' && (

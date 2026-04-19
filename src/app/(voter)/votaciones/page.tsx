@@ -43,88 +43,129 @@ function useCountdown(endTime: string | null) {
 
 function ElectionCard({ election }: { election: VoterElection }) {
   const router = useRouter();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { text: countdown, urgency } = useCountdown(
     election.status === 'OPEN' ? election.end_time : null
   );
 
-  const isOpen = election.status === 'OPEN';
+  const isActive = election.status === 'OPEN';
   const isScheduled = election.status === 'SCHEDULED';
+  const canVote = isActive && !election.has_voted;
 
   function getScheduledText() {
-    if (!election.start_time) return 'Proximamente';
+    if (!election.start_time) return 'Próximamente';
     const diff = new Date(election.start_time).getTime() - Date.now();
     const days = Math.ceil(diff / 86_400_000);
     if (days <= 0) return 'Pronto';
-    return `${days} dia${days !== 1 ? 's' : ''}`;
+    return `En ${days} día${days !== 1 ? 's' : ''}`;
   }
+
+  const handleBookClick = () => {
+    if (!isActive) return;
+    const isTouchDevice = typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches;
+    if (isTouchDevice) {
+      setMobileOpen(prev => !prev);
+    } else if (canVote) {
+      router.push(`/votaciones/${election.id}`);
+    }
+  };
+
+  const handleVote = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (canVote) router.push(`/votaciones/${election.id}`);
+  };
+
+  const year = election.end_time
+    ? new Date(election.end_time).getFullYear()
+    : new Date().getFullYear();
 
   return (
     <div
-      className={`election-card ${isScheduled ? 'scheduled' : ''}`}
-      onClick={() => {
-        if (isOpen && !election.has_voted) {
-          router.push(`/votaciones/${election.id}`);
-        }
-      }}
+      className={`book-card${mobileOpen ? ' book-card--open' : ''}${!isActive ? ' book-card--disabled' : ''}`}
+      onClick={handleBookClick}
+      role={isActive ? 'button' : undefined}
+      tabIndex={canVote ? 0 : undefined}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleBookClick(); } }}
+      aria-label={canVote ? `Votar en: ${election.title}` : election.title}
     >
-      <div className="election-card-body">
-        <div className="election-card-header">
-          <div>
-            <h3 style={{ fontFamily: 'var(--font-display)' }}>{election.title}</h3>
-            {election.description && (
-              <p className="election-card-desc">{election.description}</p>
-            )}
+      {/* Interior – parchment page visible behind the cover */}
+      <div className="book-card__interior">
+        <div className="book-card__chapter">§ Convocatoria Electoral</div>
+        <h4 className="book-card__inner-title">{election.title}</h4>
+        {election.description && (
+          <p className="book-card__inner-desc">{election.description}</p>
+        )}
+        <div className="book-card__divider" />
+        {isActive && (
+          <div className="book-card__countdown">
+            <span className="book-card__countdown-label">Cierra en</span>
+            <span className={`book-card__countdown-time ${urgency}`}>{countdown}</span>
           </div>
-          <div className={`status-light ${isOpen ? 'active' : isScheduled ? 'scheduled' : 'closed'}`}>
-            <div className="status-light-dots">
-              <span className="status-light-dot" />
-              <span className="status-light-dot" />
-              <span className="status-light-dot" />
-            </div>
-            {isOpen ? 'Activo' : isScheduled ? 'Programado' : 'Cerrado'}
+        )}
+        {isScheduled && (
+          <div className="book-card__countdown">
+            <span className="book-card__countdown-label">Abre</span>
+            <span className="book-card__countdown-time">{getScheduledText()}</span>
           </div>
-        </div>
-      </div>
-      <div className="election-card-footer">
-          <div className="election-countdown">
-          <div className={`countdown-icon ${isOpen ? urgency : 'scheduled'}`}>
-            {isOpen ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-            )}
-          </div>
-          <div className="countdown-text">
-            <span className="countdown-label">{isOpen ? 'Cierra en' : 'Abre en'}</span>
-            <span className={`countdown-time ${isOpen ? urgency : 'scheduled'}`}>
-              {isOpen ? countdown : getScheduledText()}
-            </span>
-          </div>
-        </div>
-
-        {isOpen && !election.has_voted ? (
-          <button className="election-vote-btn">
-            Votar
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        )}
+        {canVote ? (
+          <button className="book-card__vote-btn" onClick={handleVote}>
+            Emitir voto
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
             </svg>
           </button>
-        ) : isOpen && election.has_voted ? (
-          <span className="badge badge-dot badge-open" style={{ fontSize: '0.8125rem' }}>Ya votaste</span>
-        ) : (
-          <button className="election-vote-btn" disabled>
-            Proximamente
-          </button>
+        ) : isActive ? (
+          <div className="book-card__voted">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Voto registrado
+          </div>
+        ) : null}
+      </div>
+
+      {/* Cover – rotates away on hover (desktop) or tap (mobile) */}
+      <div className="book-card__cover">
+        <div className="book-card__spine" />
+        <div className="book-card__cover-content">
+          {/* Institutional seal */}
+          <div className="book-card__seal">
+            <svg viewBox="0 0 60 60" width="48" height="48" fill="none">
+              <circle cx="30" cy="30" r="26" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 2.5"/>
+              <circle cx="30" cy="30" r="19" stroke="currentColor" strokeWidth="1"/>
+              <line x1="30" y1="15" x2="30" y2="45" stroke="currentColor" strokeWidth="1.5"/>
+              <line x1="15" y1="30" x2="45" y2="30" stroke="currentColor" strokeWidth="1.5"/>
+              <circle cx="30" cy="30" r="4" fill="currentColor"/>
+            </svg>
+          </div>
+          <div className="book-card__cover-title">{election.title}</div>
+          <div className="book-card__cover-rule" />
+          {isActive && !election.has_voted && (
+            <div className="book-card__active-badge">
+              <span className="book-card__pulse-dot" />
+              Votación Activa
+            </div>
+          )}
+          {election.has_voted && (
+            <div className="book-card__voted-badge">✓ Voto Emitido</div>
+          )}
+          {isScheduled && (
+            <div className="book-card__scheduled-badge">{getScheduledText()}</div>
+          )}
+        </div>
+
+        {/* Desktop: hint fades in on hover */}
+        {canVote && <div className="book-card__hover-hint">Abrir para votar →</div>}
+        {/* Mobile: always visible */}
+        {canVote && (
+          <div className="book-card__tap-hint">
+            {mobileOpen ? '↑ Toca Emitir Voto' : 'Toca para abrir'}
+          </div>
         )}
+
+        <div className="book-card__cover-footer">Sistema Electoral · {year}</div>
       </div>
     </div>
   );
@@ -201,14 +242,16 @@ export default function VotacionesPage() {
           <p>No tienes votaciones activas en este momento.</p>
         </div>
       ) : (
-        elections.map((election, i) => (
-          <div
-            key={election.id}
-            style={{ opacity: 0, animation: `fadeInUp 0.5s var(--ease-out) ${0.1 + i * 0.1}s forwards` }}
-          >
-            <ElectionCard election={election} />
-          </div>
-        ))
+        <div className="book-shelf">
+          {elections.map((election, i) => (
+            <div
+              key={election.id}
+              style={{ opacity: 0, animation: `fadeInUp 0.5s var(--ease-out) ${0.1 + i * 0.1}s forwards` }}
+            >
+              <ElectionCard election={election} />
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

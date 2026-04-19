@@ -5,8 +5,16 @@ export interface Election {
   status: 'DRAFT' | 'SCHEDULED' | 'OPEN' | 'CLOSED' | 'SCRUTINIZED' | 'ARCHIVED';
   is_anonymous: boolean;
   auth_method: 'MICROSOFT';
-  voter_source: 'FULL_PADRON' | 'FILTERED' | 'MANUAL';
+  requires_keys: boolean;
+  min_keys: number;
+  voter_source: 'FULL_PADRON' | 'FILTERED' | 'MANUAL' | 'TAG';
   voter_filter: Record<string, unknown> | null;
+  tag_id: string | null;
+  tag_name: string | null;
+  tag_description: string | null;
+  tag_member_count: number | null;
+  starts_immediately: boolean;
+  immediate_minutes: number | null;
   start_time: string | null;
   end_time: string | null;
   created_by: string | null;
@@ -51,6 +59,7 @@ export interface VoterElection {
   description: string | null;
   status: string;
   is_anonymous: boolean;
+  tag_name: string | null;
   start_time: string | null;
   end_time: string | null;
   has_voted: boolean;
@@ -63,6 +72,7 @@ export interface VoterElectionDetail {
   description: string | null;
   status: string;
   is_anonymous: boolean;
+  tag_name: string | null;
   start_time: string | null;
   end_time: string | null;
   has_voted: boolean;

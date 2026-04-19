@@ -96,6 +96,16 @@ const sections: NavSection[] = [
         ),
       },
       {
+        label: 'Tags',
+        href: '/tags',
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20.59 13.41L11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82z" />
+            <circle cx="7.5" cy="7.5" r="1.5" />
+          </svg>
+        ),
+      },
+      {
         label: 'Cargar padron',
         href: '/padron/cargar',
         icon: (

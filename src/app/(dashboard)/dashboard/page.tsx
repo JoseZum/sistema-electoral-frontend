@@ -70,6 +70,8 @@ const RESOURCE_LABELS: Record<string, { label: string; color: string; bg: string
   election: { label: 'Eleccion', color: '#7c3aed', bg: '#f5f3ff' },
   election_option: { label: 'Opcion', color: '#7c3aed', bg: '#f5f3ff' },
   election_voter: { label: 'Votante', color: '#0891b2', bg: '#ecfeff' },
+  tag: { label: 'Tag', color: '#b45309', bg: 'var(--warning-light)' },
+  tag_member: { label: 'Tag', color: '#b45309', bg: 'var(--warning-light)' },
   vote: { label: 'Voto', color: 'var(--success)', bg: 'var(--success-light)' },
   scrutiny_key: { label: 'Llave', color: '#d97706', bg: 'var(--warning-light)' },
   padron: { label: 'Padron', color: '#64748b', bg: '#f8fafc' },

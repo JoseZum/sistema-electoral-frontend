@@ -35,6 +35,13 @@ const STATUS_BADGE: Record<string, string> = {
   ARCHIVED: 'badge-archived',
 };
 
+const VOTER_SOURCE_LABELS: Record<Election['voter_source'], string> = {
+  FULL_PADRON: 'Padron completo',
+  FILTERED: 'Filtrado',
+  MANUAL: 'Seleccion manual',
+  TAG: 'Tag guardada',
+};
+
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '-';
   return new Date(dateStr).toLocaleDateString('es-CR', {
@@ -243,7 +250,17 @@ export default function EleccionesPage() {
 
                 return (
                   <tr key={election.id} className="table-row-enter" style={{ animationDelay: `${0.05 * (index + 1)}s` }}>
-                    <td style={{ fontWeight: 500, color: 'var(--ink)' }}>{election.title}</td>
+                    <td>
+                      <div style={{ fontWeight: 500, color: 'var(--ink)' }}>{election.title}</div>
+                      {(election.tag_name || election.starts_immediately) && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.3rem' }}>
+                          {election.tag_name ? `Tag: ${election.tag_name}` : 'Sin tag'}
+                          {election.starts_immediately && election.immediate_minutes
+                            ? ` · Inicio inmediato: ${election.immediate_minutes} min`
+                            : ''}
+                        </div>
+                      )}
+                    </td>
                     <td>
                       <span className={`badge badge-dot ${STATUS_BADGE[election.status]}`}>
                         {STATUS_LABELS[election.status]}
@@ -358,6 +375,38 @@ export default function EleccionesPage() {
                         disabled={!canEditElectionFields || saving}
                         onChange={(event) => setEditor((prev) => prev ? { ...prev, end_time: event.target.value } : prev)}
                       />
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: '1rem',
+                      padding: '1rem',
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'var(--surface)',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                      gap: '0.75rem 1rem',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Origen de votantes</div>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{VOTER_SOURCE_LABELS[selectedElection.voter_source]}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Tag asociada</div>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                        {selectedElection.tag_name || 'Sin tag'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Inicio al crear</div>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                        {selectedElection.starts_immediately && selectedElection.immediate_minutes
+                          ? `${selectedElection.immediate_minutes} minutos`
+                          : 'No configurado'}
+                      </div>
                     </div>
                   </div>
 
