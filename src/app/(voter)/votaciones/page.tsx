@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import type { VoterElection } from '@/types/elections';
+import Loader from '@/components/Loader';
 
 function useCountdown(endTime: string | null) {
   const [text, setText] = useState('');
@@ -229,9 +230,7 @@ export default function VotacionesPage() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--muted)' }}>
-          Cargando votaciones...
-        </div>
+        <Loader />
       ) : elections.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--muted)' }}>
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3, marginBottom: '1rem' }}>

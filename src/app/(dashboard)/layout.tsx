@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Header from '@/components/dashboard/Header';
+import Loader from '@/components/Loader';
 
 export default function DashboardLayout({
   children,
@@ -22,18 +23,7 @@ export default function DashboardLayout({
   }, [isLoading, isAuthenticated, user, router]);
 
   if (isLoading) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <p style={{ color: 'var(--muted)' }}>Cargando...</p>
-      </div>
-    );
+    return <Loader fullscreen />;
   }
 
   if (!isAuthenticated || user?.role !== 'admin') {

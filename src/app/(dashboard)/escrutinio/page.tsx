@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { Election } from '@/types/elections';
 import type { User } from '@/types/auth';
+import Loader from '@/components/Loader';
 
 
 function formatDate(dateStr: string | null) {
@@ -58,7 +59,7 @@ export default function escrutinio() {
       </div>
     
     {loading ? (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--muted)' }}>Cargando votaciones...</div>
+        <Loader />
       ) : elections.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--muted)' }}>
           <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 600, marginBottom: '0.5rem' }}>Sin votaciones</h3>

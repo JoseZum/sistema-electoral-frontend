@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '@/lib/api-client';
 import type { Election, ElectionResults } from '@/types/elections';
+import Loader from '@/components/Loader';
 
 const RESULT_COLORS = ['var(--accent)', 'var(--ink-soft)', 'var(--muted)', '#7C3AED', '#0EA5E9', '#D97706'];
 
@@ -53,7 +54,7 @@ export default function ResultadosPage() {
   }, [selectedId, fetchResults]);
 
   if (loading) {
-    return <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--muted)' }}>Cargando...</div>;
+    return <Loader />;
   }
 
   if (elections.length === 0) {
@@ -97,7 +98,7 @@ export default function ResultadosPage() {
       )}
 
       {loadingResults ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>Cargando resultados...</div>
+        <Loader />
       ) : results && (
         <>
           {/* Stats */}

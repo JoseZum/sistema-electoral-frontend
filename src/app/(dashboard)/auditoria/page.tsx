@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { apiClient } from '@/lib/api-client';
+import Loader from '@/components/Loader';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Types
@@ -807,9 +808,7 @@ export default function AuditPage() {
 
       {/* ─── Timeline feed ──────────────────────────────────────── */}
       {loading ? (
-        <div className="audit-empty">
-          <p>Cargando eventos…</p>
-        </div>
+        <Loader />
       ) : logs.length === 0 ? (
         <div className="audit-empty">
           <div className="audit-empty-icon">{Icon.search}</div>

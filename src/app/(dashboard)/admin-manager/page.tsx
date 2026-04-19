@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import Loader from '@/components/Loader';
 
 interface AdminWithStudent {
   id: string;
@@ -195,9 +196,7 @@ export default function AdminManagerPage() {
 
       {/* Admin list */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-          Cargando...
-        </div>
+        <Loader />
       ) : admins.length === 0 ? (
         <div
           className="card"

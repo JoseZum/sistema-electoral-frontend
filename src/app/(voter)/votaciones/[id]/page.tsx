@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import type { VoterElectionDetail } from '@/types/elections';
+import Loader from '@/components/Loader';
 
 type VoteStage = 'loading' | 'voting' | 'confirm-dialog' | 'submitting' | 'success' | 'error';
 
@@ -66,11 +67,7 @@ export default function VotingBoothPage() {
 
   // Loading state
   if (stage === 'loading') {
-    return (
-      <div className="voting-booth">
-        <div style={{ textAlign: 'center', color: 'var(--muted)' }}>Cargando votacion...</div>
-      </div>
-    );
+    return <Loader fullscreen />;
   }
 
   // Error state

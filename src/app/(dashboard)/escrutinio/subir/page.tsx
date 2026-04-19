@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { apiClient } from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
+import Loader from '@/components/Loader';
 
 type ElectionInfo = {
   id: string;
@@ -147,9 +148,7 @@ export default function EscrutinioPage() {
   return (
     <div className="max-w-2xl mx-auto py-10 px-4">
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--muted)' }}>
-          Cargando votaciones...
-        </div>
+        <Loader />
       ) : !electionInfo || !electionFull ? (
         <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--muted)' }}>
           No se pudo cargar la información de la elección.

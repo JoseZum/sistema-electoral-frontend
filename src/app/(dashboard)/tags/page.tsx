@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import TagMembersEditor from '@/components/tags/TagMembersEditor';
 import { createTag, deleteTag, getTag, listTags, updateTag } from '@/lib/tags-api';
 import type { TagStudent, TagSummary } from '@/types/tags';
+import Loader from '@/components/Loader';
 
 type TagFormState = {
   name: string;
@@ -258,7 +259,7 @@ export default function TagsPage() {
 
           <div style={{ minHeight: 320, maxHeight: 560, overflowY: 'auto' }}>
             {loading ? (
-              <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)' }}>Cargando tags...</div>
+              <Loader />
             ) : tags.length === 0 ? (
               <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)' }}>
                 Todavia no has creado tags.
@@ -347,7 +348,7 @@ export default function TagsPage() {
             </div>
 
             {detailLoading ? (
-              <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)' }}>Cargando miembros...</div>
+              <Loader />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 <TagMembersEditor

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
 import type { Election } from '@/types/elections';
+import Loader from '@/components/Loader';
 
 // Interfaces para tipado
 interface VotesByHour {
@@ -96,7 +97,7 @@ export default function MonitorPage() {
         return `${diffDays > 0 ? diffDays + 'd ' : ''}${diffHours}h ${diffMinutes}m`;
     };
 
-    if (loading) return <div style={{ padding: '2rem' }}>Cargando sistema de monitoreo...</div>;
+    if (loading) return <Loader />;
 
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
@@ -207,7 +208,7 @@ export default function MonitorPage() {
                                             No disponible en votaciones anónimas
                                         </div>
                                     ) : loadingStats ? (
-                                        <p>Cargando sedes...</p>
+                                        <Loader />
                                     ) : monitoringData?.votersBySede?.length ? (
                                         monitoringData.votersBySede.map((sede, idx) => {
                                             const percent = sede.total_voters === 0

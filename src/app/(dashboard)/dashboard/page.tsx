@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import type { Election } from '@/types/elections';
+import Loader from '@/components/Loader';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -250,11 +251,7 @@ export default function DashboardPage() {
   const participationLabel = Number(data.stats.participation).toFixed(1);
 
   if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--muted)' }}>
-        Cargando dashboard...
-      </div>
-    );
+    return <Loader />;
   }
 
   if (error) {

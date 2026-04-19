@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import LoginCard from '@/components/auth/LoginCard';
 import LoginInfoPanel from '@/components/auth/LoginInfoPanel';
+import Loader from '@/components/Loader';
 
 export default function LoginPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -21,11 +22,7 @@ export default function LoginPage() {
   }, [isLoading, isAuthenticated, user, router]);
 
   if (isLoading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p style={{ color: 'var(--muted)' }}>Cargando...</p>
-      </main>
-    );
+    return <Loader fullscreen />;
   }
 
   if (isAuthenticated) {

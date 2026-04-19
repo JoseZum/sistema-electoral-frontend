@@ -37,6 +37,71 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── TEC Loader ─── */
+.loader {
+  position: relative;
+  width: 2.5em;
+  height: 2.5em;
+  transform: rotate(165deg);
+}
+
+.loader:before,
+.loader:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 0.25em;
+  transform: translate(-50%, -50%);
+}
+
+.loader:before {
+  animation: loaderBefore 2s infinite;
+}
+
+.loader:after {
+  animation: loaderAfter 2s infinite;
+}
+
+@keyframes loaderBefore {
+  0% {
+    width: 0.5em;
+    box-shadow: 1em -0.5em rgba(190, 30, 45, 0.85), -1em 0.5em rgba(27, 54, 93, 0.85);
+  }
+  35% {
+    width: 2.5em;
+    box-shadow: 0 -0.5em rgba(190, 30, 45, 0.85), 0 0.5em rgba(27, 54, 93, 0.85);
+  }
+  70% {
+    width: 0.5em;
+    box-shadow: -1em -0.5em rgba(190, 30, 45, 0.85), 1em 0.5em rgba(27, 54, 93, 0.85);
+  }
+  100% {
+    box-shadow: 1em -0.5em rgba(190, 30, 45, 0.85), -1em 0.5em rgba(27, 54, 93, 0.85);
+  }
+}
+
+@keyframes loaderAfter {
+  0% {
+    height: 0.5em;
+    box-shadow: 0.5em 1em rgba(43, 78, 122, 0.75), -0.5em -1em rgba(152, 24, 36, 0.75);
+  }
+  35% {
+    height: 2.5em;
+    box-shadow: 0.5em 0 rgba(43, 78, 122, 0.75), -0.5em 0 rgba(152, 24, 36, 0.75);
+  }
+  70% {
+    height: 0.5em;
+    box-shadow: 0.5em -1em rgba(43, 78, 122, 0.75), -0.5em 1em rgba(152, 24, 36, 0.75);
+  }
+  100% {
+    box-shadow: 0.5em 1em rgba(43, 78, 122, 0.75), -0.5em -1em rgba(152, 24, 36, 0.75);
+  }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;

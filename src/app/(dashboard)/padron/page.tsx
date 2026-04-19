@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api-client';
 import StudentFilters from '@/components/padron/StudentFilters';
 import StudentTable from '@/components/padron/StudentTable';
 import Pagination from '@/components/padron/Pagination';
+import Loader from '@/components/Loader';
 
 interface Student {
   id: string;
@@ -209,15 +210,7 @@ export default function PadronPage() {
       />
 
       {loading ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '3rem',
-            color: 'var(--muted)',
-          }}
-        >
-          Cargando...
-        </div>
+        <Loader />
       ) : (
         <StudentTable
           students={students}

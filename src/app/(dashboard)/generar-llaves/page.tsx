@@ -5,6 +5,7 @@ import { apiClient } from '@/lib/api-client';
 import { Election } from '@/types/elections';
 import { useAuth } from '@/lib/auth-context';
 import type { User } from '@/types/auth';
+import Loader from '@/components/Loader';
 
 interface GeneratedKey {
   id: string;
@@ -127,7 +128,7 @@ export default function GenerarLlavesPage() {
           Seleccionar votación
         </div>
         {loadingElections ? (
-          <div className="text-center py-4 text-gray-500">Cargando elecciones...</div>
+          <Loader />
         ) : electionsError ? (
           <div className="text-center py-4 text-red-600">{electionsError}</div>
         ) : (

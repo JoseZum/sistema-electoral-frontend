@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import type { Election, ElectionDetail } from '@/types/elections';
+import Loader from '@/components/Loader';
 
 type StatusFilter = 'ALL' | 'OPEN' | 'DRAFT' | 'CLOSED' | 'ARCHIVED' | 'SCHEDULED' | 'SCRUTINIZED';
 
@@ -223,7 +224,7 @@ export default function EleccionesPage() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--muted)' }}>Cargando votaciones...</div>
+        <Loader />
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--muted)' }}>
           <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 600, marginBottom: '0.5rem' }}>Sin votaciones</h3>
@@ -324,7 +325,7 @@ export default function EleccionesPage() {
 
             <div style={{ padding: '1.5rem' }}>
               {modalLoading || !selectedElection || !editor ? (
-                <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '2rem' }}>Cargando...</div>
+                <Loader />
               ) : (
                 <>
                   {modalError && (

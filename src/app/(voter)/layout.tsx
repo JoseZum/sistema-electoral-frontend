@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import Loader from '@/components/Loader';
 
 export default function VoterLayout({
   children,
@@ -20,11 +21,7 @@ export default function VoterLayout({
   }, [isLoading, isAuthenticated, router]);
 
   if (isLoading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: 'var(--muted)' }}>Cargando...</p>
-      </div>
-    );
+    return <Loader fullscreen />;
   }
 
   if (!isAuthenticated) return null;
