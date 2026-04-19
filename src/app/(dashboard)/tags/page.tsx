@@ -11,11 +11,48 @@ type TagFormState = {
   members: TagStudent[];
 };
 
+type TagFormErrors = {
+  name?: string;
+  members?: string;
+};
+
 const EMPTY_FORM: TagFormState = {
   name: '',
   description: '',
   members: [],
 };
+
+const EMPTY_TOUCHED_STATE = {
+  name: false,
+  members: false,
+};
+
+function normalizeTagName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ');
+}
+
+function validateTagForm(form: TagFormState, tags: TagSummary[], selectedTagId: string | null): TagFormErrors {
+  const errors: TagFormErrors = {};
+  const normalizedName = normalizeTagName(form.name);
+
+  if (!normalizedName) {
+    errors.name = 'Ingresa un nombre para la tag';
+  } else {
+    const duplicateName = tags.some(
+      (tag) => tag.id !== selectedTagId && normalizeTagName(tag.name).toLocaleLowerCase() === normalizedName.toLocaleLowerCase()
+    );
+
+    if (duplicateName) {
+      errors.name = 'Ya existe una tag con ese nombre';
+    }
+  }
+
+  if (form.members.length === 0) {
+    errors.members = 'Selecciona al menos una persona del padron';
+  }
+
+  return errors;
+}
 
 export default function TagsPage() {
   const [tags, setTags] = useState<TagSummary[]>([]);
@@ -25,6 +62,18 @@ export default function TagsPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [touched, setTouched] = useState(EMPTY_TOUCHED_STATE);
+
+  const validationErrors = validateTagForm(form, tags, selectedTagId);
+  const isFormValid = Object.keys(validationErrors).length === 0;
+  const showNameError = Boolean(validationErrors.name && (submitAttempted || touched.name));
+  const showMembersError = Boolean(validationErrors.members && (submitAttempted || touched.members));
+
+  const resetValidationState = useCallback(() => {
+    setSubmitAttempted(false);
+    setTouched(EMPTY_TOUCHED_STATE);
+  }, []);
 
   const loadTags = useCallback(async (nextSelectedId?: string | null) => {
     const data = await listTags();
@@ -39,8 +88,9 @@ export default function TagsPage() {
     if (!exists) {
       setSelectedTagId(null);
       setForm(EMPTY_FORM);
+      resetValidationState();
     }
-  }, [selectedTagId]);
+  }, [resetValidationState, selectedTagId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +132,7 @@ export default function TagsPage() {
         description: detail.description || '',
         members: detail.members,
       });
+      resetValidationState();
     } catch (err) {
       console.error('Error loading tag detail:', err);
       setError(err instanceof Error ? err.message : 'No se pudo cargar la tag');
@@ -94,17 +145,25 @@ export default function TagsPage() {
     setError(null);
     setSelectedTagId(null);
     setForm(EMPTY_FORM);
+    resetValidationState();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitAttempted(true);
+    setTouched({ name: true, members: true });
+
+    if (!isFormValid) {
+      setError('Revisa los campos marcados antes de guardar la tag');
+      return;
+    }
 
     try {
       setSaving(true);
       setError(null);
 
       const payload = {
-        name: form.name.trim(),
+        name: normalizeTagName(form.name),
         description: form.description.trim() || null,
         student_ids: form.members.map((member) => member.id),
       };
@@ -138,6 +197,7 @@ export default function TagsPage() {
       await deleteTag(selectedTagId);
       setSelectedTagId(null);
       setForm(EMPTY_FORM);
+      resetValidationState();
       await loadTags(null);
     } catch (err) {
       console.error('Error deleting tag:', err);
@@ -180,7 +240,15 @@ export default function TagsPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 320px) minmax(0, 1fr)', gap: '1.5rem' }}>
         <div className="card" style={{ padding: 0, overflow: 'hidden', alignSelf: 'start' }}>
-          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div
+            style={{
+              padding: '1rem 1.25rem',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <div>
               <div style={{ fontWeight: 600 }}>Tags disponibles</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Grupos reutilizables del padron</div>
@@ -198,9 +266,11 @@ export default function TagsPage() {
             ) : (
               tags.map((tag) => {
                 const isActive = selectedTagId === tag.id;
+
                 return (
                   <button
                     key={tag.id}
+                    type="button"
                     onClick={() => handleSelectTag(tag.id)}
                     style={{
                       width: '100%',
@@ -247,9 +317,18 @@ export default function TagsPage() {
                 className="input"
                 placeholder="Ej: AGE-21-04-25"
                 value={form.name}
-                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                onChange={(event) => {
+                  setError(null);
+                  setForm((prev) => ({ ...prev, name: event.target.value }));
+                }}
+                onBlur={() => setTouched((prev) => ({ ...prev, name: true }))}
                 disabled={saving || detailLoading}
               />
+              {showNameError && (
+                <p style={{ fontSize: '0.75rem', color: 'var(--error)', marginTop: '0.4rem' }}>
+                  {validationErrors.name}
+                </p>
+              )}
             </div>
 
             <div className="input-group">
@@ -259,7 +338,10 @@ export default function TagsPage() {
                 rows={3}
                 placeholder="Describe para que se usa este grupo"
                 value={form.description}
-                onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
+                onChange={(event) => {
+                  setError(null);
+                  setForm((prev) => ({ ...prev, description: event.target.value }));
+                }}
                 disabled={saving || detailLoading}
               />
             </div>
@@ -267,16 +349,27 @@ export default function TagsPage() {
             {detailLoading ? (
               <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)' }}>Cargando miembros...</div>
             ) : (
-              <TagMembersEditor
-                value={form.members}
-                onChange={(members) => setForm((prev) => ({ ...prev, members }))}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <TagMembersEditor
+                  value={form.members}
+                  onChange={(members) => {
+                    setError(null);
+                    setTouched((prev) => ({ ...prev, members: true }));
+                    setForm((prev) => ({ ...prev, members }));
+                  }}
+                />
+                {showMembersError && (
+                  <p style={{ fontSize: '0.75rem', color: 'var(--error)', margin: 0 }}>
+                    {validationErrors.members}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', maxWidth: 420 }}>
-              Las tags no crean la votacion por si solas. Sirven como configuracion reusable para elegir rapidamente quien vota.
+              Las tags no crean la votacion por si solas. Deben tener nombre unico y al menos una persona del padron.
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -285,11 +378,7 @@ export default function TagsPage() {
                   Eliminar
                 </button>
               )}
-              <button
-                type="submit"
-                className="btn btn-accent"
-                disabled={saving || detailLoading || !form.name.trim() || form.members.length === 0}
-              >
+              <button type="submit" className="btn btn-accent" disabled={saving || detailLoading || !isFormValid}>
                 {saving ? 'Guardando...' : selectedTagId ? 'Guardar cambios' : 'Crear tag'}
               </button>
             </div>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
+import { type ImmediateDurationUnit, getImmediateDurationMinutes } from '@/components/elections/ImmediateStartConfig';
 import TagSelector from '@/components/tags/TagSelector';
 
 interface ElectionForm {
@@ -14,7 +15,8 @@ interface ElectionForm {
   voter_filter_career: string;
   tag_id: string | null;
   start_immediately: boolean;
-  immediate_minutes: string;
+  immediate_duration_value: string;
+  immediate_duration_unit: ImmediateDurationUnit;
   start_time: string;
   end_time: string;
 }
@@ -43,6 +45,8 @@ interface StudentCatalogResponse {
 }
 
 const STEPS = ['Informacion', 'Votantes', 'Opciones', 'Seguridad'];
+const DEFAULT_IMMEDIATE_DURATION_VALUE = '15';
+const DEFAULT_IMMEDIATE_DURATION_UNIT: ImmediateDurationUnit = 'minutes';
 
 export default function CrearEleccionPage() {
   const router = useRouter();
@@ -67,7 +71,8 @@ export default function CrearEleccionPage() {
     voter_filter_career: '',
     tag_id: null,
     start_immediately: false,
-    immediate_minutes: '',
+    immediate_duration_value: DEFAULT_IMMEDIATE_DURATION_VALUE,
+    immediate_duration_unit: DEFAULT_IMMEDIATE_DURATION_UNIT,
     start_time: '',
     end_time: '',
   });
@@ -206,6 +211,9 @@ export default function CrearEleccionPage() {
     try {
       setSaving(true);
       setError(null);
+      const immediateMinutes = form.start_immediately
+        ? getImmediateDurationMinutes(form.immediate_duration_value, form.immediate_duration_unit)
+        : null;
 
       if (!asDraft && form.voter_source === 'MANUAL' && selectedStudents.length === 0) {
         throw new Error('Selecciona al menos una persona del padron para una votacion manual');
@@ -215,10 +223,17 @@ export default function CrearEleccionPage() {
         throw new Error('Selecciona una tag para la votacion');
       }
 
-      if (form.start_immediately) {
-        const minutes = Number(form.immediate_minutes);
-        if (!Number.isInteger(minutes) || minutes <= 0 || minutes > 1440) {
-          throw new Error('Indica cuantos minutos durara la votacion inmediata');
+      if (form.start_immediately && !immediateMinutes) {
+        throw new Error('Selecciona una duracion valida para el inicio inmediato');
+      }
+
+      if (!form.start_immediately && !asDraft) {
+        if (!form.start_time || !form.end_time) {
+          throw new Error('Selecciona la fecha y hora de apertura y cierre');
+        }
+
+        if (new Date(form.end_time) <= new Date(form.start_time)) {
+          throw new Error('La fecha de cierre debe ser posterior a la fecha de apertura');
         }
       }
 
@@ -229,7 +244,7 @@ export default function CrearEleccionPage() {
         voter_source: form.voter_source,
         tag_id: form.voter_source === 'TAG' ? form.tag_id : null,
         starts_immediately: form.start_immediately,
-        immediate_minutes: form.start_immediately ? Number(form.immediate_minutes) : null,
+        immediate_minutes: immediateMinutes,
       };
 
       if (!form.start_immediately) {
@@ -404,7 +419,8 @@ export default function CrearEleccionPage() {
                       setForm((prev) => ({
                         ...prev,
                         start_immediately: event.target.checked,
-                        immediate_minutes: event.target.checked ? prev.immediate_minutes : '',
+                        immediate_duration_value: prev.immediate_duration_value || DEFAULT_IMMEDIATE_DURATION_VALUE,
+                        immediate_duration_unit: prev.immediate_duration_unit || DEFAULT_IMMEDIATE_DURATION_UNIT,
                         start_time: event.target.checked ? '' : prev.start_time,
                         end_time: event.target.checked ? '' : prev.end_time,
                       }))
@@ -418,18 +434,72 @@ export default function CrearEleccionPage() {
                 </p>
               </div>
 
-              <div className="input-group" style={{ maxWidth: 240 }}>
-                <label>Minutos de inicio inmediato</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="1440"
-                  className="input"
-                  placeholder="15"
-                  value={form.immediate_minutes}
-                  disabled={!form.start_immediately}
-                  onChange={(event) => updateForm('immediate_minutes', event.target.value)}
-                />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 180px) minmax(180px, 220px)', gap: '0.75rem', alignItems: 'end' }}>
+                  <div className="input-group">
+                    <label>Duracion</label>
+                    <select
+                      className="input"
+                      value={form.immediate_duration_value}
+                      disabled={!form.start_immediately}
+                      onChange={(event) => updateForm('immediate_duration_value', event.target.value)}
+                    >
+                      {(form.immediate_duration_unit === 'minutes'
+                        ? Array.from({ length: 59 }, (_, index) => index + 1)
+                        : form.immediate_duration_unit === 'hours'
+                          ? Array.from({ length: 24 }, (_, index) => index + 1)
+                          : Array.from({ length: 30 }, (_, index) => index + 1)
+                      ).map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="input-group">
+                    <label>Unidad</label>
+                    <select
+                      className="input"
+                      value={form.immediate_duration_unit}
+                      disabled={!form.start_immediately}
+                      onChange={(event) => {
+                        const nextUnit = event.target.value as ImmediateDurationUnit;
+                        const nextOptions = nextUnit === 'minutes'
+                          ? Array.from({ length: 59 }, (_, index) => index + 1)
+                          : nextUnit === 'hours'
+                            ? Array.from({ length: 24 }, (_, index) => index + 1)
+                            : Array.from({ length: 30 }, (_, index) => index + 1);
+                        const currentValue = Number(form.immediate_duration_value);
+
+                        setForm((prev) => ({
+                          ...prev,
+                          immediate_duration_unit: nextUnit,
+                          immediate_duration_value: nextOptions.includes(currentValue)
+                            ? prev.immediate_duration_value
+                            : String(nextOptions[0]),
+                        }));
+                      }}
+                    >
+                      <option value="minutes">Minutos</option>
+                      <option value="hours">Horas</option>
+                      <option value="days">Dias</option>
+                    </select>
+                  </div>
+                </div>
+
+                {form.start_immediately && (
+                  <p style={{ fontSize: '0.75rem', color: 'var(--muted)', margin: 0 }}>
+                    La votacion se iniciara apenas se cree y tendra una duracion de{' '}
+                    {form.immediate_duration_value}{' '}
+                    {form.immediate_duration_unit === 'minutes'
+                      ? Number(form.immediate_duration_value) === 1 ? 'minuto' : 'minutos'
+                      : form.immediate_duration_unit === 'hours'
+                        ? Number(form.immediate_duration_value) === 1 ? 'hora' : 'horas'
+                        : Number(form.immediate_duration_value) === 1 ? 'dia' : 'dias'}
+                    .
+                  </p>
+                )}
               </div>
             </div>
           </div>

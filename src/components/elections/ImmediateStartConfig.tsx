@@ -1,25 +1,73 @@
 'use client';
 
+export type ImmediateDurationUnit = 'minutes' | 'hours' | 'days';
+
 interface ImmediateStartConfigProps {
   startTime: string;
   endTime: string;
   startsImmediately: boolean;
-  immediateMinutes: string;
+  durationValue: string;
+  durationUnit: ImmediateDurationUnit;
   onChange: (next: {
     startTime?: string;
     endTime?: string;
     startsImmediately?: boolean;
-    immediateMinutes?: string;
+    durationValue?: string;
+    durationUnit?: ImmediateDurationUnit;
   }) => void;
+}
+
+const DURATION_OPTIONS: Record<ImmediateDurationUnit, number[]> = {
+  minutes: Array.from({ length: 59 }, (_, index) => index + 1),
+  hours: Array.from({ length: 24 }, (_, index) => index + 1),
+  days: Array.from({ length: 30 }, (_, index) => index + 1),
+};
+
+function getUnitLabel(unit: ImmediateDurationUnit, value: number): string {
+  if (unit === 'minutes') {
+    return value === 1 ? 'minuto' : 'minutos';
+  }
+
+  if (unit === 'hours') {
+    return value === 1 ? 'hora' : 'horas';
+  }
+
+  return value === 1 ? 'dia' : 'dias';
+}
+
+export function formatImmediateDuration(value: string, unit: ImmediateDurationUnit): string {
+  const numericValue = Number(value);
+
+  if (!Number.isInteger(numericValue) || numericValue <= 0) {
+    return '';
+  }
+
+  return `${numericValue} ${getUnitLabel(unit, numericValue)}`;
+}
+
+export function getImmediateDurationMinutes(value: string, unit: ImmediateDurationUnit): number | null {
+  const numericValue = Number(value);
+
+  if (!Number.isInteger(numericValue) || numericValue <= 0) {
+    return null;
+  }
+
+  if (unit === 'minutes') return numericValue;
+  if (unit === 'hours') return numericValue * 60;
+  return numericValue * 24 * 60;
 }
 
 export default function ImmediateStartConfig({
   startTime,
   endTime,
   startsImmediately,
-  immediateMinutes,
+  durationValue,
+  durationUnit,
   onChange,
 }: ImmediateStartConfigProps) {
+  const options = DURATION_OPTIONS[durationUnit];
+  const summary = formatImmediateDuration(durationValue, durationUnit);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
@@ -56,7 +104,16 @@ export default function ImmediateStartConfig({
           gap: '0.75rem',
         }}
       >
-        <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <label
+          style={{
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            color: 'var(--ink-soft)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+          }}
+        >
           <input
             type="checkbox"
             checked={startsImmediately}
@@ -66,25 +123,54 @@ export default function ImmediateStartConfig({
           Iniciar cuando se cree
         </label>
 
-        <div className="input-group" style={{ maxWidth: 220 }}>
-          <label>Minutos inmediatos</label>
-          <input
-            type="number"
-            min={1}
-            step={1}
-            className="input"
-            value={immediateMinutes}
-            onChange={(event) => onChange({ immediateMinutes: event.target.value })}
-            disabled={!startsImmediately}
-            placeholder="15"
-          />
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 180px) minmax(180px, 220px)', gap: '0.75rem', alignItems: 'end' }}>
+          <div className="input-group">
+            <label>Duracion</label>
+            <select
+              className="input"
+              value={durationValue}
+              onChange={(event) => onChange({ durationValue: event.target.value })}
+              disabled={!startsImmediately}
+            >
+              {options.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="input-group">
+            <label>Unidad</label>
+            <select
+              className="input"
+              value={durationUnit}
+              onChange={(event) => {
+                const nextUnit = event.target.value as ImmediateDurationUnit;
+                const nextOptions = DURATION_OPTIONS[nextUnit];
+                const currentValue = Number(durationValue);
+                const nextValue = nextOptions.includes(currentValue) ? durationValue : String(nextOptions[0]);
+
+                onChange({
+                  durationUnit: nextUnit,
+                  durationValue: nextValue,
+                });
+              }}
+              disabled={!startsImmediately}
+            >
+              <option value="minutes">Minutos</option>
+              <option value="hours">Horas</option>
+              <option value="days">Dias</option>
+            </select>
+          </div>
         </div>
 
         <p style={{ fontSize: '0.75rem', color: 'var(--muted)', margin: 0 }}>
-          Si activas esta opción, la votación se abrirá al guardarse y correrá durante la cantidad de minutos indicada.
+          {startsImmediately && summary
+            ? `La votacion se iniciara apenas se cree y tendra una duracion de ${summary}.`
+            : 'Si activas esta opcion, la votacion se abrira al publicarse y correra por la duracion seleccionada.'}
         </p>
       </div>
     </div>
   );
 }
-
