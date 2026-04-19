@@ -1050,7 +1050,19 @@ export default function CrearEleccionPage() {
                   onClick={() => scrollToSection(section.id)}
                 >
                   <div className="create-election-nav-item__index">
-                    {sectionStates[section.id].complete ? 'OK' : index + 1}
+                    {sectionStates[section.id].complete ? (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        aria-hidden="true"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : index + 1}
                   </div>
                   <div className="create-election-nav-item__copy">
                     <div className="create-election-nav-item__label">{section.label}</div>
