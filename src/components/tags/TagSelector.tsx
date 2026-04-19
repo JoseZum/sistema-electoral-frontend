@@ -22,6 +22,7 @@ export default function TagSelector({
 }: TagSelectorProps) {
   const [tags, setTags] = useState<TagSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasTags = tags.length > 0;
 
   useEffect(() => {
     let cancelled = false;
@@ -61,10 +62,12 @@ export default function TagSelector({
       <select
         className="input"
         value={value || ''}
-        disabled={loading}
+        disabled={loading || !hasTags}
         onChange={(event) => onChange(event.target.value || null)}
       >
-        {allowClear && <option value="">Sin tag</option>}
+        <option value="" disabled={!allowClear}>
+          {allowClear ? 'Sin tag' : 'Selecciona una tag'}
+        </option>
         {tags.map((tag) => (
           <option key={tag.id} value={tag.id}>
             {tag.name} {tag.member_count > 0 ? `(${tag.member_count})` : ''}
@@ -74,6 +77,11 @@ export default function TagSelector({
       {helperText && (
         <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.4rem' }}>
           {helperText}
+        </p>
+      )}
+      {!loading && !hasTags && (
+        <p style={{ fontSize: '0.75rem', color: 'var(--error)', marginTop: '0.4rem' }}>
+          No hay tags disponibles todavia. Crea una en la seccion de tags antes de continuar.
         </p>
       )}
     </div>
