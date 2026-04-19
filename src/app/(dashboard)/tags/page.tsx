@@ -378,7 +378,7 @@ export default function TagsPage() {
                   Eliminar
                 </button>
               )}
-              <button type="submit" className="btn btn-accent" disabled={saving || detailLoading || !isFormValid}>
+              <button type="submit" className="btn btn-accent" disabled={saving || detailLoading}>
                 {saving ? 'Guardando...' : selectedTagId ? 'Guardar cambios' : 'Crear tag'}
               </button>
             </div>
