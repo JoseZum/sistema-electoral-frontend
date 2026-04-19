@@ -44,14 +44,27 @@ function useCountdown(endTime: string | null) {
 
 function ElectionCard({ election }: { election: VoterElection }) {
   const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const { text: countdown, urgency } = useCountdown(
     election.status === 'OPEN' ? election.end_time : null
   );
+  const [timeLeft, setTimeLeft] = useState(100);
 
   const isActive = election.status === 'OPEN';
   const isScheduled = election.status === 'SCHEDULED';
   const canVote = isActive && !election.has_voted;
+
+  useEffect(() => {
+    if (!isActive || !election.start_time || !election.end_time) return;
+    function update() {
+      const start = new Date(election.start_time!).getTime();
+      const end = new Date(election.end_time!).getTime();
+      const remaining = Math.max(0, Math.min(100, ((end - Date.now()) / (end - start)) * 100));
+      setTimeLeft(Math.round(remaining));
+    }
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [isActive, election.start_time, election.end_time]);
 
   function getScheduledText() {
     if (!election.start_time) return 'Próximamente';
@@ -61,113 +74,76 @@ function ElectionCard({ election }: { election: VoterElection }) {
     return `En ${days} día${days !== 1 ? 's' : ''}`;
   }
 
-  const handleBookClick = () => {
-    if (!isActive) return;
-    const isTouchDevice = typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches;
-    if (isTouchDevice) {
-      setMobileOpen(prev => !prev);
-    } else if (canVote) {
-      router.push(`/votaciones/${election.id}`);
-    }
-  };
-
-  const handleVote = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (canVote) router.push(`/votaciones/${election.id}`);
-  };
-
-  const year = election.end_time
-    ? new Date(election.end_time).getFullYear()
-    : new Date().getFullYear();
-
   return (
     <div
-      className={`book-card${mobileOpen ? ' book-card--open' : ''}${!isActive ? ' book-card--disabled' : ''}`}
-      onClick={handleBookClick}
-      role={isActive ? 'button' : undefined}
+      className={`elec-card${canVote ? ' elec-card--votable' : ''}${!isActive ? ' elec-card--disabled' : ''}`}
+      onClick={() => canVote && router.push(`/votaciones/${election.id}`)}
+      role={canVote ? 'button' : undefined}
       tabIndex={canVote ? 0 : undefined}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleBookClick(); } }}
+      onKeyDown={e => {
+        if ((e.key === 'Enter' || e.key === ' ') && canVote) {
+          e.preventDefault();
+          router.push(`/votaciones/${election.id}`);
+        }
+      }}
       aria-label={canVote ? `Votar en: ${election.title}` : election.title}
     >
-      {/* Interior – parchment page visible behind the cover */}
-      <div className="book-card__interior">
-        <div className="book-card__chapter">§ Convocatoria Electoral</div>
-        <h4 className="book-card__inner-title">{election.title}</h4>
-        {election.description && (
-          <p className="book-card__inner-desc">{election.description}</p>
+      <div className="elec-card__badge-row">
+        {isActive && !election.has_voted && (
+          <span className="elec-card__badge elec-card__badge--active">
+            <span className="elec-card__pulse" />
+            Activa
+          </span>
         )}
-        <div className="book-card__divider" />
-        {isActive && (
-          <div className="book-card__countdown">
-            <span className="book-card__countdown-label">Cierra en</span>
-            <span className={`book-card__countdown-time ${urgency}`}>{countdown}</span>
-          </div>
+        {election.has_voted && (
+          <span className="elec-card__badge elec-card__badge--voted">✓ Voto emitido</span>
         )}
         {isScheduled && (
-          <div className="book-card__countdown">
-            <span className="book-card__countdown-label">Abre</span>
-            <span className="book-card__countdown-time">{getScheduledText()}</span>
-          </div>
+          <span className="elec-card__badge elec-card__badge--scheduled">{getScheduledText()}</span>
         )}
-        {canVote ? (
-          <button className="book-card__vote-btn" onClick={handleVote}>
-            Emitir voto
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
-          </button>
-        ) : isActive ? (
-          <div className="book-card__voted">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            Voto registrado
-          </div>
-        ) : null}
       </div>
 
-      {/* Cover – rotates away on hover (desktop) or tap (mobile) */}
-      <div className="book-card__cover">
-        <div className="book-card__spine" />
-        <div className="book-card__cover-content">
-          {/* Institutional seal */}
-          <div className="book-card__seal">
-            <svg viewBox="0 0 60 60" width="48" height="48" fill="none">
-              <circle cx="30" cy="30" r="26" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 2.5"/>
-              <circle cx="30" cy="30" r="19" stroke="currentColor" strokeWidth="1"/>
-              <line x1="30" y1="15" x2="30" y2="45" stroke="currentColor" strokeWidth="1.5"/>
-              <line x1="15" y1="30" x2="45" y2="30" stroke="currentColor" strokeWidth="1.5"/>
-              <circle cx="30" cy="30" r="4" fill="currentColor"/>
-            </svg>
-          </div>
-          <div className="book-card__cover-title">{election.title}</div>
-          <div className="book-card__cover-rule" />
-          {isActive && !election.has_voted && (
-            <div className="book-card__active-badge">
-              <span className="book-card__pulse-dot" />
-              Votación Activa
-            </div>
-          )}
-          {election.has_voted && (
-            <div className="book-card__voted-badge">✓ Voto Emitido</div>
-          )}
-          {isScheduled && (
-            <div className="book-card__scheduled-badge">{getScheduledText()}</div>
-          )}
+      <div className="elec-card__body">
+        <h3 className="elec-card__title">{election.title}</h3>
+        {election.description && (
+          <p className="elec-card__desc">{election.description}</p>
+        )}
+      </div>
+
+      {isActive && (
+        <div className="elec-card__timer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span className={`elec-card__timer-value${urgency !== 'normal' ? ` ${urgency}` : ''}`}>{countdown}</span>
         </div>
+      )}
 
-        {/* Desktop: hint fades in on hover */}
-        {canVote && <div className="book-card__hover-hint">Abrir para votar →</div>}
-        {/* Mobile: always visible */}
-        {canVote && (
-          <div className="book-card__tap-hint">
-            {mobileOpen ? '↑ Toca Emitir Voto' : 'Toca para abrir'}
+      {isActive && election.start_time && (
+        <div className="elec-card__progress-wrap">
+          <div className="elec-card__progress-track">
+            <div
+              className={`elec-card__progress-fill${urgency !== 'normal' ? ` ${urgency}` : ''}`}
+              style={{ width: `${timeLeft}%` }}
+            />
           </div>
-        )}
+          <span className="elec-card__progress-label">{timeLeft}% tiempo restante</span>
+        </div>
+      )}
 
-        <div className="book-card__cover-footer">Sistema Electoral · {year}</div>
-      </div>
+      {canVote && (
+        <div className="elec-card__cta">
+          <span>Votar ahora</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </div>
+      )}
+      {election.has_voted && isActive && (
+        <div className="elec-card__done">Ya participaste en esta elección</div>
+      )}
     </div>
   );
 }
@@ -241,7 +217,7 @@ export default function VotacionesPage() {
           <p>No tienes votaciones activas en este momento.</p>
         </div>
       ) : (
-        <div className="book-shelf">
+        <div className="elec-grid">
           {elections.map((election, i) => (
             <div
               key={election.id}
