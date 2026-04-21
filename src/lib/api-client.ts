@@ -1,5 +1,47 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+interface ErrorPayload {
+  error?: string;
+  code?: string;
+  details?: unknown;
+}
+
+interface ApiErrorOptions {
+  endpoint: string;
+  message: string;
+  status: number;
+  code?: string;
+  details?: unknown;
+}
+
+export class ApiError extends Error {
+  readonly endpoint: string;
+  readonly status: number;
+  readonly code?: string;
+  readonly details?: unknown;
+
+  constructor({ endpoint, message, status, code, details }: ApiErrorOptions) {
+    super(message);
+    this.name = 'ApiError';
+    this.endpoint = endpoint;
+    this.status = status;
+    this.code = code;
+    this.details = details;
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+async function readErrorPayload(response: Response): Promise<ErrorPayload> {
+  const contentType = response.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
+    return response.json().catch(() => ({}));
+  }
+
+  const text = await response.text().catch(() => '');
+  return text ? { error: text } : {};
+}
+
 async function handleResponse<T>(response: Response, endpoint: string): Promise<T> {
   if (!response.ok) {
     if ((response.status === 401 || response.status === 403) && !endpoint.includes('/api/auth')) {
@@ -9,12 +51,43 @@ async function handleResponse<T>(response: Response, endpoint: string): Promise<
         window.location.href = '/';
       }
     }
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
+
+    const error = await readErrorPayload(response);
     const message = error.error || `HTTP ${response.status}`;
-    if (error.details) console.error('[API details]', error.details);
-    throw new Error(message);
+
+    if (error.details) {
+      console.error('[API details]', {
+        endpoint,
+        status: response.status,
+        code: error.code,
+        details: error.details,
+      });
+    }
+
+    throw new ApiError({
+      endpoint,
+      message,
+      status: response.status,
+      code: error.code,
+      details: error.details,
+    });
   }
+
   return response.json();
+}
+
+async function performRequest(endpoint: string, options: RequestInit): Promise<Response> {
+  try {
+    return await fetch(`${API_URL}${endpoint}`, options);
+  } catch (error) {
+    throw new ApiError({
+      endpoint,
+      status: 0,
+      code: 'NETWORK_ERROR',
+      message: 'No se pudo conectar con el servidor.',
+      details: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 export async function apiClient<T>(
@@ -29,7 +102,7 @@ export async function apiClient<T>(
     ...options.headers,
   };
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const response = await performRequest(endpoint, {
     ...options,
     headers,
   });
@@ -47,7 +120,7 @@ export async function apiUpload<T>(
     ...(token && { Authorization: `Bearer ${token}` }),
   };
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const response = await performRequest(endpoint, {
     method: 'POST',
     headers,
     body: formData,

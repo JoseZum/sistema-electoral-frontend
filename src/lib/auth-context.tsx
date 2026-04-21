@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import { loginRequest } from './msal';
-import { apiClient } from './api-client';
+import { apiClient, ApiError } from './api-client';
 import type { User, AuthState } from '@/types/auth';
 
 interface AuthContextType extends AuthState {
@@ -19,6 +19,40 @@ interface AuthResponse {
   user: User;
 }
 
+function getAuthErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    switch (error.code) {
+      case 'NETWORK_ERROR':
+        return 'No se pudo conectar con el servidor. Verifica que el backend este disponible.';
+      case 'AUTH_DOMAIN_NOT_ALLOWED':
+        return 'Solo se permiten cuentas institucionales @estudiantec.cr.';
+      case 'AUTH_STUDENT_NOT_FOUND':
+        return 'Tu cuenta no aparece en el padron electoral. Contacta al TEE.';
+      case 'AUTH_MICROSOFT_TOKEN_EXPIRED':
+      case 'AUTH_TOKEN_EXPIRED':
+        return 'Tu sesion con Microsoft expiro. Intenta iniciar sesion nuevamente.';
+      case 'AUTH_PROVIDER_UNAVAILABLE':
+      case 'AUTH_JWKS_UNAVAILABLE':
+        return 'No fue posible validar la autenticacion con Microsoft. Intenta nuevamente.';
+      case 'AUTH_CONFIG_ERROR':
+      case 'DB_CONNECTION_ERROR':
+      case 'DB_AUTH_FAILED':
+        return 'El servicio de autenticacion no esta disponible en este momento.';
+      default:
+        if (error.status >= 500) {
+          return 'El servicio de autenticacion no esta disponible en este momento.';
+        }
+        return error.message;
+    }
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Authentication failed';
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { instance, accounts } = useMsal();
   const isMsalAuthenticated = useIsAuthenticated();
@@ -31,7 +65,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [processedAccount, setProcessedAccount] = useState<string | null>(null);
 
-  // Restore session from localStorage on mount
   useEffect(() => {
     const token = localStorage.getItem('tee_token');
     const userStr = localStorage.getItem('tee_user');
@@ -49,7 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // When MSAL detects an authenticated account, send token to backend
   useEffect(() => {
     if (!isMsalAuthenticated || accounts.length === 0) return;
     if (state.isAuthenticated) return;
@@ -88,8 +120,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isLoading: false,
         });
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Authentication failed';
-        console.error('[Auth] Error:', message);
+        const message = getAuthErrorMessage(err);
+
+        if (err instanceof ApiError) {
+          console.error('[Auth] Error', {
+            status: err.status,
+            code: err.code,
+            message: err.message,
+            details: err.details,
+          });
+        } else {
+          console.error('[Auth] Error', err);
+        }
+
         setError(message);
         setState((prev) => ({ ...prev, isLoading: false }));
       }
@@ -98,7 +141,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sendTokenToBackend();
   }, [isMsalAuthenticated, accounts, instance, state.isAuthenticated, processedAccount]);
 
-  // Redirect flow — no popup
   const loginWithMicrosoft = useCallback(() => {
     setError(null);
     setProcessedAccount(null);
