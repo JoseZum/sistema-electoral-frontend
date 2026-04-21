@@ -212,7 +212,7 @@ export default function ResultadosPage() {
                 </h3>
               </div>
               {!results.voters || results.voters.length === 0 ? (
-                <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Ninguna persona ha votado aun.</p>
+                <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Ninguna persona votó.</p>
               ) : (
                 <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
