@@ -214,6 +214,60 @@ export default function ResultadosPage() {
               </div>
             );
           })()}
+
+          {/* Voter list - only for non-anonymous elections */}
+          {results.voters ? (
+            <div className="card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '1rem', margin: 0 }}>
+                  Personas votantes ({results.voters.length})
+                </h3>
+              </div>
+              {results.voters.length === 0 ? (
+                <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Ninguna persona ha votado aun.</p>
+              ) : (
+                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
+                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--muted)' }}>Nombre</th>
+                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--muted)' }}>Carnet</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {results.voters.map((voter, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={{ padding: '0.5rem 0.75rem' }}>{voter.full_name}</td>
+                          <td style={{ padding: '0.5rem 0.75rem', color: 'var(--muted)' }}>{voter.carnet}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : results.election.is_anonymous && (
+            <div className="card" style={{ padding: '1.25rem', marginTop: '1.5rem', background: 'var(--surface-alt, var(--surface))' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Votacion anonima</div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
+                    La lista de votantes no esta disponible porque esta votacion es anonima.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </>
