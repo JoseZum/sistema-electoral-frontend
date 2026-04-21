@@ -182,8 +182,23 @@ export default function ResultadosPage() {
             )}
           </div>
 
-          {/* Voter list - only for non-anonymous elections */}
-          {results.voters ? (
+          {/* Voter list */}
+          {results.election.is_anonymous ? (
+            <div className="card" style={{ padding: '1.25rem', marginTop: '1.5rem', background: 'var(--surface-alt, var(--surface))' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Votacion anonima</div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
+                    La lista de votantes no esta disponible porque esta votacion es anonima.
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
             <div className="card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -193,10 +208,10 @@ export default function ResultadosPage() {
                   <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
                 <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '1rem', margin: 0 }}>
-                  Personas votantes ({results.voters.length})
+                  Personas votantes ({(results.voters ?? []).length})
                 </h3>
               </div>
-              {results.voters.length === 0 ? (
+              {!results.voters || results.voters.length === 0 ? (
                 <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Ninguna persona ha votado aun.</p>
               ) : (
                 <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
@@ -218,21 +233,6 @@ export default function ResultadosPage() {
                   </table>
                 </div>
               )}
-            </div>
-          ) : results.election.is_anonymous && (
-            <div className="card" style={{ padding: '1.25rem', marginTop: '1.5rem', background: 'var(--surface-alt, var(--surface))' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Votacion anonima</div>
-                  <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-                    La lista de votantes no esta disponible porque esta votacion es anonima.
-                  </div>
-                </div>
-              </div>
             </div>
           )}
         </>
