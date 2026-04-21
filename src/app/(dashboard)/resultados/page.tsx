@@ -83,19 +83,17 @@ export default function ResultadosPage() {
       </div>
 
       {/* Election selector */}
-      {elections.length > 1 && (
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-          {elections.map((e) => (
-            <button
-              key={e.id}
-              className={`filter-chip ${selectedId === e.id ? 'active' : ''}`}
-              onClick={() => setSelectedId(e.id)}
-            >
-              {e.title}
-            </button>
-          ))}
-        </div>
-      )}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        {elections.map((e) => (
+          <button
+            key={e.id}
+            className={`filter-chip ${selectedId === e.id ? 'active' : ''}`}
+            onClick={() => setSelectedId(e.id)}
+          >
+            {e.title}
+          </button>
+        ))}
+      </div>
 
       {loadingResults ? (
         <Loader />
@@ -183,37 +181,6 @@ export default function ResultadosPage() {
               </div>
             )}
           </div>
-
-          {/* Winner announcement */}
-          {results.options.length > 0 && (() => {
-            const validOptions = results.options.filter(
-              (o) => o.option_type !== 'BLANK' && o.option_type !== 'NULL_VOTE'
-            );
-            const winner = validOptions.reduce((prev, curr) =>
-              curr.vote_count > prev.vote_count ? curr : prev
-            , validOptions[0]);
-
-            if (!winner) return null;
-
-            return (
-              <div className="card" style={{ background: 'var(--success-light)', borderColor: '#BBF7D0', padding: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                    <polyline points="22 4 12 14.01 9 11.01" />
-                  </svg>
-                  <div>
-                    <div style={{ fontWeight: 600, color: '#065F46' }}>
-                      Resultado: {winner.label}
-                    </div>
-                    <div style={{ fontSize: '0.8125rem', color: '#059669' }}>
-                      {winner.percentage.toFixed(1)}% de los votos
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
 
           {/* Voter list - only for non-anonymous elections */}
           {results.voters ? (
