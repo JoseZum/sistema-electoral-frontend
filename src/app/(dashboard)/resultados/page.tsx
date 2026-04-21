@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { exportResultsToPDF, exportResultsToDOCX } from '@/lib/export-results';
 import type { Election, ElectionResults } from '@/types/elections';
 import Loader from '@/components/Loader';
 
@@ -13,6 +14,9 @@ export default function ResultadosPage() {
   const [results, setResults] = useState<ElectionResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingResults, setLoadingResults] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   const fetchElections = useCallback(async () => {
     try {
@@ -44,6 +48,31 @@ export default function ResultadosPage() {
       setLoadingResults(false);
     }
   }, []);
+
+  const handleExport = useCallback(async (format: 'pdf' | 'docx') => {
+    if (!results) return;
+    setExporting(true);
+    setExportMenuOpen(false);
+    try {
+      if (format === 'pdf') await exportResultsToPDF(results);
+      else await exportResultsToDOCX(results);
+    } catch (err) {
+      console.error('Export error:', err);
+    } finally {
+      setExporting(false);
+    }
+  }, [results]);
+
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setExportMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [exportMenuOpen]);
 
   useEffect(() => {
     fetchElections();
@@ -80,6 +109,117 @@ export default function ResultadosPage() {
             {results?.election.title ?? 'Selecciona una votacion'}
           </p>
         </div>
+
+        {results && (
+          <div ref={exportMenuRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setExportMenuOpen((v) => !v)}
+              disabled={exporting}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                background: 'var(--accent)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: exporting ? 'not-allowed' : 'pointer',
+                opacity: exporting ? 0.7 : 1,
+              }}
+            >
+              {exporting ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="12" y1="18" x2="12" y2="12" />
+                  <line x1="9" y1="15" x2="15" y2="15" />
+                </svg>
+              )}
+              {exporting ? 'Exportando…' : 'Exportar reporte'}
+              {!exporting && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              )}
+            </button>
+
+            {exportMenuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  right: 0,
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                  zIndex: 50,
+                  minWidth: '160px',
+                  overflow: 'hidden',
+                }}
+              >
+                <button
+                  onClick={() => handleExport('pdf')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.625rem',
+                    width: '100%',
+                    padding: '0.625rem 1rem',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    textAlign: 'left',
+                    color: 'var(--ink)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-alt, var(--border))')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                  </svg>
+                  Exportar PDF
+                </button>
+                <button
+                  onClick={() => handleExport('docx')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.625rem',
+                    width: '100%',
+                    padding: '0.625rem 1rem',
+                    background: 'none',
+                    border: 'none',
+                    borderTop: '1px solid var(--border)',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    textAlign: 'left',
+                    color: 'var(--ink)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-alt, var(--border))')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="8" y1="13" x2="16" y2="13" />
+                    <line x1="8" y1="17" x2="16" y2="17" />
+                  </svg>
+                  Exportar Word (.doc)
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Election selector */}
