@@ -898,6 +898,30 @@ body {
 
 /* ─── Book Card (Voting) ─── */
 /* ─── Election Grid ─── */
+.voter-filter-row {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.35rem;
+}
+
+.voter-filter-empty {
+  padding: 3.2rem 1.5rem 3.6rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.voter-filter-empty h3 {
+  margin: 0 0 0.45rem;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.voter-filter-empty p {
+  margin: 0;
+}
+
 .elec-grid {
   display: flex;
   flex-wrap: wrap;
@@ -1004,7 +1028,38 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
+}
+
+.elec-card__tag-row {
+  display: flex;
+  align-items: center;
+  min-height: 1.55rem;
+}
+
+.elec-card__tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  max-width: 100%;
+  padding: 0.34rem 0.72rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.elec-card__tag-chip svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.elec-card__tag-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .elec-card__title {
