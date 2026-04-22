@@ -1145,9 +1145,9 @@ body {
 }
 
 .tag-badge--table {
-  --tag-height: 22px;
+  --tag-height: 26px;
   margin-left: 0;
-  padding: 0 0.85rem;
+  padding: 0 0.62rem;
   max-width: min(100%, 13.5rem);
   border-radius: 999px;
 }
@@ -1158,8 +1158,14 @@ body {
 }
 
 .tag-badge--table .tag-badge__label {
-  font-size: 0.66rem;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+.tag-badge--table .tag-badge__icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-right: 0.28rem;
 }
 
 
