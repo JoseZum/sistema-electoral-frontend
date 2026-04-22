@@ -9,20 +9,34 @@ interface TagBadgeProps {
   style?: CSSProperties;
 }
 
+const TAG_PALETTE = [
+  '#C62828',
+  '#AD1457',
+  '#6A1B9A',
+  '#4527A0',
+  '#283593',
+  '#1565C0',
+  '#0277BD',
+  '#00838F',
+  '#00695C',
+  '#2E7D32',
+  '#558B2F',
+  '#EF6C00',
+  '#D84315',
+  '#5D4037',
+];
+
 function getTagBadgePalette(tagName: string): CSSProperties {
   const hash = Array.from(tagName).reduce(
     (acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0,
     17
   );
-  const hue = hash % 360;
-  const saturation = 58 + (hash % 18);
-  const accentLightness = 34 + (hash % 10);
-  const backgroundLightness = 90 + (hash % 4);
+  const backgroundColor = TAG_PALETTE[hash % TAG_PALETTE.length];
 
   return {
-    '--tag-accent': `hsl(${hue} ${saturation}% ${accentLightness}%)`,
-    '--tag-bg': `hsl(${hue} ${Math.max(42, saturation - 16)}% ${backgroundLightness}%)`,
-    '--tag-shadow': `0 10px 22px hsla(${hue} ${saturation}% ${accentLightness}% / 0.14)`,
+    '--tag-bg': backgroundColor,
+    '--tag-text': '#ffffff',
+    '--tag-shadow': 'none',
   } as CSSProperties;
 }
 

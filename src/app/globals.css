@@ -1039,9 +1039,9 @@ body {
 }
 
 .tag-badge {
-  --tag-bg: #ecf6dd;
-  --tag-accent: #4d7d16;
-  --tag-shadow: 0 10px 22px rgba(77, 125, 22, 0.16);
+  --tag-bg: #3243A5;
+  --tag-text: #ffffff;
+  --tag-shadow: none;
   --tag-height: 30px;
   --tag-point-size: 14px;
   display: inline-flex;
@@ -1053,7 +1053,7 @@ body {
   padding: 0.35rem 1rem 0.35rem 1.1rem;
   border-radius: 0 999px 999px 0;
   background: var(--tag-bg);
-  color: var(--tag-accent);
+  color: var(--tag-text);
   box-shadow: var(--tag-shadow);
   white-space: nowrap;
   isolation: isolate;
@@ -1093,6 +1093,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: inherit;
 }
 
 .tag-badge--sm {
