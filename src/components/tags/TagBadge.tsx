@@ -57,7 +57,7 @@ export default function TagBadge({
     >
       {leadingIcon === 'tag' && (
         <span className="tag-badge__icon" aria-hidden="true">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20.59 13.41 12 22l-9-9V4h9l8.59 8.59a2 2 0 0 1 0 2.82Z" />
             <circle cx="7.5" cy="7.5" r="1.25" fill="currentColor" stroke="none" />
           </svg>
