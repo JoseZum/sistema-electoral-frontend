@@ -1140,6 +1140,29 @@ body {
   letter-spacing: 0.08em;
 }
 
+.tag-page-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tag-page-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+  flex: 0 0 auto;
+}
+
+.tag-page-icon svg {
+  display: block;
+}
+
 .elec-card__title {
   font-family: var(--font-display);
   font-size: 1.05rem;
