@@ -20,6 +20,8 @@ interface AuditLog {
   actor_id: string | null;
   actor_carnet: string | null;
   actor_name?: string | null;
+  target_name?: string | null;
+  target_carnet?: string | null;
   action: string;
   resource_type: string;
   resource_id: string | null;
@@ -330,6 +332,15 @@ function getField<T = unknown>(obj: unknown, path: string): T | undefined {
   return (obj as Record<string, T>)[path];
 }
 
+function formatPersonLabel(
+  name: string | null | undefined,
+  carnet: string | null | undefined,
+  fallback: string
+): string {
+  if (name && carnet) return `${name} · ${carnet}`;
+  return name || carnet || fallback;
+}
+
 function opBadgeFor(op: string): Narrative['opBadge'] {
   if (op === 'insert') return { label: 'Creado', variant: 'create' };
   if (op === 'update') return { label: 'Actualizado', variant: 'update' };
@@ -486,19 +497,41 @@ function buildNarrative(log: AuditLog): Narrative {
 
     // ─── Administradores ────────────────────────────────────────────
     case 'admin.insert': {
-      const carnet = (newRow.carnet as string | undefined) || log.resource_id || '';
-      const name = newRow.full_name as string | undefined;
+      const name =
+        (details.target_name as string | undefined) ||
+        log.target_name ||
+        (newRow.full_name as string | undefined);
+      const carnet =
+        (details.target_carnet as string | undefined) ||
+        log.target_carnet ||
+        (newRow.carnet as string | undefined) ||
+        log.resource_id ||
+        '';
       return {
         lead: 'creó al administrador',
-        subject: name ? `${name} · ${carnet}` : carnet,
+        subject: formatPersonLabel(name, carnet, log.resource_id || ''),
         opBadge,
       };
     }
     case 'admin.update': {
       const fields = Object.keys(changes).filter((k) => k !== 'updated_at' && k !== 'email');
+      const name =
+        (details.target_name as string | undefined) ||
+        log.target_name ||
+        (newRow.full_name as string | undefined) ||
+        (previous.full_name as string | undefined) ||
+        (oldRow.full_name as string | undefined);
+      const carnet =
+        (details.target_carnet as string | undefined) ||
+        log.target_carnet ||
+        (newRow.carnet as string | undefined) ||
+        (previous.carnet as string | undefined) ||
+        (oldRow.carnet as string | undefined) ||
+        log.resource_id ||
+        '';
       return {
         lead: 'actualizó al administrador',
-        subject: log.resource_id || '',
+        subject: formatPersonLabel(name, carnet, log.resource_id || ''),
         trailer:
           fields.length > 0
             ? `cambió ${fields.map(fieldLabel).join(', ')}`
@@ -507,8 +540,21 @@ function buildNarrative(log: AuditLog): Narrative {
       };
     }
     case 'admin.delete': {
-      const carnet = (oldRow.carnet as string | undefined) || log.resource_id || '';
-      return { lead: 'eliminó al administrador', subject: carnet, opBadge };
+      const name =
+        (details.target_name as string | undefined) ||
+        log.target_name ||
+        (oldRow.full_name as string | undefined);
+      const carnet =
+        (details.target_carnet as string | undefined) ||
+        log.target_carnet ||
+        (oldRow.carnet as string | undefined) ||
+        log.resource_id ||
+        '';
+      return {
+        lead: 'eliminó al administrador',
+        subject: formatPersonLabel(name, carnet, log.resource_id || ''),
+        opBadge,
+      };
     }
 
     // ─── Llaves de escrutinio ───────────────────────────────────────
