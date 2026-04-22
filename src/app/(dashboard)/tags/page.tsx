@@ -1,6 +1,6 @@
 'use client';
 
-import { type CSSProperties, FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import TagBadge from '@/components/tags/TagBadge';
 import TagMembersEditor from '@/components/tags/TagMembersEditor';
 import { createTag, deleteTag, getTag, listTags, updateTag } from '@/lib/tags-api';
@@ -28,45 +28,6 @@ const EMPTY_TOUCHED_STATE = {
   name: false,
   members: false,
 };
-
-const TAG_PALETTE = [
-  '#C62828',
-  '#AD1457',
-  '#6A1B9A',
-  '#4527A0',
-  '#283593',
-  '#1565C0',
-  '#0277BD',
-  '#00838F',
-  '#00695C',
-  '#2E7D32',
-  '#558B2F',
-  '#EF6C00',
-  '#D84315',
-  '#5D4037',
-];
-
-function getTagColor(tagName: string): string {
-  const hash = Array.from(tagName).reduce(
-    (acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0,
-    17
-  );
-
-  return TAG_PALETTE[hash % TAG_PALETTE.length];
-}
-
-function TagGlyph({ label }: { label: string }) {
-  const backgroundColor = getTagColor(label);
-
-  return (
-    <span className="tag-page-icon" style={{ backgroundColor } as CSSProperties} aria-hidden="true">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.59 13.41 12 22l-9-9V4h9l8.59 8.59a2 2 0 0 1 0 2.82Z" />
-        <circle cx="7.5" cy="7.5" r="1.25" fill="currentColor" stroke="none" />
-      </svg>
-    </span>
-  );
-}
 
 function normalizeTagName(name: string): string {
   return name.trim().replace(/\s+/g, ' ');
@@ -323,10 +284,7 @@ export default function TagsPage() {
                       cursor: 'pointer',
                     }}
                   >
-                    <div className="tag-page-badge-row">
-                      <TagGlyph label={tag.name} />
-                      <TagBadge label={tag.name} size="sm" className="tag-badge--table" />
-                    </div>
+                    <TagBadge label={tag.name} size="sm" className="tag-badge--table" leadingIcon="tag" />
                     <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
                       {tag.member_count} integrante{tag.member_count === 1 ? '' : 's'}
                     </div>
@@ -355,10 +313,7 @@ export default function TagsPage() {
               </div>
               {form.name.trim() && (
                 <div style={{ marginTop: '0.85rem' }}>
-                  <div className="tag-page-badge-row">
-                    <TagGlyph label={form.name.trim()} />
-                    <TagBadge label={form.name.trim()} className="tag-badge--table" />
-                  </div>
+                  <TagBadge label={form.name.trim()} className="tag-badge--table" leadingIcon="tag" />
                 </div>
               )}
             </div>

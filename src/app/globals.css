@@ -1111,10 +1111,32 @@ body {
   color: inherit;
 }
 
+.tag-badge__icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-right: 0.4rem;
+  flex: 0 0 auto;
+}
+
+.tag-badge__icon svg {
+  display: block;
+}
+
 .tag-badge--sm {
   --tag-height: 24px;
   padding: 0 calc(var(--tag-height) / 1.5);
   max-width: min(100%, 15rem);
+}
+
+.tag-badge--sm .tag-badge__icon {
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-right: 0.3rem;
 }
 
 .tag-badge--sm .tag-badge__label {
@@ -1140,28 +1162,6 @@ body {
   letter-spacing: 0.08em;
 }
 
-.tag-page-badge-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.tag-page-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  color: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
-  flex: 0 0 auto;
-}
-
-.tag-page-icon svg {
-  display: block;
-}
 
 .elec-card__title {
   font-family: var(--font-display);
