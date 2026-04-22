@@ -1041,49 +1041,64 @@ body {
 .tag-badge {
   --tag-bg: #3243A5;
   --tag-text: #ffffff;
-  --tag-shadow: none;
+  --tag-hole-bg: #f4eaec;
+  --tag-shadow: 2px 3px 3px rgba(0, 0, 0, 0.15);
   --tag-height: 30px;
-  --tag-point-size: 14px;
+  --tag-tail-size: calc(var(--tag-height) * 0.7);
+  --tag-radius: calc(var(--tag-height) / 4);
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   position: relative;
   max-width: min(100%, 22rem);
-  min-height: var(--tag-height);
-  margin-left: var(--tag-point-size);
-  padding: 0.35rem 1rem 0.35rem 1.1rem;
-  border-radius: 0 999px 999px 0;
+  height: var(--tag-height);
+  margin-left: calc(var(--tag-tail-size) * 0.5);
+  padding: 0 1rem 0 calc(0.9rem + (var(--tag-tail-size) * 0.28));
+  border-radius: 0 var(--tag-radius) var(--tag-radius) 0;
   background: var(--tag-bg);
   color: var(--tag-text);
   box-shadow: var(--tag-shadow);
   white-space: nowrap;
   isolation: isolate;
+  line-height: 1;
+  text-decoration: none;
+  overflow: visible;
 }
 
-.tag-badge::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: calc(var(--tag-point-size) * -1);
-  width: 0;
-  height: 0;
-  border-color: transparent var(--tag-bg) transparent transparent;
-  border-style: solid;
-  border-width: calc(var(--tag-height) / 2) var(--tag-point-size) calc(var(--tag-height) / 2) 0;
-}
-
+.tag-badge::before,
 .tag-badge::after {
   content: "";
   position: absolute;
-  top: calc(50% - 3px);
-  left: 2px;
-  width: 6px;
-  height: 6px;
+  display: block;
+}
+
+.tag-badge::before {
+  z-index: -1;
+  left: calc(var(--tag-tail-size) * -0.5);
+  top: calc((var(--tag-height) - var(--tag-tail-size)) / 2);
+  width: var(--tag-tail-size);
+  height: var(--tag-tail-size);
+  border-radius: 3px 0 0 0;
+  background: var(--tag-bg);
+  box-shadow: var(--tag-shadow);
+  transform: rotate(-45deg);
+}
+
+.tag-badge::after {
+  z-index: 1;
+  top: 50%;
+  left: calc(var(--tag-tail-size) * -0.14);
+  width: calc(var(--tag-height) / 2);
+  height: calc(var(--tag-height) / 2);
+  transform: translateY(-50%);
   border-radius: 50%;
-  background: #fff;
-  box-shadow: -1px -1px 2px rgba(0, 0, 0, 0.28);
+  background: var(--tag-hole-bg);
+  box-shadow: inset 2px 3px 3px rgba(0, 0, 0, 0.15);
 }
 
 .tag-badge__label {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   max-width: 100%;
@@ -1098,8 +1113,7 @@ body {
 
 .tag-badge--sm {
   --tag-height: 24px;
-  --tag-point-size: 12px;
-  padding: 0.24rem 0.85rem 0.24rem 0.95rem;
+  padding: 0 calc(var(--tag-height) / 1.5);
   max-width: min(100%, 15rem);
 }
 
@@ -1108,8 +1122,22 @@ body {
   letter-spacing: 0.11em;
 }
 
-.table-wrapper td .tag-badge {
+.tag-badge--table {
+  --tag-height: 22px;
+  margin-left: 0;
+  padding: 0 0.85rem;
   max-width: min(100%, 13.5rem);
+  border-radius: 999px;
+}
+
+.tag-badge--table::before,
+.tag-badge--table::after {
+  display: none;
+}
+
+.tag-badge--table .tag-badge__label {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
 }
 
 .elec-card__title {
