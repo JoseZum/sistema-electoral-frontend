@@ -398,7 +398,7 @@ export default function TagsPage() {
                 })}
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.45rem' }}>
-                Colores fuertes pensados para verse bien con texto blanco. No se incluyen tonos amarillos.
+                El color que elijas se mantendra en todos los lugares donde aparezca esta tag.
               </p>
             </div>
 
