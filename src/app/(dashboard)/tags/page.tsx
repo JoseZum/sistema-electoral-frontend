@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import TagBadge from '@/components/tags/TagBadge';
 import TagMembersEditor from '@/components/tags/TagMembersEditor';
+import { DEFAULT_TAG_COLOR, TAG_COLOR_OPTIONS } from '@/lib/tag-colors';
 import { createTag, deleteTag, getTag, listTags, updateTag } from '@/lib/tags-api';
 import type { TagStudent, TagSummary } from '@/types/tags';
 import Loader from '@/components/Loader';
@@ -10,6 +11,7 @@ import Loader from '@/components/Loader';
 type TagFormState = {
   name: string;
   description: string;
+  color: string;
   members: TagStudent[];
 };
 
@@ -21,6 +23,7 @@ type TagFormErrors = {
 const EMPTY_FORM: TagFormState = {
   name: '',
   description: '',
+  color: DEFAULT_TAG_COLOR,
   members: [],
 };
 
@@ -132,6 +135,7 @@ export default function TagsPage() {
       setForm({
         name: detail.name,
         description: detail.description || '',
+        color: detail.color || DEFAULT_TAG_COLOR,
         members: detail.members,
       });
       resetValidationState();
@@ -167,6 +171,7 @@ export default function TagsPage() {
       const payload = {
         name: normalizeTagName(form.name),
         description: form.description.trim() || null,
+        color: form.color,
         student_ids: form.members.map((member) => member.id),
       };
 
@@ -284,7 +289,7 @@ export default function TagsPage() {
                       cursor: 'pointer',
                     }}
                   >
-                    <TagBadge label={tag.name} size="sm" className="tag-badge--table" leadingIcon="tag" />
+                    <TagBadge label={tag.name} color={tag.color} size="sm" className="tag-badge--table" leadingIcon="tag" />
                     <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
                       {tag.member_count} integrante{tag.member_count === 1 ? '' : 's'}
                     </div>
@@ -313,7 +318,7 @@ export default function TagsPage() {
               </div>
               {form.name.trim() && (
                 <div style={{ marginTop: '0.85rem' }}>
-                  <TagBadge label={form.name.trim()} className="tag-badge--table" leadingIcon="tag" />
+                  <TagBadge label={form.name.trim()} color={form.color} className="tag-badge--table" leadingIcon="tag" />
                 </div>
               )}
             </div>
@@ -351,6 +356,50 @@ export default function TagsPage() {
                 }}
                 disabled={saving || detailLoading}
               />
+            </div>
+
+            <div className="input-group">
+              <label>Color</label>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {TAG_COLOR_OPTIONS.map((option) => {
+                  const isSelected = form.color === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      aria-pressed={isSelected}
+                      title={option.label}
+                      onClick={() => {
+                        setError(null);
+                        setForm((prev) => ({ ...prev, color: option.value }));
+                      }}
+                      disabled={saving || detailLoading}
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: '999px',
+                        border: isSelected ? '3px solid var(--ink)' : '1px solid rgba(15, 23, 42, 0.18)',
+                        background: option.value,
+                        display: 'grid',
+                        placeItems: 'center',
+                        cursor: saving || detailLoading ? 'not-allowed' : 'pointer',
+                        boxShadow: isSelected ? '0 0 0 4px rgba(15, 23, 42, 0.08)' : 'none',
+                        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                      }}
+                    >
+                      {isSelected && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.45rem' }}>
+                Colores fuertes pensados para verse bien con texto blanco. No se incluyen tonos amarillos.
+              </p>
             </div>
 
             {detailLoading ? (

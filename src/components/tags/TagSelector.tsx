@@ -78,7 +78,7 @@ export default function TagSelector({
       </select>
       {selectedTag && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
-          <TagBadge label={selectedTag.name} size="sm" />
+          <TagBadge label={selectedTag.name} color={selectedTag.color} size="sm" />
           <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
             {selectedTag.member_count} integrante{selectedTag.member_count === 1 ? '' : 's'}
           </span>

@@ -1,41 +1,20 @@
 'use client';
 
 import type { CSSProperties } from 'react';
+import { resolveTagColor } from '@/lib/tag-colors';
 
 interface TagBadgeProps {
   label: string;
+  color?: string | null;
   className?: string;
   size?: 'sm' | 'md';
   style?: CSSProperties;
   leadingIcon?: 'tag';
 }
 
-const TAG_PALETTE = [
-  '#C62828',
-  '#AD1457',
-  '#6A1B9A',
-  '#4527A0',
-  '#283593',
-  '#1565C0',
-  '#0277BD',
-  '#00838F',
-  '#00695C',
-  '#2E7D32',
-  '#558B2F',
-  '#EF6C00',
-  '#D84315',
-  '#5D4037',
-];
-
-function getTagBadgePalette(tagName: string): CSSProperties {
-  const hash = Array.from(tagName).reduce(
-    (acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0,
-    17
-  );
-  const backgroundColor = TAG_PALETTE[hash % TAG_PALETTE.length];
-
+function getTagBadgePalette(tagName: string, color?: string | null): CSSProperties {
   return {
-    '--tag-bg': backgroundColor,
+    '--tag-bg': resolveTagColor(tagName, color),
     '--tag-text': '#ffffff',
     '--tag-shadow': 'none',
   } as CSSProperties;
@@ -43,12 +22,13 @@ function getTagBadgePalette(tagName: string): CSSProperties {
 
 export default function TagBadge({
   label,
+  color,
   className = '',
   size = 'md',
   style,
   leadingIcon,
 }: TagBadgeProps) {
-  const palette = getTagBadgePalette(label);
+  const palette = getTagBadgePalette(label, color);
 
   return (
     <span

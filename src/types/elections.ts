@@ -11,6 +11,7 @@ export interface Election {
   voter_filter: Record<string, unknown> | null;
   tag_id: string | null;
   tag_name: string | null;
+  tag_color: string | null;
   tag_description: string | null;
   tag_member_count: number | null;
   starts_immediately: boolean;
@@ -64,6 +65,7 @@ export interface VoterElection {
   status: string;
   is_anonymous: boolean;
   tag_name: string | null;
+  tag_color: string | null;
   start_time: string | null;
   end_time: string | null;
   has_voted: boolean;
@@ -77,6 +79,7 @@ export interface VoterElectionDetail {
   status: string;
   is_anonymous: boolean;
   tag_name: string | null;
+  tag_color: string | null;
   start_time: string | null;
   end_time: string | null;
   has_voted: boolean;

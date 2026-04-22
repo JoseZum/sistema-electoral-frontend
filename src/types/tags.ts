@@ -2,6 +2,7 @@ export interface TagSummary {
   id: string;
   name: string;
   description: string | null;
+  color: string;
   member_count: number;
   created_at: string;
   updated_at: string;
@@ -24,11 +25,13 @@ export interface TagDetail extends TagSummary {
 export interface CreateTagPayload {
   name: string;
   description?: string | null;
+  color?: string | null;
   student_ids?: string[];
 }
 
 export interface UpdateTagPayload {
   name?: string;
   description?: string | null;
+  color?: string | null;
   student_ids?: string[];
 }

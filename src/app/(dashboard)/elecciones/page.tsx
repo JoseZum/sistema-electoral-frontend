@@ -136,7 +136,13 @@ export default function EleccionesPage() {
                     </td>
                     <td>
                       {election.tag_name ? (
-                        <TagBadge label={election.tag_name} size="sm" className="tag-badge--table" leadingIcon="tag" />
+                        <TagBadge
+                          label={election.tag_name}
+                          color={election.tag_color}
+                          size="sm"
+                          className="tag-badge--table"
+                          leadingIcon="tag"
+                        />
                       ) : (
                         <span style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>-</span>
                       )}
