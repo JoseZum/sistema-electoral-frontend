@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import TagBadge from '@/components/tags/TagBadge';
 import { listTags } from '@/lib/tags-api';
 import type { TagSummary } from '@/types/tags';
 
@@ -23,6 +24,7 @@ export default function TagSelector({
   const [tags, setTags] = useState<TagSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const hasTags = tags.length > 0;
+  const selectedTag = value ? tags.find((tag) => tag.id === value) ?? null : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +76,14 @@ export default function TagSelector({
           </option>
         ))}
       </select>
+      {selectedTag && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+          <TagBadge label={selectedTag.name} size="sm" />
+          <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+            {selectedTag.member_count} integrante{selectedTag.member_count === 1 ? '' : 's'}
+          </span>
+        </div>
+      )}
       {helperText && (
         <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.4rem' }}>
           {helperText}

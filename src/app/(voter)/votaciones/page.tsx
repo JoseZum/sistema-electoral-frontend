@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback, type CSSProperties } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import TagBadge from '@/components/tags/TagBadge';
 import type { VoterElection } from '@/types/elections';
 import Loader from '@/components/Loader';
 
@@ -51,22 +52,6 @@ function useCountdown(endTime: string | null) {
   return { text, urgency };
 }
 
-function getTagChipStyle(tagName: string): CSSProperties {
-  const hash = Array.from(tagName).reduce(
-    (acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0,
-    17
-  );
-  const hue = hash % 360;
-  const saturation = 64 + (hash % 14);
-  const tone = 30 + (hash % 12);
-
-  return {
-    color: `hsl(${hue} ${saturation}% ${tone}%)`,
-    backgroundColor: `hsla(${hue} ${Math.max(42, saturation - 18)}% 90% / 0.96)`,
-    boxShadow: `inset 2px 2px 4px rgba(255, 255, 255, 0.72), 0 8px 18px hsla(${hue} ${saturation}% ${tone}% / 0.14)`,
-  };
-}
-
 function ElectionCard({ election }: { election: VoterElection }) {
   const router = useRouter();
   const { text: countdown, urgency } = useCountdown(
@@ -77,7 +62,6 @@ function ElectionCard({ election }: { election: VoterElection }) {
   const isActive = election.status === 'OPEN';
   const isScheduled = election.status === 'SCHEDULED';
   const canVote = isActive && !election.has_voted;
-  const tagChipStyle = election.tag_name ? getTagChipStyle(election.tag_name) : undefined;
 
   useEffect(() => {
     if (!isActive || !election.start_time || !election.end_time) return;
@@ -141,12 +125,7 @@ function ElectionCard({ election }: { election: VoterElection }) {
       <div className="elec-card__body">
         {election.tag_name && (
           <div className="elec-card__tag-row">
-            <span className="elec-card__tag-chip" style={tagChipStyle}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                <path d="M2.5 2A1.5 1.5 0 0 0 1 3.5v3.379c0 .398.158.779.439 1.061l5.121 5.121a1.5 1.5 0 0 0 2.122 0l4.379-4.379a1.5 1.5 0 0 0 0-2.122L7.94 1.439A1.5 1.5 0 0 0 6.879 1H3.5A1.5 1.5 0 0 0 2.5 2Zm1.75 1.25a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z" />
-              </svg>
-              <span>{election.tag_name}</span>
-            </span>
+            <TagBadge label={election.tag_name} size="sm" />
           </div>
         )}
         <h3 className="elec-card__title">{election.title}</h3>

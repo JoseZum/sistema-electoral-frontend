@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import TagBadge from '@/components/tags/TagBadge';
 import TagMembersEditor from '@/components/tags/TagMembersEditor';
 import { createTag, deleteTag, getTag, listTags, updateTag } from '@/lib/tags-api';
 import type { TagStudent, TagSummary } from '@/types/tags';
@@ -283,7 +284,7 @@ export default function TagsPage() {
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--ink)' }}>{tag.name}</div>
+                    <TagBadge label={tag.name} size="sm" />
                     <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
                       {tag.member_count} integrante{tag.member_count === 1 ? '' : 's'}
                     </div>
@@ -310,6 +311,11 @@ export default function TagsPage() {
                   ? 'Actualiza el nombre, la descripcion y las personas incluidas en este grupo.'
                   : 'Crea una configuracion reutilizable con personas especificas del padron.'}
               </div>
+              {form.name.trim() && (
+                <div style={{ marginTop: '0.85rem' }}>
+                  <TagBadge label={form.name.trim()} />
+                </div>
+              )}
             </div>
 
             <div className="input-group">

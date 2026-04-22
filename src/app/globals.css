@@ -1035,56 +1035,80 @@ body {
   display: flex;
   align-items: center;
   min-height: 1.55rem;
+  overflow: visible;
 }
 
-.elec-card__tag-chip {
+.tag-badge {
+  --tag-bg: #ecf6dd;
+  --tag-accent: #4d7d16;
+  --tag-shadow: 0 10px 22px rgba(77, 125, 22, 0.16);
+  --tag-height: 30px;
+  --tag-point-size: 14px;
   display: inline-flex;
   align-items: center;
-  gap: 0.38rem;
+  position: relative;
+  max-width: min(100%, 22rem);
+  min-height: var(--tag-height);
+  margin-left: var(--tag-point-size);
+  padding: 0.35rem 1rem 0.35rem 1.1rem;
+  border-radius: 0 999px 999px 0;
+  background: var(--tag-bg);
+  color: var(--tag-accent);
+  box-shadow: var(--tag-shadow);
+  white-space: nowrap;
+  isolation: isolate;
+}
+
+.tag-badge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(var(--tag-point-size) * -1);
+  width: 0;
+  height: 0;
+  border-color: transparent var(--tag-bg) transparent transparent;
+  border-style: solid;
+  border-width: calc(var(--tag-height) / 2) var(--tag-point-size) calc(var(--tag-height) / 2) 0;
+}
+
+.tag-badge::after {
+  content: "";
+  position: absolute;
+  top: calc(50% - 3px);
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: -1px -1px 2px rgba(0, 0, 0, 0.28);
+}
+
+.tag-badge__label {
+  display: inline-flex;
+  align-items: center;
   max-width: 100%;
-  padding: 0.34rem 0.72rem;
-  border-radius: 999px;
-  font-size: 0.62rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.84rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 
-.elec-card__tag-chip svg {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
+.tag-badge--sm {
+  --tag-height: 24px;
+  --tag-point-size: 12px;
+  padding: 0.24rem 0.85rem 0.24rem 0.95rem;
+  max-width: min(100%, 15rem);
 }
 
-.elec-card__tag-chip span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.tag-badge--sm .tag-badge__label {
+  font-size: 0.68rem;
+  letter-spacing: 0.11em;
 }
 
-.admin-election-tag-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.38rem;
-  max-width: 180px;
-  padding: 0.34rem 0.72rem;
-  border-radius: 999px;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.admin-election-tag-chip svg {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-}
-
-.admin-election-tag-chip span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.table-wrapper td .tag-badge {
+  max-width: min(100%, 13.5rem);
 }
 
 .elec-card__title {
