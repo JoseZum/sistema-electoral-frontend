@@ -125,7 +125,7 @@ function ElectionCard({ election }: { election: VoterElection }) {
       <div className="elec-card__body">
         {election.tag_name && (
           <div className="elec-card__tag-row">
-            <TagBadge label={election.tag_name} size="sm" className="tag-badge--table" />
+            <TagBadge label={election.tag_name} size="sm" className="tag-badge--table" leadingIcon="tag" />
           </div>
         )}
         <h3 className="elec-card__title">{election.title}</h3>
