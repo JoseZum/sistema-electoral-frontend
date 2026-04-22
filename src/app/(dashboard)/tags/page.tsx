@@ -284,7 +284,7 @@ export default function TagsPage() {
                       cursor: 'pointer',
                     }}
                   >
-                    <TagBadge label={tag.name} size="sm" />
+                    <TagBadge label={tag.name} size="sm" className="tag-badge--table" />
                     <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
                       {tag.member_count} integrante{tag.member_count === 1 ? '' : 's'}
                     </div>
@@ -313,7 +313,7 @@ export default function TagsPage() {
               </div>
               {form.name.trim() && (
                 <div style={{ marginTop: '0.85rem' }}>
-                  <TagBadge label={form.name.trim()} />
+                  <TagBadge label={form.name.trim()} className="tag-badge--table" />
                 </div>
               )}
             </div>
