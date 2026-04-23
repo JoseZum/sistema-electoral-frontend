@@ -233,6 +233,8 @@ const RESOURCE_META: Record<
   padron_upload: { icon: Icon.upload, label: 'Padrón', tone: '#1E4A7A', tint: '#EAF1F9' },
   election: { icon: Icon.ballot, label: 'Elección', tone: '#6B21A8', tint: '#F5EFFB' },
   election_option: { icon: Icon.ballot, label: 'Opción', tone: '#6B21A8', tint: '#F5EFFB' },
+  tag: { icon: Icon.plus, label: 'Tag', tone: '#AD1457', tint: '#FCE7F3' },
+  tag_member: { icon: Icon.users, label: 'Miembro de tag', tone: '#AD1457', tint: '#FCE7F3' },
   election_voter: { icon: Icon.checkCircle, label: 'Votante', tone: '#0F766E', tint: '#E6F4F2' },
   vote: { icon: Icon.checkCircle, label: 'Voto', tone: '#0F766E', tint: '#E6F4F2' },
   admin: { icon: Icon.shield, label: 'Administrador', tone: 'var(--accent)', tint: 'var(--accent-light)' },
@@ -476,6 +478,53 @@ function buildNarrative(log: AuditLog): Narrative {
     }
 
     // ─── Votantes y votos ───────────────────────────────────────────
+    case 'tag_member.insert': {
+      const tagName =
+        (newRow.tag_name as string | undefined) ||
+        (details.tag_name as string | undefined) ||
+        'tag';
+      const studentName =
+        (newRow.student_name as string | undefined) ||
+        (details.target_name as string | undefined) ||
+        log.target_name ||
+        'persona';
+      const studentCarnet =
+        (newRow.student_carnet as string | undefined) ||
+        (details.target_carnet as string | undefined) ||
+        log.target_carnet ||
+        undefined;
+
+      return {
+        lead: 'agregÃ³ a la tag',
+        subject: `Â«${tagName}Â»`,
+        trailer: formatPersonLabel(studentName, studentCarnet, 'persona agregada'),
+        opBadge,
+      };
+    }
+    case 'tag_member.delete': {
+      const tagName =
+        (oldRow.tag_name as string | undefined) ||
+        (details.tag_name as string | undefined) ||
+        'tag';
+      const studentName =
+        (oldRow.student_name as string | undefined) ||
+        (details.target_name as string | undefined) ||
+        log.target_name ||
+        'persona';
+      const studentCarnet =
+        (oldRow.student_carnet as string | undefined) ||
+        (details.target_carnet as string | undefined) ||
+        log.target_carnet ||
+        undefined;
+
+      return {
+        lead: 'quitÃ³ de la tag',
+        subject: `Â«${tagName}Â»`,
+        trailer: formatPersonLabel(studentName, studentCarnet, 'persona removida'),
+        opBadge,
+      };
+    }
+
     case 'election_voter.update': {
       const tokenUsed = changes.token_used;
       if (tokenUsed === true) {
