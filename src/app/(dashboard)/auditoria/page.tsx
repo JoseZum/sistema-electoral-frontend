@@ -278,6 +278,12 @@ const FIELD_LABELS: Record<string, string> = {
   position: 'posición',
   filename: 'archivo',
   total_rows: 'registros',
+  option_count: 'cantidad de opciones',
+  options_summary: 'opciones',
+  eligible_count: 'votantes elegibles',
+  voter_scope: 'alcance',
+  privacy_mode: 'privacidad',
+  publication_mode: 'publicacion',
 };
 
 function fieldLabel(key: string): string {
@@ -421,8 +427,27 @@ function buildNarrative(log: AuditLog): Narrative {
 
     // ─── Elecciones ─────────────────────────────────────────────────
     case 'election.insert': {
+      const optionCount = Number(newRow.option_count ?? 0);
       const title = (newRow.title as string | undefined) || log.resource_id || '';
-      return { lead: 'creó la elección', subject: `«${title}»`, opBadge };
+      const eligibleCount = Number(newRow.eligible_count ?? 0);
+      const voterScope = typeof newRow.voter_scope === 'string' ? newRow.voter_scope : undefined;
+      const privacyMode = typeof newRow.privacy_mode === 'string' ? newRow.privacy_mode : undefined;
+      const publicationMode = typeof newRow.publication_mode === 'string' ? newRow.publication_mode : undefined;
+      const optionsSummary = typeof newRow.options_summary === 'string' ? newRow.options_summary : undefined;
+      const trailerParts = [
+        optionCount > 0 ? `${optionCount} opciones` : null,
+        eligibleCount > 0 ? `${eligibleCount} votantes elegibles` : null,
+        publicationMode || null,
+        privacyMode || null,
+        voterScope ? `alcance: ${voterScope}` : null,
+        optionsSummary ? `opciones: ${optionsSummary}` : null,
+      ].filter(Boolean);
+      return {
+        lead: 'creó la elección',
+        subject: `«${title}»`,
+        trailer: trailerParts.length > 0 ? trailerParts.join(' | ') : undefined,
+        opBadge,
+      };
     }
     case 'election.update': {
       const title =

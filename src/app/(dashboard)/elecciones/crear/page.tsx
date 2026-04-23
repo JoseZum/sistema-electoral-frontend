@@ -470,34 +470,6 @@ export default function CrearEleccionPage() {
         }
       }
 
-      const electionData: Record<string, unknown> = {
-        title: trimmedTitle,
-        description: form.description.trim() || null,
-        is_anonymous: form.is_anonymous,
-        voter_source: form.voter_source,
-        tag_id: form.voter_source === 'TAG' ? form.tag_id : null,
-        starts_immediately: form.start_immediately,
-        immediate_minutes: immediateMinutes,
-      };
-
-      if (!form.start_immediately) {
-        electionData.start_time = form.start_time;
-        electionData.end_time = form.end_time;
-      }
-
-      if (form.voter_source === 'FILTERED') {
-        const filter: Record<string, string> = {};
-        if (form.voter_filter_sede) filter.sede = form.voter_filter_sede;
-        if (form.voter_filter_career) filter.career = form.voter_filter_career;
-        electionData.voter_filter = filter;
-      }
-
-      const created = await apiClient<{ id: string }>('/api/elections', {
-        method: 'POST',
-        body: JSON.stringify(electionData),
-      });
-
-      const electionId = created.id;
       const allOptions: Array<{ label: string; option_type: string; description?: string }> = candidateOptions.map((option) => ({
         label: option.label,
         description: option.description || undefined,
@@ -512,38 +484,49 @@ export default function CrearEleccionPage() {
         allOptions.push({ label: 'Voto nulo', option_type: 'NULL_VOTE' });
       }
 
-      for (let index = 0; index < allOptions.length; index += 1) {
-        await apiClient(`/api/elections/${electionId}/options`, {
-          method: 'POST',
-          body: JSON.stringify({
-            label: allOptions[index].label,
-            option_type: allOptions[index].option_type,
-            display_order: index + 1,
-            description: allOptions[index].description,
-          }),
-        });
+      const electionData: Record<string, unknown> = {
+        title: trimmedTitle,
+        description: form.description.trim() || null,
+        is_anonymous: form.is_anonymous,
+        voter_source: form.voter_source,
+        tag_id: form.voter_source === 'TAG' ? form.tag_id : null,
+        starts_immediately: form.start_immediately,
+        immediate_minutes: immediateMinutes,
+        options: allOptions.map((option, index) => ({
+          label: option.label,
+          option_type: option.option_type,
+          description: option.description,
+          display_order: index + 1,
+        })),
+        status: 'AUTO',
+      };
+
+      if (!form.start_immediately) {
+        electionData.start_time = form.start_time;
+        electionData.end_time = form.end_time;
       }
 
-      const populateBody: Record<string, unknown> = {};
       if (form.voter_source === 'FILTERED') {
-        if (form.voter_filter_sede) populateBody.sede = form.voter_filter_sede;
-        if (form.voter_filter_career) populateBody.career = form.voter_filter_career;
+        const filter: Record<string, string> = {};
+        if (form.voter_filter_sede) filter.sede = form.voter_filter_sede;
+        if (form.voter_filter_career) filter.career = form.voter_filter_career;
+        electionData.voter_filter = filter;
+        electionData.populate = filter;
       }
       if (form.voter_source === 'MANUAL') {
-        populateBody.student_ids = selectedStudents.map((student) => student.id);
+        electionData.populate = {
+          student_ids: selectedStudents.map((student) => student.id),
+        };
       }
       if (form.voter_source === 'TAG' && form.tag_id) {
-        populateBody.tag_id = form.tag_id;
+        electionData.populate = {
+          tag_id: form.tag_id,
+        };
       }
 
-      await apiClient(`/api/elections/${electionId}/voters/populate`, {
+      await apiClient('/api/elections', {
         method: 'POST',
-        body: JSON.stringify(populateBody),
-      });
-
-      await apiClient(`/api/elections/${electionId}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ status: 'AUTO' }),
+        body: JSON.stringify(electionData),
       });
 
       router.push('/elecciones');
