@@ -478,7 +478,7 @@ function buildNarrative(log: AuditLog): Narrative {
     }
 
     // ─── Votantes y votos ───────────────────────────────────────────
-    case 'tag_member.insert': {
+    case '__tag_member_insert_old': {
       const tagName =
         (newRow.tag_name as string | undefined) ||
         (details.tag_name as string | undefined) ||
@@ -501,7 +501,7 @@ function buildNarrative(log: AuditLog): Narrative {
         opBadge,
       };
     }
-    case 'tag_member.delete': {
+    case '__tag_member_delete_old': {
       const tagName =
         (oldRow.tag_name as string | undefined) ||
         (details.tag_name as string | undefined) ||
@@ -520,6 +520,53 @@ function buildNarrative(log: AuditLog): Narrative {
       return {
         lead: 'quitÃ³ de la tag',
         subject: `Â«${tagName}Â»`,
+        trailer: formatPersonLabel(studentName, studentCarnet, 'persona removida'),
+        opBadge,
+      };
+    }
+
+    case 'tag_member.insert': {
+      const tagName =
+        (newRow.tag_name as string | undefined) ||
+        (details.tag_name as string | undefined) ||
+        'tag';
+      const studentName =
+        (newRow.student_name as string | undefined) ||
+        (details.target_name as string | undefined) ||
+        log.target_name ||
+        'persona';
+      const studentCarnet =
+        (newRow.student_carnet as string | undefined) ||
+        (details.target_carnet as string | undefined) ||
+        log.target_carnet ||
+        undefined;
+
+      return {
+        lead: 'agrego a la tag',
+        subject: `"${tagName}"`,
+        trailer: formatPersonLabel(studentName, studentCarnet, 'persona agregada'),
+        opBadge,
+      };
+    }
+    case 'tag_member.delete': {
+      const tagName =
+        (oldRow.tag_name as string | undefined) ||
+        (details.tag_name as string | undefined) ||
+        'tag';
+      const studentName =
+        (oldRow.student_name as string | undefined) ||
+        (details.target_name as string | undefined) ||
+        log.target_name ||
+        'persona';
+      const studentCarnet =
+        (oldRow.student_carnet as string | undefined) ||
+        (details.target_carnet as string | undefined) ||
+        log.target_carnet ||
+        undefined;
+
+      return {
+        lead: 'quito de la tag',
+        subject: `"${tagName}"`,
         trailer: formatPersonLabel(studentName, studentCarnet, 'persona removida'),
         opBadge,
       };
