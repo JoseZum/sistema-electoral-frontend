@@ -293,6 +293,8 @@ const FIELD_LABELS: Record<string, string> = {
   position: 'posición',
   filename: 'archivo',
   total_rows: 'registros',
+  member_count: 'integrantes',
+  members_summary: 'personas',
   option_count: 'cantidad de opciones',
   options_summary: 'opciones',
   eligible_count: 'votantes elegibles',
@@ -536,7 +538,13 @@ function buildNarrative(log: AuditLog): Narrative {
     // ─── Votantes y votos ───────────────────────────────────────────
     case 'tag.insert': {
       const tagName = getTagAuditName(newRow, details, log);
-      return { lead: 'creo la tag', subject: `"${tagName}"`, opBadge };
+      const memberCount = Number(newRow.member_count ?? 0);
+      return {
+        lead: 'creo la tag',
+        subject: `"${tagName}"`,
+        trailer: memberCount > 0 ? `${memberCount} integrante${memberCount === 1 ? '' : 's'}` : undefined,
+        opBadge,
+      };
     }
     case 'tag.update': {
       const tagName = getTagAuditName(newRow, previous, log);
@@ -1258,6 +1266,57 @@ function EventDetail({ log, narrative }: { log: AuditLog; narrative: Narrative }
             </span>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (log.action === 'tag.insert') {
+    const row = (getField<Record<string, unknown>>(details, 'new') ?? {}) as Record<string, unknown>;
+    const description = typeof row.description === 'string' ? row.description : '';
+    const color = typeof row.color === 'string' ? row.color : '';
+    const members = Array.isArray(row.members)
+      ? row.members.filter((member): member is Record<string, unknown> => Boolean(member) && typeof member === 'object')
+      : [];
+
+    return (
+      <div className="audit-detail-list">
+        <div className="audit-detail-list-row">
+          <dt>Nombre</dt>
+          <dd>{prettyValue('name', row.name)}</dd>
+        </div>
+        {description && (
+          <div className="audit-detail-list-row">
+            <dt>Descripcion</dt>
+            <dd>{prettyValue('description', description)}</dd>
+          </div>
+        )}
+        {color && (
+          <div className="audit-detail-list-row">
+            <dt>Color</dt>
+            <dd>{prettyValue('color', color)}</dd>
+          </div>
+        )}
+        <div className="audit-detail-list-row">
+          <dt>Integrantes</dt>
+          <dd>{Number(row.member_count ?? members.length).toLocaleString('es-CR')}</dd>
+        </div>
+        {members.map((member, index) => {
+          const name = typeof member.full_name === 'string' ? member.full_name : 'Persona';
+          const carnet = typeof member.carnet === 'string' ? member.carnet : undefined;
+          const sede = typeof member.sede === 'string' ? member.sede : undefined;
+          const career = typeof member.career === 'string' ? member.career : undefined;
+          const parts = [sede, career].filter(Boolean);
+
+          return (
+            <div key={`${carnet || name}-${index}`} className="audit-detail-list-row">
+              <dt>{index + 1}</dt>
+              <dd>
+                {formatPersonLabel(name, carnet, 'persona')}
+                {parts.length > 0 ? ` - ${parts.join(' | ')}` : ''}
+              </dd>
+            </div>
+          );
+        })}
       </div>
     );
   }
