@@ -2,17 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import { MsalProvider } from '@azure/msal-react';
-import { msalInstance, msalReady } from '@/lib/msal';
+import type { PublicClientApplication } from '@azure/msal-browser';
+import { initializeMsal } from '@/lib/msal';
 import { AuthProvider } from '@/lib/auth-context';
 
 export function MsalProviderWrapper({ children }: { children: React.ReactNode }) {
-  const [isReady, setIsReady] = useState(false);
+  const [msalInstance, setMsalInstance] = useState<PublicClientApplication | null>(null);
 
   useEffect(() => {
-    msalReady.then(() => setIsReady(true));
+    let mounted = true;
+
+    initializeMsal().then((instance) => {
+      if (mounted) {
+        setMsalInstance(instance);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  if (!isReady) return null;
+  if (!msalInstance) return null;
 
   return (
     <MsalProvider instance={msalInstance}>

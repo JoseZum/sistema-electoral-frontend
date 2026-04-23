@@ -26,18 +26,35 @@ export const loginRequest = {
   domainHint: 'estudiantec.cr',
 };
 
-export const msalInstance = new PublicClientApplication(msalConfig);
+let msalInstance: PublicClientApplication | null = null;
 
-export const msalReady = msalInstance
-  .initialize()
-  .then(() => msalInstance.handleRedirectPromise())
-  .then((response) => {
+export function getMsalInstance() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  if (!msalInstance) {
+    msalInstance = new PublicClientApplication(msalConfig);
+  }
+
+  return msalInstance;
+}
+
+export async function initializeMsal() {
+  const instance = getMsalInstance();
+  if (!instance) {
+    return null;
+  }
+
+  try {
+    await instance.initialize();
+    const response = await instance.handleRedirectPromise();
     if (response) {
       console.log('[MSAL] Auth response received for:', response.account?.username);
     }
-    return response;
-  })
-  .catch((err) => {
+    return instance;
+  } catch (err) {
     console.error('[MSAL] Init error:', err);
     return null;
-  });
+  }
+}

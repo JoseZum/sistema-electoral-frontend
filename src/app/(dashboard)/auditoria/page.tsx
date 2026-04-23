@@ -114,6 +114,12 @@ const Icon = {
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   ),
+  tag: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.5 13.5 13.5 20.5a2.2 2.2 0 0 1-3.1 0L3 13.1V3h10.1l7.4 7.4a2.2 2.2 0 0 1 0 3.1Z" />
+      <circle cx="8" cy="8" r="1.25" />
+    </svg>
+  ),
   trash: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="3 6 5 6 21 6" />
@@ -189,6 +195,15 @@ const CATEGORIES: Category[] = [
     tint: '#F5EFFB',
   },
   {
+    id: 'tags',
+    label: 'Tags',
+    description: 'Agrupaciones de votantes',
+    icon: Icon.tag,
+    resourceTypes: ['tag', 'tag_member'],
+    tone: '#AD1457',
+    tint: '#FCE7F3',
+  },
+  {
     id: 'votos',
     label: 'Votos',
     description: 'Boletas registradas',
@@ -233,7 +248,7 @@ const RESOURCE_META: Record<
   padron_upload: { icon: Icon.upload, label: 'Padrón', tone: '#1E4A7A', tint: '#EAF1F9' },
   election: { icon: Icon.ballot, label: 'Elección', tone: '#6B21A8', tint: '#F5EFFB' },
   election_option: { icon: Icon.ballot, label: 'Opción', tone: '#6B21A8', tint: '#F5EFFB' },
-  tag: { icon: Icon.plus, label: 'Tag', tone: '#AD1457', tint: '#FCE7F3' },
+  tag: { icon: Icon.tag, label: 'Tag', tone: '#AD1457', tint: '#FCE7F3' },
   tag_member: { icon: Icon.users, label: 'Miembro de tag', tone: '#AD1457', tint: '#FCE7F3' },
   election_voter: { icon: Icon.checkCircle, label: 'Votante', tone: '#0F766E', tint: '#E6F4F2' },
   vote: { icon: Icon.checkCircle, label: 'Voto', tone: '#0F766E', tint: '#E6F4F2' },
@@ -354,6 +369,22 @@ function opBadgeFor(op: string): Narrative['opBadge'] {
   if (op === 'update') return { label: 'Actualizado', variant: 'update' };
   if (op === 'delete') return { label: 'Eliminado', variant: 'delete' };
   return { label: 'Evento', variant: 'event' };
+}
+
+function getTagAuditName(
+  primary: Record<string, unknown>,
+  secondary: Record<string, unknown>,
+  log: AuditLog
+): string {
+  return (
+    (primary.name as string | undefined) ||
+    (secondary.name as string | undefined) ||
+    (primary.tag_name as string | undefined) ||
+    (secondary.tag_name as string | undefined) ||
+    (log.target_name as string | undefined) ||
+    log.resource_id ||
+    'tag'
+  );
 }
 
 function buildNarrative(log: AuditLog): Narrative {
@@ -503,6 +534,34 @@ function buildNarrative(log: AuditLog): Narrative {
     }
 
     // ─── Votantes y votos ───────────────────────────────────────────
+    case 'tag.insert': {
+      const tagName = getTagAuditName(newRow, details, log);
+      return { lead: 'creo la tag', subject: `"${tagName}"`, opBadge };
+    }
+    case 'tag.update': {
+      const tagName = getTagAuditName(newRow, previous, log);
+      if ('name' in changes) {
+        return {
+          lead: 'renombro la tag a',
+          subject: `"${String(changes.name)}"`,
+          trailer: previous.name ? `antes: "${String(previous.name)}"` : undefined,
+          opBadge,
+        };
+      }
+
+      const fields = Object.keys(changes).filter((field) => field !== 'updated_at');
+      return {
+        lead: 'actualizo la tag',
+        subject: `"${tagName}"`,
+        trailer: fields.length > 0 ? `cambios en ${fields.map(fieldLabel).join(', ')}` : undefined,
+        opBadge,
+      };
+    }
+    case 'tag.delete': {
+      const tagName = getTagAuditName(oldRow, details, log);
+      return { lead: 'elimino la tag', subject: `"${tagName}"`, opBadge };
+    }
+
     case '__tag_member_insert_old': {
       const tagName =
         (newRow.tag_name as string | undefined) ||
