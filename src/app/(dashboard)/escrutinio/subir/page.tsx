@@ -115,6 +115,11 @@ export default function EscrutinioPage() {
 
   const handleSubmit = async () => {
     if (!value.trim()) return;
+    if (!user?.studentId) {
+      alert('No se pudo identificar al usuario autenticado');
+      return;
+    }
+
     setSubmit(true);
     try{
       const payload: Record<string, string> = {

@@ -25,7 +25,7 @@ export default function GenerarLlavesPage() {
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [generated, setGenerated] = useState(false);
-  const [generatedKeys, setGeneratedKeys] = useState([]);
+  const [generatedKeys, setGeneratedKeys] = useState<GeneratedKey[]>([]);
   const { user } = useAuth();
 
   // Load elections on component mount
@@ -73,7 +73,7 @@ export default function GenerarLlavesPage() {
     setGenerating(true);
     setProgress(0);
     try{
-      const payload: Record< string, string[]> = {
+      const payload: { option: string; students_id: string[] } = {
         option: tokenFormat,
         students_id: [user.studentId]
       };
@@ -84,7 +84,7 @@ export default function GenerarLlavesPage() {
       });
 
       const userResult: GeneratedKey = {
-        id: user.students_id,
+        id: user.studentId,
         carnet: user.carnet,
         nombre: user.fullName,
         token: response.keys,
