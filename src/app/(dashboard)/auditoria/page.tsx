@@ -559,7 +559,7 @@ function buildNarrative(log: AuditLog): Narrative {
 
       const fields = Object.keys(changes).filter((field) => field !== 'updated_at');
       return {
-        lead: 'actualizo la tag',
+        lead: 'actualizó la tag',
         subject: `"${tagName}"`,
         trailer: fields.length > 0 ? `cambios en ${fields.map(fieldLabel).join(', ')}` : undefined,
         opBadge,
