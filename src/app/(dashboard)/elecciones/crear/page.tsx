@@ -49,6 +49,12 @@ interface StudentCatalogResponse {
   careers: string[];
 }
 
+interface AdminSummary {
+  id: string;
+}
+
+type KeyRequirementMode = 'COUNT' | 'PERCENTAGE';
+
 const SECTION_ITEMS = [
   { id: 'informacion', label: 'Informacion', description: 'Detalles y horario' },
   { id: 'votantes', label: 'Votantes', description: 'Padron elegible' },
@@ -90,8 +96,30 @@ const VOTER_SOURCE_OPTIONS: Array<{
   },
 ];
 
+const KEY_REQUIREMENT_OPTIONS: Array<{
+  value: KeyRequirementMode;
+  title: string;
+  description: string;
+  badge: string;
+}> = [
+  {
+    value: 'COUNT',
+    title: 'Cantidad fija',
+    description: 'Define directamente cuantas llaves de administradores se necesitan.',
+    badge: 'Cantidad',
+  },
+  {
+    value: 'PERCENTAGE',
+    title: 'Porcentaje',
+    description: 'Calcula el minimo requerido con base en el total actual de administradores.',
+    badge: 'Porcentaje',
+  },
+];
+
 const DEFAULT_IMMEDIATE_DURATION_VALUE = '15';
 const DEFAULT_IMMEDIATE_DURATION_UNIT: ImmediateDurationUnit = 'minutes';
+const DEFAULT_KEY_COUNT = '1';
+const DEFAULT_KEY_PERCENTAGE = '50';
 
 function isScheduledWindowValid(startTime: string, endTime: string) {
   const start = new Date(startTime);
@@ -122,6 +150,30 @@ function getVoterSummary(form: ElectionForm, selectedStudents: Student[]) {
     default:
       return 'Sin definir';
   }
+}
+
+function parsePositiveInteger(value: string) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return null;
+  }
+  return parsed;
+}
+
+function parsePercentage(value: string) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 100) {
+    return null;
+  }
+  return parsed;
+}
+
+function getPercentageMinKeys(totalAdmins: number, percentage: number) {
+  return Math.max(1, Math.ceil((totalAdmins * percentage) / 100));
+}
+
+function formatKeysLabel(count: number) {
+  return `${count} llave${count === 1 ? '' : 's'}`;
 }
 
 function SelectionCard({
@@ -203,6 +255,9 @@ export default function CrearEleccionPage() {
   const [manualResults, setManualResults] = useState<Student[]>([]);
   const [manualSearching, setManualSearching] = useState(false);
   const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
+  const [adminCount, setAdminCount] = useState<number | null>(null);
+  const [adminCountLoading, setAdminCountLoading] = useState(true);
+  const [adminCountError, setAdminCountError] = useState<string | null>(null);
 
   const [form, setForm] = useState<ElectionForm>({
     title: '',
@@ -226,7 +281,10 @@ export default function CrearEleccionPage() {
 
   const [includeBlank, setIncludeBlank] = useState(true);
   const [includeNull, setIncludeNull] = useState(true);
-  const [requiresKeys, setRequiresKeys] = useState(true);
+  const [requiresKeys, setRequiresKeys] = useState(false);
+  const [keyRequirementMode, setKeyRequirementMode] = useState<KeyRequirementMode>('COUNT');
+  const [keyCount, setKeyCount] = useState(DEFAULT_KEY_COUNT);
+  const [keyPercentage, setKeyPercentage] = useState(DEFAULT_KEY_PERCENTAGE);
 
   useEffect(() => {
     let cancelled = false;
@@ -248,6 +306,34 @@ export default function CrearEleccionPage() {
     }
 
     fetchCatalog();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchAdminCount() {
+      try {
+        const admins = await apiClient<AdminSummary[]>('/api/users/admins');
+        if (!cancelled) {
+          setAdminCount(admins.length);
+          setAdminCountError(null);
+        }
+      } catch (err) {
+        console.error('Error fetching admins:', err);
+        if (!cancelled) {
+          setAdminCount(null);
+          setAdminCountError('No se pudo cargar el total de administradores');
+        }
+      } finally {
+        if (!cancelled) setAdminCountLoading(false);
+      }
+    }
+
+    fetchAdminCount();
 
     return () => {
       cancelled = true;
@@ -418,6 +504,40 @@ export default function CrearEleccionPage() {
     setSelectedStudents((prev) => prev.filter((student) => student.id !== studentId));
   }
 
+  function resolveMinKeysForSubmit() {
+    if (!requiresKeys) {
+      return 1;
+    }
+
+    if (keyRequirementMode === 'COUNT') {
+      const parsedCount = parsePositiveInteger(keyCount);
+      if (parsedCount === null) {
+        throw new Error('Define una cantidad valida de llaves de escrutinio');
+      }
+
+      if (adminCount !== null && adminCount > 0 && parsedCount > adminCount) {
+        throw new Error('La cantidad de llaves no puede superar el total de administradores');
+      }
+
+      return parsedCount;
+    }
+
+    const parsedPercentage = parsePercentage(keyPercentage);
+    if (parsedPercentage === null) {
+      throw new Error('Define un porcentaje de administradores entre 1 y 100');
+    }
+
+    if (adminCount === null) {
+      throw new Error(
+        adminCountLoading
+          ? 'Espera a que cargue el total de administradores'
+          : 'No se pudo calcular el minimo por porcentaje porque no se cargo el total de administradores'
+      );
+    }
+
+    return getPercentageMinKeys(adminCount, parsedPercentage);
+  }
+
   async function handleSubmit() {
     try {
       setSaving(true);
@@ -470,6 +590,8 @@ export default function CrearEleccionPage() {
         }
       }
 
+      const minKeys = resolveMinKeysForSubmit();
+
       const allOptions: Array<{ label: string; option_type: string; description?: string }> = candidateOptions.map((option) => ({
         label: option.label,
         description: option.description || undefined,
@@ -492,6 +614,8 @@ export default function CrearEleccionPage() {
         tag_id: form.voter_source === 'TAG' ? form.tag_id : null,
         starts_immediately: form.start_immediately,
         immediate_minutes: immediateMinutes,
+        requires_keys: requiresKeys,
+        min_keys: minKeys,
         options: allOptions.map((option, index) => ({
           label: option.label,
           option_type: option.option_type,
@@ -542,6 +666,37 @@ export default function CrearEleccionPage() {
     ? isScheduledWindowValid(form.start_time, form.end_time)
     : false;
   const immediateSummary = formatImmediateDuration(form.immediate_duration_value, form.immediate_duration_unit);
+  const parsedKeyCount = parsePositiveInteger(keyCount);
+  const parsedKeyPercentage = parsePercentage(keyPercentage);
+  const percentageMinKeys = adminCount !== null && parsedKeyPercentage !== null
+    ? getPercentageMinKeys(adminCount, parsedKeyPercentage)
+    : null;
+  const minKeysPreview = !requiresKeys
+    ? null
+    : keyRequirementMode === 'COUNT'
+      ? parsedKeyCount
+      : percentageMinKeys;
+  const adminCountLabel = adminCountLoading
+    ? 'Cargando administradores'
+    : adminCount === null
+      ? 'Administradores no disponibles'
+      : `${adminCount} administrador${adminCount === 1 ? '' : 'es'}`;
+  const countExceedsAdmins = requiresKeys
+    && keyRequirementMode === 'COUNT'
+    && adminCount !== null
+    && adminCount > 0
+    && parsedKeyCount !== null
+    && parsedKeyCount > adminCount;
+  const keyRequirementSummary = !requiresKeys
+    ? 'Sin llaves de escrutinio'
+    : countExceedsAdmins
+      ? 'Cantidad supera administradores'
+      : minKeysPreview !== null
+      ? `${formatKeysLabel(minKeysPreview)} requeridas`
+      : keyRequirementMode === 'PERCENTAGE'
+        ? 'Porcentaje pendiente'
+        : 'Cantidad pendiente';
+  const securitySummary = `${form.is_anonymous ? 'Voto anonimo' : 'Voto identificable'} - ${keyRequirementSummary}`;
 
   const sectionStates: Record<SectionId, { complete: boolean; summary: string }> = {
     informacion: {
@@ -563,8 +718,8 @@ export default function CrearEleccionPage() {
       summary: `${candidateOptionsCount} opcion${candidateOptionsCount === 1 ? '' : 'es'} configurada${candidateOptionsCount === 1 ? '' : 's'}`,
     },
     seguridad: {
-      complete: true,
-      summary: form.is_anonymous ? 'Voto anonimo activado' : 'Voto identificable',
+      complete: !requiresKeys || (minKeysPreview !== null && !countExceedsAdmins),
+      summary: securitySummary,
     },
   };
 
@@ -999,9 +1154,122 @@ export default function CrearEleccionPage() {
                 checked={requiresKeys}
                 title="Requiere llaves de escrutinio"
                 description="Los resultados se revelan cuando se alcanzan las llaves necesarias."
-                onChange={setRequiresKeys}
+                onChange={(checked) => {
+                  setError(null);
+                  setRequiresKeys(checked);
+                }}
               />
             </div>
+
+            {requiresKeys && (
+              <div className="create-election-option-stack">
+                <div className="create-election-choice-grid">
+                  {KEY_REQUIREMENT_OPTIONS.map((option) => (
+                    <SelectionCard
+                      key={option.value}
+                      selected={keyRequirementMode === option.value}
+                      badge={option.badge}
+                      title={option.title}
+                      description={option.description}
+                      onClick={() => {
+                        setError(null);
+                        setKeyRequirementMode(option.value);
+                      }}
+                    >
+                      {option.value === 'COUNT' ? 'Cantidad manual' : adminCountLabel}
+                    </SelectionCard>
+                  ))}
+                </div>
+
+                <div className="create-election-option-card">
+                  <div className="create-election-option-card__header">
+                    <div className="create-election-option-card__index">Llaves requeridas</div>
+                    <div className="create-election-list-card__count">{adminCountLabel}</div>
+                  </div>
+
+                  <div className="create-election-field-grid">
+                    {keyRequirementMode === 'COUNT' ? (
+                      <div className="input-group">
+                        <label>Cantidad de administradores</label>
+                        <input
+                          type="number"
+                          className="input"
+                          min={1}
+                          max={adminCount ?? undefined}
+                          step={1}
+                          value={keyCount}
+                          onChange={(event) => {
+                            setError(null);
+                            setKeyCount(event.target.value);
+                          }}
+                        />
+                        <p className="create-election-inline-help">
+                          {countExceedsAdmins
+                            ? 'No puede superar el total actual de administradores.'
+                            : 'Cantidad minima de llaves para revelar resultados.'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="input-group">
+                        <label>Porcentaje de administradores</label>
+                        <div style={{ position: 'relative' }}>
+                          <input
+                            type="number"
+                            className="input"
+                            min={1}
+                            max={100}
+                            step={1}
+                            value={keyPercentage}
+                            onChange={(event) => {
+                              setError(null);
+                              setKeyPercentage(event.target.value);
+                            }}
+                            style={{ paddingRight: '2.4rem' }}
+                          />
+                          <span
+                            aria-hidden="true"
+                            style={{
+                              position: 'absolute',
+                              right: '0.85rem',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              color: 'var(--muted)',
+                              fontWeight: 700,
+                            }}
+                          >
+                            %
+                          </span>
+                        </div>
+                        <p className="create-election-inline-help">
+                          {percentageMinKeys !== null
+                            ? `Minimo calculado: ${formatKeysLabel(percentageMinKeys)}.`
+                            : 'El minimo se calculara cuando carguen los administradores.'}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="input-group">
+                      <label>Total de administradores</label>
+                      <input
+                        type="text"
+                        className="input"
+                        value={adminCountLabel}
+                        readOnly
+                      />
+                      <p className="create-election-inline-help">
+                        Total cargado desde la lista actual de administradores.
+                      </p>
+                    </div>
+                  </div>
+
+                  {adminCountError && keyRequirementMode === 'PERCENTAGE' && (
+                    <div className="create-election-helper" style={{ color: 'var(--error)' }}>
+                      {adminCountError}. No se puede calcular un porcentaje sin ese dato.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
 
           <div className="card create-election-submit-card">
@@ -1085,6 +1353,10 @@ export default function CrearEleccionPage() {
               <div className="create-election-summary-item">
                 <span>Privacidad</span>
                 <strong>{form.is_anonymous ? 'Anonima' : 'No anonima'}</strong>
+              </div>
+              <div className="create-election-summary-item">
+                <span>Escrutinio</span>
+                <strong>{keyRequirementSummary}</strong>
               </div>
             </div>
           </div>

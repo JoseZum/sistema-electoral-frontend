@@ -1,18 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { Election } from '@/types/elections';
 import { useAuth } from '@/lib/auth-context';
-import type { User } from '@/types/auth';
 import Loader from '@/components/Loader';
 
 interface GeneratedKey {
-  id: string;
+  electionTitle: string;
   carnet: string;
   nombre: string;
   token: string;
-  result: any;
+}
+
+interface AssignMembersResponse {
+  result: unknown;
+  keys: string[] | string;
+}
+
+function getResponseKey(keys: string[] | string): string {
+  return Array.isArray(keys) ? keys[0] ?? '' : keys;
 }
 
 export default function GenerarLlavesPage() {
@@ -20,15 +27,17 @@ export default function GenerarLlavesPage() {
   const [loadingElections, setLoadingElections] = useState(true);
   const [electionsError, setElectionsError] = useState<string | null>(null);
   const [selectedElection, setSelectedElection] = useState<Election | null>(null);
-  const [tokenFormat, setTokenFormat] = useState("0");
-  const [autoSend, setAutoSend] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [generated, setGenerated] = useState(false);
-  const [generatedKeys, setGeneratedKeys] = useState<GeneratedKey[]>([]);
+  const [generatedKey, setGeneratedKey] = useState<GeneratedKey | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generationMessage, setGenerationMessage] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Load elections on component mount
+  const eligibleElections = useMemo(
+    () => elections.filter((election) => election.requires_keys && election.status === 'CLOSED'),
+    [elections]
+  );
+
   useEffect(() => {
     const loadElections = async () => {
       try {
@@ -48,97 +57,119 @@ export default function GenerarLlavesPage() {
   }, []);
 
   const handleElectionChange = (electionId: string) => {
-    const election = elections.find(e => e.id === electionId) || null;
+    const election = eligibleElections.find((item) => item.id === electionId) || null;
     setSelectedElection(election);
-    setGenerated(false);
-    setGeneratedKeys([]);
+    setGeneratedKey(null);
+    setGenerationError(null);
+    setGenerationMessage(null);
   };
 
   const getElectionType = (election: Election): string => {
-    if (election.voter_source === 'FULL_PADRON') return 'Electoral Masiva';
+    if (election.voter_source === 'FULL_PADRON') return 'Electoral masiva';
     if (election.voter_source === 'FILTERED') return 'Filtrada';
+    if (election.voter_source === 'TAG') return 'Por tag';
     return 'Manual';
   };
 
   const getVoterSource = (election: Election): string => {
-    if (election.voter_source === 'FULL_PADRON') return 'Padrón completo';
-    if (election.voter_source === 'FILTERED') return 'Filtrado personalizado';
+    if (election.voter_source === 'FULL_PADRON') return 'Padron completo';
+    if (election.voter_source === 'FILTERED') return 'Filtro personalizado';
+    if (election.voter_source === 'TAG') return election.tag_name ? `Tag: ${election.tag_name}` : 'Tag';
     return 'Lista manual';
   };
 
-  const generateKeys = async () => {
-      console.log(user);
-    if (!selectedElection || !user) return;
+  const generateKey = async () => {
+    if (!selectedElection) return;
+
+    if (!user?.studentId) {
+      setGenerationError('No se pudo identificar al usuario administrador autenticado.');
+      return;
+    }
 
     setGenerating(true);
-    setProgress(0);
-    try{
-      const payload: { option: string; students_id: string[] } = {
-        option: tokenFormat,
-        students_id: [user.studentId]
-      };
+    setGeneratedKey(null);
+    setGenerationError(null);
+    setGenerationMessage(null);
 
-      const response = await apiClient<{result: any, keys: string}>(`/api/scrutiny/${selectedElection.id}/assign-members`, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
+    try {
+      const response = await apiClient<AssignMembersResponse>(
+        `/api/scrutiny/${selectedElection.id}/assign-members`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            option: '0',
+            students_id: [user.studentId],
+          }),
+        }
+      );
 
-      const userResult: GeneratedKey = {
-        id: user.studentId,
-        carnet: user.carnet,
-        nombre: user.fullName,
-        token: response.keys,
-        result: response.result
+      const token = getResponseKey(response.keys);
+      if (!token) {
+        throw new Error('El servidor no devolvio la llave generada.');
       }
 
-      setProgress(100);
-      setGeneratedKeys([userResult]);
-      setGenerated(true);
-    }catch(error){
-      alert('Error al generar llaves');
-    }finally{
+      setGeneratedKey({
+        electionTitle: selectedElection.title,
+        carnet: user.carnet,
+        nombre: user.fullName,
+        token,
+      });
+      setGenerationMessage('Llave generada. Guardala ahora; por seguridad solo se muestra en este momento.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al generar la llave';
+      setGenerationError(
+        message.toLowerCase().includes('duplic')
+          ? 'Ya existe una llave asignada para este usuario en esta eleccion. No es posible volver a mostrarla.'
+          : message
+      );
+    } finally {
       setGenerating(false);
     }
   };
 
+  const copyGeneratedKey = async () => {
+    if (!generatedKey) return;
 
-  const exportCSV = () => {
-    // Implement CSV export
-    console.log('Exporting CSV...');
-  };
-
-  const sendEmails = () => {
-    // Implement email sending
-    console.log('Sending emails...');
+    try {
+      await navigator.clipboard.writeText(generatedKey.token);
+      setGenerationMessage('Llave copiada al portapapeles.');
+      setGenerationError(null);
+    } catch {
+      setGenerationError('No se pudo copiar la llave automaticamente.');
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
         <div className="w-16 h-1 bg-red-600 mb-4"></div>
-        <h2 className="text-3xl font-serif font-normal mb-2">Generar llaves de votación</h2>
+        <h2 className="text-3xl font-serif font-normal mb-2">Generar llave de escrutinio</h2>
         <p className="text-gray-600 text-sm">
-          Generá tokens de acceso únicos para cada votante elegible de una votación específica. Cada token permite votar una sola vez.
+          Genera una llave para el administrador autenticado en elecciones cerradas que requieren escrutinio.
         </p>
       </div>
 
-      {/* Select Election */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4 shadow-sm">
         <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-4">
-          Seleccionar votación
+          Eleccion pendiente de escrutinio
         </div>
+
         {loadingElections ? (
           <Loader />
         ) : electionsError ? (
           <div className="text-center py-4 text-red-600">{electionsError}</div>
+        ) : eligibleElections.length === 0 ? (
+          <div className="text-center py-8 text-gray-600">
+            No hay elecciones cerradas que requieran llaves de escrutinio.
+          </div>
         ) : (
           <select
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
             value={selectedElection?.id || ''}
-            onChange={(e) => handleElectionChange(e.target.value)}
+            onChange={(event) => handleElectionChange(event.target.value)}
           >
-            <option value="">Elegir una votación...</option>
-            {elections.filter(election => election.status === "CLOSED" && !election.requires_keys).map(election => (
+            <option value="">Elegir una eleccion...</option>
+            {eligibleElections.map((election) => (
               <option key={election.id} value={election.id}>
                 {election.title}
               </option>
@@ -146,10 +177,9 @@ export default function GenerarLlavesPage() {
           </select>
         )}
 
-        {/* Election info (shown on selection) */}
         {selectedElection && (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tipo</div>
                 <div className="font-semibold text-sm mt-1">{getElectionType(selectedElection)}</div>
@@ -157,6 +187,12 @@ export default function GenerarLlavesPage() {
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Origen votantes</div>
                 <div className="font-semibold text-sm mt-1">{getVoterSource(selectedElection)}</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Minimo llaves</div>
+                <div className="text-2xl font-medium mt-0.5 text-red-600 font-serif">
+                  {selectedElection.min_keys.toLocaleString()}
+                </div>
               </div>
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Elegibles</div>
@@ -169,188 +205,92 @@ export default function GenerarLlavesPage() {
         )}
       </div>
 
-      {/* Config */}
       {selectedElection && (
         <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4 shadow-sm">
-          <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-5">
-            Configuración de tokens
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                Administrador autenticado
+              </div>
+              <div className="font-semibold text-gray-900">{user?.fullName || 'Usuario no disponible'}</div>
+              <div className="text-sm text-gray-600 font-mono">{user?.carnet || user?.studentId || '-'}</div>
+            </div>
+
+            <button
+              className="bg-red-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={generateKey}
+              disabled={generating || !user?.studentId}
+            >
+              {generating ? (
+                <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                </svg>
+              )}
+              {generating ? 'Generando...' : 'Generar mi llave'}
+            </button>
           </div>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+        </div>
+      )}
+
+      {generationError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-sm text-red-700">
+          {generationError}
+        </div>
+      )}
+
+      {generationMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 text-sm text-green-800">
+          {generationMessage}
+        </div>
+      )}
+
+      {generatedKey && (
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Llave generada
+            </div>
+            <div className="font-semibold text-gray-900 mt-1">{generatedKey.electionTitle}</div>
+          </div>
+
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Formato del token
-                </label>
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  value={tokenFormat}
-                  onChange={(e) => setTokenFormat(e.target.value)}
+                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Nombre</div>
+                <div className="text-sm font-semibold text-gray-900 mt-1">{generatedKey.nombre}</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Carnet</div>
+                <div className="text-sm font-mono text-gray-900 mt-1">{generatedKey.carnet}</div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                Tu llave
+              </div>
+              <div className="flex flex-col md:flex-row md:items-center gap-3">
+                <code className="flex-1 text-2xl font-mono font-semibold text-gray-900 break-all">
+                  {generatedKey.token}
+                </code>
+                <button
+                  type="button"
+                  className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-white transition-colors"
+                  onClick={copyGeneratedKey}
                 >
-                  <option value="0">6 dígitos numéricos (ej: 847291)</option>
-                  <option value="1">8 caracteres alfanuméricos (ej: aX7k9mP2)</option>
-                  <option value="2">UUID corto (ej: f47ac10b)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Expiración
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-                  value="Igual al cierre de la votación"
-                  disabled
-                />
+                  Copiar
+                </button>
               </div>
             </div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-              <input
-                type="checkbox"
-                className="accent-red-600"
-                checked={autoSend}
-                onChange={(e) => setAutoSend(e.target.checked)}
-                disabled = {true}
-              />
-              Enviar tokens por correo automáticamente al generar
-            </label>
+
+            <p className="text-xs text-gray-500 mt-4">
+              Esta llave se canjea en el flujo de escrutinio. No se envia por correo ni se muestra en otro listado.
+            </p>
           </div>
-        </div>
-      )}
-
-      {/* Generate Button */}
-      {selectedElection && (
-        <div className="text-center py-4">
-          <button
-            className="bg-red-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 mx-auto disabled:opacity-50"
-            onClick={generateKeys}
-            disabled={generating}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-            </svg>
-            {generating ? 'Generando tokens...' : 'Generar tokens'}
-          </button>
-
-          {/* Progress */}
-          {generating && (
-            <div className="mt-6 max-w-md mx-auto">
-              <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-medium">Generando tokens...</span>
-                  <span className="font-semibold text-red-600">{progress}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-red-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Results */}
-      {generated && (
-        <div>
-          {/* Success Card */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-5 mb-4">
-            <div className="flex items-center gap-3">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
-              <div>
-                <div className="font-semibold text-green-800">
-                   Tokens generados exitosamente
-                </div>
-                <div className="text-sm text-green-600">
-                  Formato: {tokenFormat === '0' ? '6 dígitos numéricos' : tokenFormat === '1' ? '8 caracteres alfanuméricos' : 'UUID corto'}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 mb-6">
-            <button
-              className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
-              onClick={exportCSV}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
-              Exportar CSV
-            </button>
-            <button
-              className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors flex items-center gap-2"
-              onClick={sendEmails}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="22" y1="2" x2="11" y2="13"/>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
-              Enviar por correo
-            </button>
-          </div>
-
-          {/* Preview Table */}
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">#</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Carnet</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Nombre</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Token</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Estado</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {generatedKeys.map((key, index) => (
-                  <tr key={key.id} className="hover:bg-red-50 transition-colors">
-                    <td className="px-4 py-3 text-sm text-gray-900">{index + 1}</td>
-                    <td className="px-4 py-3 text-sm font-mono text-gray-900">{key.carnet}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{key.nombre}</td>
-                    <td className="px-4 py-3 text-sm font-mono font-semibold text-gray-900">{key.token}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {"Creado"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-              <span className="text-sm text-gray-700">
-                Mostrando 1–{generatedKeys.length} de {selectedElection?.total_voters.toLocaleString()}
-              </span>
-              <div className="flex gap-1">
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">‹</button>
-                <button className="px-3 py-1 text-sm bg-red-600 text-white border border-red-600 rounded">1</button>
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">2</button>
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">3</button>
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">…</button>
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">›</button>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-center text-xs text-gray-400 mt-6">
-            Los tokens son de uso único. Cada token solo permite votar una vez en esta votación. Si se regeneran, los anteriores se invalidan.
-          </p>
         </div>
       )}
     </div>

@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { Election } from '@/types/elections';
-import type { User } from '@/types/auth';
 import Loader from '@/components/Loader';
-
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '-';
+
   return new Date(dateStr).toLocaleDateString('es-CR', {
     day: 'numeric',
     month: 'short',
@@ -16,54 +16,54 @@ function formatDate(dateStr: string | null) {
   });
 }
 
-export default function escrutinio() {
+export default function EscrutinioPage() {
   const [elections, setElections] = useState<Election[]>([]);
-  const [loading, setLoading] = useState(false);
-  //const [loadingElections, setLoadingElections] = useState(true);
-  //const [electionsError, setElectionsError] = useState<string | null>(null);
-  //const [selectedElection, setSelectedElection] = useState<Election | null>(null);
-  //const [tokenFormat, setTokenFormat] = useState("0");
-  //const [autoSend, setAutoSend] = useState(false);
-  //const [generating, setGenerating] = useState(false);
-  //const [progress, setProgress] = useState(0);
-  //const [generated, setGenerated] = useState(false);
-  //const [generatedKeys, setGeneratedKeys] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load elections on component mount
+  const pendingScrutiny = useMemo(
+    () => elections.filter((election) => election.requires_keys && election.status === 'CLOSED'),
+    [elections]
+  );
+
   const fetchElections = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await apiClient<Election[]>('/api/elections');
-      const filtered = data.filter((election) => (election.status === 'SCRUTINIZED' || election.status === 'CLOSED'));
-      setElections(filtered);
-      
+      setElections(data);
     } catch (err) {
       console.error('Error fetching elections:', err);
+      setError(err instanceof Error ? err.message : 'Error al cargar elecciones');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchElections()
-  }, [fetchElections])
+    fetchElections();
+  }, [fetchElections]);
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <div className="mb-6">
         <div className="w-16 h-1 bg-red-600 mb-4"></div>
         <h2 className="text-3xl font-serif font-normal mb-2">Escrutinio</h2>
         <p className="text-gray-600 text-sm">
-          Comprobacion de tipos.
+          Canje de llaves para elecciones cerradas que requieren escrutinio y aun no estan finalizadas.
         </p>
       </div>
-    
-    {loading ? (
+
+      {loading ? (
         <Loader />
-      ) : elections.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--muted)' }}>
-          <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 600, marginBottom: '0.5rem' }}>Sin votaciones</h3>
-          <p>No hay votaciones para realizar escrutinio.</p>
+      ) : error ? (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
+          {error}
+        </div>
+      ) : pendingScrutiny.length === 0 ? (
+        <div className="bg-white border border-gray-200 rounded-lg text-center py-16 px-6 text-gray-600">
+          <h3 className="font-semibold mb-2 text-gray-900">Sin escrutinios pendientes</h3>
+          <p>No hay elecciones cerradas con llaves pendientes de canje.</p>
         </div>
       ) : (
         <div className="table-wrapper">
@@ -72,47 +72,47 @@ export default function escrutinio() {
               <tr>
                 <th>Titulo</th>
                 <th>Elegibles</th>
+                <th>Participacion</th>
+                <th>Llaves minimas</th>
                 <th>Fecha</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {elections.map((election, index) => {
+              {pendingScrutiny.map((election, index) => {
                 const participation = election.total_voters > 0
                   ? Math.round((election.votes_cast / election.total_voters) * 100)
                   : 0;
 
                 return (
                   <tr key={election.id} className="table-row-enter" style={{ animationDelay: `${0.05 * (index + 1)}s` }}>
-                    <td style={{ fontWeight: 500, color: 'var(--ink)' }}>{election.title}</td>
-                    {/* 
                     <td>
-                      <span className={`badge badge-dot ${STATUS_BADGE[election.status]}`}>
-                        {STATUS_LABELS[election.status]}
-                      </span>
+                      <div style={{ fontWeight: 500, color: 'var(--ink)' }}>{election.title}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
+                        Requiere escrutinio por llaves
+                      </div>
                     </td>
-                    */}
                     <td>{election.total_voters.toLocaleString()}</td>
-                    {/* 
                     <td>
-                      {election.status === 'DRAFT' || election.status === 'SCHEDULED' ? (
-                        <span style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>-</span>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <div className="progress-bar" style={{ width: 80, height: 6 }}>
-                            <div className={`progress-bar-fill ${participation >= 70 ? 'success' : 'accent'}`} style={{ width: `${participation}%` }} />
-                          </div>
-                          <span style={{ fontSize: '0.8125rem', fontWeight: 500 }}>{participation}%</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div className="progress-bar" style={{ width: 80, height: 6 }}>
+                          <div
+                            className={`progress-bar-fill ${participation >= 70 ? 'success' : 'accent'}`}
+                            style={{ width: `${participation}%` }}
+                          />
                         </div>
-                      )}
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 500 }}>{participation}%</span>
+                      </div>
                     </td>
-                    */}
-                    <td style={{ fontSize: '0.8125rem' }}>{formatDate(election.start_time || election.created_at)}</td>
+                    <td>{election.min_keys.toLocaleString()}</td>
+                    <td style={{ fontSize: '0.8125rem' }}>{formatDate(election.end_time || election.start_time || election.created_at)}</td>
                     <td>
-                      <a  href={`/escrutinio/subir?data=${encodeURIComponent(JSON.stringify({id: election.id}))}`}
-                        className = "btn btn-ghost btn-sm">
-                        Agregar llave
-                      </a>
+                      <Link
+                        href={`/escrutinio/subir?id=${encodeURIComponent(election.id)}`}
+                        className="btn btn-ghost btn-sm"
+                      >
+                        Canjear llave
+                      </Link>
                     </td>
                   </tr>
                 );
@@ -122,6 +122,5 @@ export default function escrutinio() {
         </div>
       )}
     </div>
-    
   );
 }

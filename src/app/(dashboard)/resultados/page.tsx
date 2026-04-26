@@ -22,9 +22,10 @@ export default function ResultadosPage() {
     try {
       setLoading(true);
       const data = await apiClient<Election[]>('/api/elections');
-      // Only elections that have been closed or later can show results
+      // Elections that require scrutiny only expose results after finalization.
       const withResults = data.filter((e) =>
-        ['CLOSED', 'SCRUTINIZED', 'ARCHIVED'].includes(e.status)
+        ['SCRUTINIZED', 'ARCHIVED'].includes(e.status)
+        || (e.status === 'CLOSED' && !e.requires_keys)
       );
       setElections(withResults);
       if (withResults.length > 0) {
