@@ -12,9 +12,13 @@ import Loader from '@/components/Loader';
 interface AuditLog {
   id: string;
   actor_carnet: string | null;
+  actor_name?: string | null;
   action: string;
   resource_type: string | null;
   resource_id: string | null;
+  actionLabel?: string;
+  resourceLabel?: string;
+  activityMessage?: string;
   ip_address: string | null;
   created_at: string;
 }
@@ -524,6 +528,8 @@ export default function DashboardPage() {
                   bg: 'var(--surface-sunken)',
                 };
                 const op = OP_LABELS[opKey] || { label: opKey || log.action, icon: '?' };
+                const summary = log.activityMessage || formatResourceId(log.resource_id);
+                const actor = log.actor_name?.trim() || log.actor_carnet?.trim();
 
                 return (
                   <div
@@ -584,15 +590,26 @@ export default function DashboardPage() {
                           <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' }}>
                             {op.label}
                           </span>
-                          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--muted-light)' }}>
-                            {formatResourceId(log.resource_id)}
-                          </span>
                         </div>
-                        {log.actor_carnet && (
-                          <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                            por {log.actor_carnet}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              color: 'var(--muted)',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                            title={summary}
+                          >
+                            {summary}
                           </span>
-                        )}
+                          {actor && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--muted-light)' }}>
+                              por {actor}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <span
