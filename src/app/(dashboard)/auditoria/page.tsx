@@ -567,7 +567,7 @@ function buildNarrative(log: AuditLog): Narrative {
     }
     case 'tag.delete': {
       const tagName = getTagAuditName(oldRow, details, log);
-      return { lead: 'elimino la tag', subject: `"${tagName}"`, opBadge };
+      return { lead: 'eliminó la tag', subject: `"${tagName}"`, opBadge };
     }
 
     case '__tag_member_insert_old': {
