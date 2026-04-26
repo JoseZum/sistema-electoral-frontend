@@ -540,7 +540,7 @@ function buildNarrative(log: AuditLog): Narrative {
       const tagName = getTagAuditName(newRow, details, log);
       const memberCount = Number(newRow.member_count ?? 0);
       return {
-        lead: 'creo la tag',
+        lead: 'creó la tag',
         subject: `"${tagName}"`,
         trailer: memberCount > 0 ? `${memberCount} integrante${memberCount === 1 ? '' : 's'}` : undefined,
         opBadge,
