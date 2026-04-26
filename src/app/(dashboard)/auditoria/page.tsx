@@ -550,7 +550,7 @@ function buildNarrative(log: AuditLog): Narrative {
       const tagName = getTagAuditName(newRow, previous, log);
       if ('name' in changes) {
         return {
-          lead: 'renombro la tag a',
+          lead: 'renombró la tag a',
           subject: `"${String(changes.name)}"`,
           trailer: previous.name ? `antes: "${String(previous.name)}"` : undefined,
           opBadge,
