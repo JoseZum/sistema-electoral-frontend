@@ -32,6 +32,9 @@ interface AuditLog {
   actionLabel?: string;
   resourceLabel?: string;
   activityMessage?: string;
+  election_title?: string | null;
+  holder_name?: string | null;
+  holder_carnet?: string | null;
 }
 
 interface AuditResponse {
@@ -203,15 +206,9 @@ const CATEGORIES: Category[] = [
     tone: '#AD1457',
     tint: '#FCE7F3',
   },
-  {
-    id: 'votos',
-    label: 'Votos',
-    description: 'Boletas registradas',
-    icon: Icon.checkCircle,
-    resourceTypes: ['vote', 'election_voter'],
-    tone: '#0F766E',
-    tint: '#E6F4F2',
-  },
+  // La categoría individual "Votos" se eliminó por privacidad: la auditoría
+  // no expone canjeo de token ni votos individuales. El cierre de votación
+  // (con su total agregado de boletas) se reporta dentro de "Elecciones".
   {
     id: 'admins',
     label: 'Administradores',
@@ -484,14 +481,32 @@ function buildNarrative(log: AuditLog): Narrative {
     }
     case 'election.update': {
       const title =
+        (details.election_title as string | undefined) ||
+        log.election_title ||
         (newRow.title as string | undefined) ||
         (previous.title as string | undefined) ||
-        log.resource_id ||
-        '';
+        'sin título';
       if ('status' in changes) {
+        const newStatus = String(changes.status);
+        const ballotsRaw = details.ballots_count;
+        const ballotsCount =
+          typeof ballotsRaw === 'number'
+            ? ballotsRaw
+            : typeof ballotsRaw === 'string'
+            ? Number(ballotsRaw)
+            : null;
+
+        if (newStatus === 'CLOSED' && ballotsCount !== null && Number.isFinite(ballotsCount)) {
+          return {
+            lead: `cerró la votación «${title}»`,
+            subject: `${ballotsCount.toLocaleString('es-CR')} boletas emitidas`,
+            opBadge: { label: 'Votación cerrada', variant: 'event' },
+          };
+        }
+
         return {
           lead: `cambió el estado de «${title}» a`,
-          subject: STATUS_LABELS[String(changes.status)] || String(changes.status),
+          subject: STATUS_LABELS[newStatus] || newStatus,
           trailer: previous.status
             ? `antes: ${STATUS_LABELS[String(previous.status)] || String(previous.status)}`
             : undefined,
@@ -664,22 +679,15 @@ function buildNarrative(log: AuditLog): Narrative {
       };
     }
 
-    case 'election_voter.update': {
-      const tokenUsed = changes.token_used;
-      if (tokenUsed === true) {
-        return {
-          lead: 'ejerció su voto',
-          subject: 'token canjeado',
-          opBadge: { label: 'Voto emitido', variant: 'event' },
-        };
-      }
-      return { lead: 'actualizó un votante', subject: log.resource_id || '', opBadge };
-    }
+    // Privacidad: los eventos individuales de voto y canjeo de token no se exponen en
+    // auditoría. El backend ya los filtra; estos cases existen como defensa por si quedaran
+    // registros antiguos en la BD — los rendereamos genéricos y sin trazabilidad.
+    case 'election_voter.update':
     case 'vote.insert': {
       return {
-        lead: 'registró una boleta cifrada',
-        subject: 'voto anónimo',
-        opBadge: { label: 'Voto', variant: 'event' },
+        lead: 'actividad de votación registrada',
+        subject: '',
+        opBadge: { label: 'Votación', variant: 'event' },
       };
     }
 
@@ -747,21 +755,66 @@ function buildNarrative(log: AuditLog): Narrative {
 
     // ─── Llaves de escrutinio ───────────────────────────────────────
     case 'scrutiny_key.insert': {
+      const electionTitle =
+        log.election_title ||
+        (details.election_title as string | undefined) ||
+        'una elección';
+      const holder =
+        log.holder_name ||
+        (details.holder_name as string | undefined) ||
+        null;
       return {
-        lead: 'recibió una llave de escrutinio',
-        subject: log.resource_id || '',
+        lead: holder
+          ? `asignó una llave de escrutinio a ${holder}`
+          : 'asignó una llave de escrutinio',
+        subject: `«${electionTitle}»`,
         opBadge: { label: 'Llave asignada', variant: 'event' },
       };
     }
     case 'scrutiny_key.update': {
+      const electionTitle =
+        log.election_title ||
+        (details.election_title as string | undefined) ||
+        'una elección';
+      const holder =
+        log.holder_name ||
+        (details.holder_name as string | undefined) ||
+        null;
       if (changes.has_submitted === true) {
         return {
-          lead: 'entregó su llave de escrutinio',
-          subject: log.resource_id || '',
+          lead: holder
+            ? `${holder} entregó su llave de escrutinio`
+            : 'se entregó una llave de escrutinio',
+          subject: `«${electionTitle}»`,
           opBadge: { label: 'Llave entregada', variant: 'event' },
         };
       }
-      return { lead: 'actualizó una llave', subject: log.resource_id || '', opBadge };
+      return {
+        lead: 'actualizó una llave de escrutinio',
+        subject: `«${electionTitle}»`,
+        opBadge,
+      };
+    }
+    case 'scrutiny.finalize': {
+      const electionTitle =
+        log.election_title ||
+        (details.election_title as string | undefined) ||
+        'una elección';
+      const submittedRaw = details.submitted_keys;
+      const submitted =
+        typeof submittedRaw === 'number'
+          ? submittedRaw
+          : typeof submittedRaw === 'string'
+          ? Number(submittedRaw)
+          : null;
+      return {
+        lead: `finalizó el escrutinio de «${electionTitle}»`,
+        subject:
+          submitted !== null && Number.isFinite(submitted)
+            ? `${submitted} llaves entregadas`
+            : '',
+        opBadge: { label: 'Escrutinio', variant: 'event' },
+      };
     }
 
     default: {
