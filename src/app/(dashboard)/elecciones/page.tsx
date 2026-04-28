@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import TagBadge from '@/components/tags/TagBadge';
+import Badge, { type BadgeVariant } from '@/components/ui/Badge';
 import type { Election } from '@/types/elections';
 import Loader from '@/components/Loader';
 
@@ -18,13 +19,13 @@ const STATUS_LABELS: Record<string, string> = {
   ARCHIVED: 'Archivada',
 };
 
-const STATUS_BADGE: Record<string, string> = {
-  DRAFT: 'badge-draft',
-  SCHEDULED: 'badge-scheduled',
-  OPEN: 'badge-open',
-  CLOSED: 'badge-closed',
-  SCRUTINIZED: 'badge-scrutinized',
-  ARCHIVED: 'badge-archived',
+const STATUS_BADGE_VARIANTS: Record<Election['status'], BadgeVariant> = {
+  DRAFT: 'gray-subtle',
+  SCHEDULED: 'blue-subtle',
+  OPEN: 'green-subtle',
+  CLOSED: 'red-subtle',
+  SCRUTINIZED: 'amber-subtle',
+  ARCHIVED: 'purple-subtle',
 };
 
 function formatDate(dateStr: string | null) {
@@ -148,9 +149,9 @@ export default function EleccionesPage() {
                       )}
                     </td>
                     <td>
-                      <span className={`badge badge-dot ${STATUS_BADGE[election.status]}`}>
+                      <Badge variant={STATUS_BADGE_VARIANTS[election.status]} size="sm" capitalize={false}>
                         {STATUS_LABELS[election.status]}
-                      </span>
+                      </Badge>
                     </td>
                     <td>{election.total_voters.toLocaleString()}</td>
                     <td>
