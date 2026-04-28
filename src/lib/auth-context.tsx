@@ -24,24 +24,14 @@ function getAuthErrorMessage(error: unknown): string {
     switch (error.code) {
       case 'NETWORK_ERROR':
         return 'No se pudo conectar con el servidor. Verifica que el backend este disponible.';
-      case 'AUTH_DOMAIN_NOT_ALLOWED':
-        return 'Solo se permiten cuentas institucionales @estudiantec.cr.';
-      case 'AUTH_STUDENT_NOT_FOUND':
-        return 'Tu cuenta no aparece en el padron electoral. Contacta al TEE.';
       case 'AUTH_MICROSOFT_TOKEN_EXPIRED':
       case 'AUTH_TOKEN_EXPIRED':
         return 'Tu sesion con Microsoft expiro. Intenta iniciar sesion nuevamente.';
-      case 'AUTH_PROVIDER_UNAVAILABLE':
-      case 'AUTH_JWKS_UNAVAILABLE':
-        return 'No fue posible validar la autenticacion con Microsoft. Intenta nuevamente.';
       case 'AUTH_CONFIG_ERROR':
       case 'DB_CONNECTION_ERROR':
       case 'DB_AUTH_FAILED':
         return 'El servicio de autenticacion no esta disponible en este momento.';
       default:
-        if (error.status >= 500) {
-          return 'El servicio de autenticacion no esta disponible en este momento.';
-        }
         return error.message;
     }
   }
