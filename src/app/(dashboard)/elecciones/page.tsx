@@ -20,12 +20,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_BADGE_VARIANTS: Record<Election['status'], BadgeVariant> = {
-  DRAFT: 'gray-subtle',
-  SCHEDULED: 'blue-subtle',
-  OPEN: 'green-subtle',
-  CLOSED: 'red-subtle',
-  SCRUTINIZED: 'amber-subtle',
-  ARCHIVED: 'purple-subtle',
+  DRAFT: 'gray',
+  SCHEDULED: 'blue',
+  OPEN: 'green',
+  CLOSED: 'red',
+  SCRUTINIZED: 'amber',
+  ARCHIVED: 'purple',
 };
 
 function formatDate(dateStr: string | null) {
