@@ -283,7 +283,11 @@ const FIELD_LABELS: Record<string, string> = {
   token_used: 'voto ejercido',
   scholarship: 'beca',
   degree: 'carrera',
+  career: 'carrera',
+  degree_level: 'nivel académico',
+  sede: 'sede',
   campus: 'sede',
+  email: 'correo',
   role: 'rol',
   password_hash: 'contraseña',
   label: 'etiqueta',
@@ -429,20 +433,32 @@ function buildNarrative(log: AuditLog): Narrative {
 
     // ─── Estudiantes ────────────────────────────────────────────────
     case 'student.insert': {
-      const carnet = (newRow.carnet as string | undefined) || log.resource_id || '';
-      const name = newRow.full_name as string | undefined;
+      const carnet =
+        (newRow.carnet as string | undefined) || log.target_carnet || '';
+      const name = (newRow.full_name as string | undefined) || log.target_name || undefined;
+      const subject = name && carnet ? `${name} · ${carnet}` : name || carnet || log.resource_id || '';
       return {
         lead: 'agregó al estudiante',
-        subject: name ? `${name} · ${carnet}` : carnet,
+        subject,
         opBadge,
       };
     }
     case 'student.update': {
       const fields = Object.keys(changes).filter((k) => k !== 'updated_at' && k !== 'email');
-      const carnet = (newRow.carnet as string | undefined) || log.resource_id || '';
+      const carnet =
+        (newRow.carnet as string | undefined) ||
+        (previous.carnet as string | undefined) ||
+        log.target_carnet ||
+        '';
+      const name =
+        (newRow.full_name as string | undefined) ||
+        (previous.full_name as string | undefined) ||
+        log.target_name ||
+        undefined;
+      const subject = name && carnet ? `${name} · ${carnet}` : name || carnet || log.resource_id || '';
       return {
         lead: 'actualizó al estudiante',
-        subject: carnet,
+        subject,
         trailer:
           fields.length > 0
             ? `cambió ${fields.map(fieldLabel).join(', ')}`
@@ -451,8 +467,11 @@ function buildNarrative(log: AuditLog): Narrative {
       };
     }
     case 'student.delete': {
-      const carnet = (oldRow.carnet as string | undefined) || log.resource_id || '';
-      return { lead: 'eliminó al estudiante', subject: carnet, opBadge };
+      const carnet =
+        (oldRow.carnet as string | undefined) || log.target_carnet || '';
+      const name = (oldRow.full_name as string | undefined) || log.target_name || undefined;
+      const subject = name && carnet ? `${name} · ${carnet}` : name || carnet || log.resource_id || '';
+      return { lead: 'eliminó al estudiante', subject, opBadge };
     }
 
     // ─── Elecciones ─────────────────────────────────────────────────
