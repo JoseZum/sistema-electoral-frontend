@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { listTags } from '@/lib/tags-api';
 import TagBadge from '@/components/tags/TagBadge';
 import Loader from '@/components/Loader';
 import type { Election, ElectionDetail } from '@/types/elections';
+import type { TagSummary } from '@/types/tags';
 
 type VotesByHour = {
   hour: string;
@@ -22,6 +24,8 @@ type HourlyVotePoint = {
   shortLabel: string;
   fullLabel: string;
 };
+
+type MonitoringStatusFilter = 'OPEN' | 'FINISHED' | 'ALL';
 
 const MONITORABLE_STATUSES = new Set<Election['status']>(['OPEN', 'CLOSED', 'SCRUTINIZED', 'ARCHIVED']);
 const REFRESH_INTERVAL_MS = 30_000;
@@ -45,6 +49,18 @@ const STATUS_BADGE: Record<Election['status'], string> = {
   ARCHIVED: 'badge-archived',
 };
 
+function matchesMonitoringStatus(status: Election['status'], filter: MonitoringStatusFilter) {
+  if (filter === 'ALL') {
+    return MONITORABLE_STATUSES.has(status);
+  }
+
+  if (filter === 'OPEN') {
+    return status === 'OPEN';
+  }
+
+  return status === 'CLOSED' || status === 'SCRUTINIZED' || status === 'ARCHIVED';
+}
+
 function roundToHour(date: Date) {
   const rounded = new Date(date);
   rounded.setMinutes(0, 0, 0);
@@ -57,7 +73,7 @@ function addHours(date: Date, hours: number) {
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) {
-    return '—';
+    return '-';
   }
 
   return new Date(value).toLocaleString('es-CR', {
@@ -355,6 +371,10 @@ export default function MonitorPage() {
   const [selectedElectionId, setSelectedElectionId] = useState('');
   const [selectedElection, setSelectedElection] = useState<Election | null>(null);
   const [monitoringData, setMonitoringData] = useState<MonitoringData | null>(null);
+  const [tags, setTags] = useState<TagSummary[]>([]);
+  const [statusFilter, setStatusFilter] = useState<MonitoringStatusFilter>('OPEN');
+  const [selectedTagId, setSelectedTagId] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingStats, setLoadingStats] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -370,7 +390,12 @@ export default function MonitorPage() {
         const data = await apiClient<Election[]>('/api/elections');
 
         if (!cancelled) {
+          const monitorable = data.filter((election) => MONITORABLE_STATUSES.has(election.status));
+          const firstOpen = monitorable.find((election) => election.status === 'OPEN') || null;
+
           setElections(data);
+          setSelectedElectionId(firstOpen?.id ?? '');
+          setSelectedElection(firstOpen);
         }
       } catch (fetchError) {
         if (!cancelled) {
@@ -385,6 +410,30 @@ export default function MonitorPage() {
     }
 
     fetchElections();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchTags() {
+      try {
+        const data = await listTags();
+        if (!cancelled) {
+          setTags(data || []);
+        }
+      } catch (fetchError) {
+        if (!cancelled) {
+          console.error(fetchError);
+          setTags([]);
+        }
+      }
+    }
+
+    fetchTags();
 
     return () => {
       cancelled = true;
@@ -445,11 +494,27 @@ export default function MonitorPage() {
     };
   }, [selectedElectionId]);
 
-  if (loading) {
-    return <Loader />;
-  }
-
   const monitorableElections = elections.filter((election) => MONITORABLE_STATUSES.has(election.status));
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredElections = monitorableElections.filter((election) => {
+    const matchesStatus = matchesMonitoringStatus(election.status, statusFilter);
+    const matchesTag = selectedTagId === 'all'
+      ? true
+      : selectedTagId === 'untagged'
+        ? !election.tag_id
+        : election.tag_id === selectedTagId;
+    const matchesSearch = !normalizedSearch
+      || election.title.toLowerCase().includes(normalizedSearch)
+      || (election.description || '').toLowerCase().includes(normalizedSearch)
+      || (election.tag_name || '').toLowerCase().includes(normalizedSearch);
+
+    return matchesStatus && matchesTag && matchesSearch;
+  });
+  const activeTagLabel = selectedTagId === 'all'
+    ? ''
+    : selectedTagId === 'untagged'
+      ? 'Sin tag'
+      : tags.find((tag) => tag.id === selectedTagId)?.name || '';
   const points = buildHourlySeries(selectedElection, monitoringData?.votesByHour);
   const totalVotes = points.reduce((sum, point) => sum + point.count, 0);
   const turnout = selectedElection?.total_voters
@@ -463,6 +528,31 @@ export default function MonitorPage() {
     .filter((point) => point.count > 0)
     .sort((first, second) => second.count - first.count)
     .slice(0, 5);
+
+  useEffect(() => {
+    if (filteredElections.length === 0) {
+      if (selectedElectionId) {
+        setSelectedElectionId('');
+      }
+      setSelectedElection(null);
+      setMonitoringData(null);
+      setLastUpdated(null);
+      setError(null);
+      return;
+    }
+
+    if (!selectedElectionId || !filteredElections.some((election) => election.id === selectedElectionId)) {
+      setSelectedElectionId(filteredElections[0].id);
+      setSelectedElection(filteredElections[0]);
+      setMonitoringData(null);
+      setLastUpdated(null);
+      setError(null);
+    }
+  }, [filteredElections, selectedElectionId]);
+
+  if (loading) {
+    return <Loader />;
+  }
 
   return (
     <div className="view-enter monitoring-page">
@@ -497,27 +587,78 @@ export default function MonitorPage() {
           </div>
 
           <div className="monitoring-hero__actions">
-            <label className="monitoring-select-group">
-              <span>Votacion a monitorear</span>
-              <select
-                value={selectedElectionId}
-                onChange={(event) => {
-                  setSelectedElectionId(event.target.value);
-                  setSelectedElection(elections.find((election) => election.id === event.target.value) || null);
-                  setMonitoringData(null);
-                  setLastUpdated(null);
-                  setError(null);
-                }}
-                className="input monitoring-select"
-              >
-                <option value="">Seleccionar votacion...</option>
-                {monitorableElections.map((election) => (
-                  <option key={election.id} value={election.id}>
-                    {election.title} ({STATUS_LABELS[election.status]})
+            <div className="election-filter-grid election-filter-grid--compact">
+              <label className="monitoring-select-group">
+                <span>Buscar</span>
+                <input
+                  type="text"
+                  className="input monitoring-select"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Titulo, descripcion o tag"
+                />
+              </label>
+
+              <label className="monitoring-select-group">
+                <span>Estado</span>
+                <select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value as MonitoringStatusFilter)}
+                  className="input monitoring-select"
+                >
+                  <option value="OPEN">Abiertas</option>
+                  <option value="FINISHED">Terminadas</option>
+                  <option value="ALL">Todas</option>
+                </select>
+              </label>
+
+              <label className="monitoring-select-group">
+                <span>Tag</span>
+                <select
+                  value={selectedTagId}
+                  onChange={(event) => setSelectedTagId(event.target.value)}
+                  className="input monitoring-select"
+                >
+                  <option value="all">Todas las tags</option>
+                  <option value="untagged">Sin tag</option>
+                  {tags.map((tag) => (
+                    <option key={tag.id} value={tag.id}>
+                      {tag.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="monitoring-select-group">
+                <span>Votacion a monitorear</span>
+                <select
+                  value={selectedElectionId}
+                  onChange={(event) => {
+                    setSelectedElectionId(event.target.value);
+                    setSelectedElection(filteredElections.find((election) => election.id === event.target.value) || null);
+                    setMonitoringData(null);
+                    setLastUpdated(null);
+                    setError(null);
+                  }}
+                  className="input monitoring-select"
+                  disabled={filteredElections.length === 0}
+                >
+                  <option value="">
+                    {filteredElections.length === 0 ? 'Sin votaciones para este filtro' : 'Seleccionar votacion...'}
                   </option>
-                ))}
-              </select>
-            </label>
+                  {filteredElections.map((election) => (
+                    <option key={election.id} value={election.id}>
+                      {election.title} ({STATUS_LABELS[election.status]})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="election-filter-summary election-filter-summary--subtle">
+              Mostrando {filteredElections.length} de {monitorableElections.length} votaciones en monitoreo
+              {activeTagLabel ? ` · ${activeTagLabel}` : ''}
+            </div>
 
             <div className={`monitoring-live-pill${selectedElection?.status === 'OPEN' ? ' is-live' : ''}`}>
               <span className="monitoring-live-pill__dot" />
@@ -541,10 +682,20 @@ export default function MonitorPage() {
 
       {!selectedElection ? (
         <div className="card monitoring-empty">
-          <div className="overline" style={{ marginBottom: '0.75rem' }}>Panel listo</div>
-          <h3>Selecciona una votacion para ver actividad horaria</h3>
+          <div className="overline" style={{ marginBottom: '0.75rem' }}>
+            {filteredElections.length === 0 ? 'Sin coincidencias' : 'Panel listo'}
+          </div>
+          <h3>
+            {filteredElections.length === 0
+              ? statusFilter === 'OPEN'
+                ? 'No hay votaciones abiertas con este filtro'
+                : 'No hay votaciones disponibles con este filtro'
+              : 'Selecciona una votacion para ver actividad horaria'}
+          </h3>
           <p>
-            El monitoreo esta disponible para votaciones abiertas o ya finalizadas. La grafica muestra votos emitidos por hora y se refresca automaticamente.
+            {filteredElections.length === 0
+              ? 'Prueba otro estado, cambia la tag o limpia la busqueda para cargar una votacion.'
+              : 'El monitoreo esta disponible para votaciones abiertas o ya finalizadas. La grafica muestra votos emitidos por hora y se refresca automaticamente.'}
           </p>
         </div>
       ) : (

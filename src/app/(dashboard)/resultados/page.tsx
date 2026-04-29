@@ -3,7 +3,10 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { exportResultsToPDF, exportResultsToDOCX } from '@/lib/export-results';
+import { listTags } from '@/lib/tags-api';
+import TagBadge from '@/components/tags/TagBadge';
 import type { Election, ElectionResults } from '@/types/elections';
+import type { TagSummary } from '@/types/tags';
 import Loader from '@/components/Loader';
 
 const RESULT_COLORS = ['var(--accent)', 'var(--ink-soft)', 'var(--muted)', '#7C3AED', '#0EA5E9', '#D97706'];
@@ -12,6 +15,9 @@ export default function ResultadosPage() {
   const [elections, setElections] = useState<Election[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [results, setResults] = useState<ElectionResults | null>(null);
+  const [tags, setTags] = useState<TagSummary[]>([]);
+  const [selectedTagId, setSelectedTagId] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingResults, setLoadingResults] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
@@ -28,13 +34,21 @@ export default function ResultadosPage() {
         || (e.status === 'CLOSED' && !e.requires_keys)
       );
       setElections(withResults);
-      if (withResults.length > 0) {
-        setSelectedId(withResults[0].id);
-      }
+      setSelectedId(withResults[0]?.id ?? null);
     } catch (err) {
       console.error('Error fetching elections:', err);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const fetchTags = useCallback(async () => {
+    try {
+      const data = await listTags();
+      setTags(data || []);
+    } catch (err) {
+      console.error('Error fetching tags:', err);
+      setTags([]);
     }
   }, []);
 
@@ -80,7 +94,51 @@ export default function ResultadosPage() {
   }, [fetchElections]);
 
   useEffect(() => {
-    if (selectedId) fetchResults(selectedId);
+    fetchTags();
+  }, [fetchTags]);
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredElections = elections.filter((election) => {
+    const matchesTag = selectedTagId === 'all'
+      ? true
+      : selectedTagId === 'untagged'
+        ? !election.tag_id
+        : election.tag_id === selectedTagId;
+
+    const matchesSearch = !normalizedSearch
+      || election.title.toLowerCase().includes(normalizedSearch)
+      || (election.description || '').toLowerCase().includes(normalizedSearch)
+      || (election.tag_name || '').toLowerCase().includes(normalizedSearch);
+
+    return matchesTag && matchesSearch;
+  });
+
+  const selectedElection = elections.find((election) => election.id === selectedId) || null;
+  const activeTagLabel = selectedTagId === 'all'
+    ? ''
+    : selectedTagId === 'untagged'
+      ? 'Sin tag'
+      : tags.find((tag) => tag.id === selectedTagId)?.name || '';
+
+  useEffect(() => {
+    if (filteredElections.length === 0) {
+      setSelectedId(null);
+      setResults(null);
+      return;
+    }
+
+    if (!selectedId || !filteredElections.some((election) => election.id === selectedId)) {
+      setSelectedId(filteredElections[0].id);
+    }
+  }, [filteredElections, selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setResults(null);
+      return;
+    }
+
+    fetchResults(selectedId);
   }, [selectedId, fetchResults]);
 
   if (loading) {
@@ -107,8 +165,18 @@ export default function ResultadosPage() {
         <div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem' }}>Resultados</h2>
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            {results?.election.title ?? 'Selecciona una votacion'}
+            {selectedElection?.title ?? results?.election.title ?? 'Selecciona una votacion'}
           </p>
+          {selectedElection?.tag_name && (
+            <div style={{ marginTop: '0.75rem' }}>
+              <TagBadge
+                label={selectedElection.tag_name}
+                color={selectedElection.tag_color}
+                size="sm"
+                leadingIcon="tag"
+              />
+            </div>
+          )}
         </div>
 
         {results && (
@@ -143,7 +211,7 @@ export default function ResultadosPage() {
                   <line x1="9" y1="15" x2="15" y2="15" />
                 </svg>
               )}
-              {exporting ? 'Exportando…' : 'Exportar reporte'}
+              {exporting ? 'Exportando...' : 'Exportar reporte'}
               {!exporting && (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="6 9 12 15 18 9" />
@@ -223,22 +291,72 @@ export default function ResultadosPage() {
         )}
       </div>
 
-      {/* Election selector */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        {elections.map((e) => (
-          <button
-            key={e.id}
-            className={`filter-chip ${selectedId === e.id ? 'active' : ''}`}
-            onClick={() => setSelectedId(e.id)}
-          >
-            {e.title}
-          </button>
-        ))}
+      <div className="card election-filters-card" style={{ marginBottom: '1.5rem' }}>
+        <div className="election-filter-grid">
+          <label className="monitoring-select-group">
+            <span>Buscar votacion</span>
+            <input
+              type="text"
+              className="input"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Titulo, descripcion o tag"
+            />
+          </label>
+
+          <label className="monitoring-select-group">
+            <span>Filtrar por tag</span>
+            <select
+              className="input"
+              value={selectedTagId}
+              onChange={(event) => setSelectedTagId(event.target.value)}
+            >
+              <option value="all">Todas las tags</option>
+              <option value="untagged">Sin tag</option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="monitoring-select-group">
+            <span>Votacion</span>
+            <select
+              className="input"
+              value={selectedId ?? ''}
+              onChange={(event) => setSelectedId(event.target.value || null)}
+              disabled={filteredElections.length === 0}
+            >
+              <option value="">
+                {filteredElections.length === 0 ? 'Sin coincidencias' : 'Selecciona una votacion'}
+              </option>
+              {filteredElections.map((election) => (
+                <option key={election.id} value={election.id}>
+                  {election.title}{election.tag_name ? ` · ${election.tag_name}` : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="election-filter-summary">
+          Mostrando {filteredElections.length} de {elections.length} votaciones con resultados
+          {activeTagLabel ? ` · ${activeTagLabel}` : ''}
+        </div>
       </div>
 
-      {loadingResults ? (
+      {filteredElections.length === 0 && (
+        <div className="card election-filters-empty">
+          <h3>No hay votaciones que coincidan con los filtros</h3>
+          <p>Ajusta la busqueda o cambia la tag para volver a cargar resultados.</p>
+        </div>
+      )}
+
+      {filteredElections.length > 0 && loadingResults ? (
         <Loader />
-      ) : results && (
+      ) : filteredElections.length > 0 && results && (
         <>
           {/* Stats */}
           <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
@@ -353,7 +471,7 @@ export default function ResultadosPage() {
                 </h3>
               </div>
               {!results.voters || results.voters.length === 0 ? (
-                <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Ninguna persona votó.</p>
+                <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Ninguna persona voto.</p>
               ) : (
                 <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>

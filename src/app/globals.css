@@ -779,6 +779,50 @@ body {
   border-color: var(--accent);
 }
 
+.election-filters-card {
+  padding: 1.2rem 1.25rem;
+}
+
+.election-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+}
+
+.election-filter-grid--compact {
+  grid-template-columns: 1fr;
+}
+
+.election-filter-summary {
+  margin-top: 0.85rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.election-filter-summary--subtle {
+  margin-top: 0;
+}
+
+.election-filters-empty {
+  padding: 1.4rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border-style: dashed;
+  text-align: center;
+}
+
+.election-filters-empty h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.election-filters-empty p {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
 /* ─── Card ─── */
 .card {
   background: var(--surface-raised);
