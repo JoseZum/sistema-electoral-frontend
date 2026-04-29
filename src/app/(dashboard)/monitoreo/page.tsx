@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
-import { listTags } from '@/lib/tags-api';
 import TagBadge from '@/components/tags/TagBadge';
 import Loader from '@/components/Loader';
 import type { Election, ElectionDetail } from '@/types/elections';
-import type { TagSummary } from '@/types/tags';
 
 type VotesByHour = {
   hour: string;
@@ -371,10 +369,7 @@ export default function MonitorPage() {
   const [selectedElectionId, setSelectedElectionId] = useState('');
   const [selectedElection, setSelectedElection] = useState<Election | null>(null);
   const [monitoringData, setMonitoringData] = useState<MonitoringData | null>(null);
-  const [tags, setTags] = useState<TagSummary[]>([]);
   const [statusFilter, setStatusFilter] = useState<MonitoringStatusFilter>('OPEN');
-  const [selectedTagId, setSelectedTagId] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingStats, setLoadingStats] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -410,30 +405,6 @@ export default function MonitorPage() {
     }
 
     fetchElections();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchTags() {
-      try {
-        const data = await listTags();
-        if (!cancelled) {
-          setTags(data || []);
-        }
-      } catch (fetchError) {
-        if (!cancelled) {
-          console.error(fetchError);
-          setTags([]);
-        }
-      }
-    }
-
-    fetchTags();
 
     return () => {
       cancelled = true;
@@ -495,26 +466,10 @@ export default function MonitorPage() {
   }, [selectedElectionId]);
 
   const monitorableElections = elections.filter((election) => MONITORABLE_STATUSES.has(election.status));
-  const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredElections = monitorableElections.filter((election) => {
     const matchesStatus = matchesMonitoringStatus(election.status, statusFilter);
-    const matchesTag = selectedTagId === 'all'
-      ? true
-      : selectedTagId === 'untagged'
-        ? !election.tag_id
-        : election.tag_id === selectedTagId;
-    const matchesSearch = !normalizedSearch
-      || election.title.toLowerCase().includes(normalizedSearch)
-      || (election.description || '').toLowerCase().includes(normalizedSearch)
-      || (election.tag_name || '').toLowerCase().includes(normalizedSearch);
-
-    return matchesStatus && matchesTag && matchesSearch;
+    return matchesStatus;
   });
-  const activeTagLabel = selectedTagId === 'all'
-    ? ''
-    : selectedTagId === 'untagged'
-      ? 'Sin tag'
-      : tags.find((tag) => tag.id === selectedTagId)?.name || '';
   const points = buildHourlySeries(selectedElection, monitoringData?.votesByHour);
   const totalVotes = points.reduce((sum, point) => sum + point.count, 0);
   const turnout = selectedElection?.total_voters
@@ -587,45 +542,17 @@ export default function MonitorPage() {
           </div>
 
           <div className="monitoring-hero__actions">
-            <div className="election-filter-grid election-filter-grid--compact">
-              <label className="monitoring-select-group">
-                <span>Buscar</span>
-                <input
-                  type="text"
-                  className="input monitoring-select"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Titulo, descripcion o tag"
-                />
-              </label>
-
+            <div className="election-filter-grid election-filter-grid--inline">
               <label className="monitoring-select-group">
                 <span>Estado</span>
                 <select
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value as MonitoringStatusFilter)}
-                  className="input monitoring-select"
+                  className="input monitoring-select election-filter-control"
                 >
                   <option value="OPEN">Abiertas</option>
                   <option value="FINISHED">Terminadas</option>
                   <option value="ALL">Todas</option>
-                </select>
-              </label>
-
-              <label className="monitoring-select-group">
-                <span>Tag</span>
-                <select
-                  value={selectedTagId}
-                  onChange={(event) => setSelectedTagId(event.target.value)}
-                  className="input monitoring-select"
-                >
-                  <option value="all">Todas las tags</option>
-                  <option value="untagged">Sin tag</option>
-                  {tags.map((tag) => (
-                    <option key={tag.id} value={tag.id}>
-                      {tag.name}
-                    </option>
-                  ))}
                 </select>
               </label>
 
@@ -640,7 +567,7 @@ export default function MonitorPage() {
                     setLastUpdated(null);
                     setError(null);
                   }}
-                  className="input monitoring-select"
+                  className="input monitoring-select election-filter-control"
                   disabled={filteredElections.length === 0}
                 >
                   <option value="">
@@ -653,11 +580,6 @@ export default function MonitorPage() {
                   ))}
                 </select>
               </label>
-            </div>
-
-            <div className="election-filter-summary election-filter-summary--subtle">
-              Mostrando {filteredElections.length} de {monitorableElections.length} votaciones en monitoreo
-              {activeTagLabel ? ` · ${activeTagLabel}` : ''}
             </div>
 
             <div className={`monitoring-live-pill${selectedElection?.status === 'OPEN' ? ' is-live' : ''}`}>

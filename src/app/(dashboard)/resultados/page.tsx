@@ -17,7 +17,6 @@ export default function ResultadosPage() {
   const [results, setResults] = useState<ElectionResults | null>(null);
   const [tags, setTags] = useState<TagSummary[]>([]);
   const [selectedTagId, setSelectedTagId] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingResults, setLoadingResults] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
@@ -97,7 +96,6 @@ export default function ResultadosPage() {
     fetchTags();
   }, [fetchTags]);
 
-  const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredElections = elections.filter((election) => {
     const matchesTag = selectedTagId === 'all'
       ? true
@@ -105,20 +103,10 @@ export default function ResultadosPage() {
         ? !election.tag_id
         : election.tag_id === selectedTagId;
 
-    const matchesSearch = !normalizedSearch
-      || election.title.toLowerCase().includes(normalizedSearch)
-      || (election.description || '').toLowerCase().includes(normalizedSearch)
-      || (election.tag_name || '').toLowerCase().includes(normalizedSearch);
-
-    return matchesTag && matchesSearch;
+    return matchesTag;
   });
 
   const selectedElection = elections.find((election) => election.id === selectedId) || null;
-  const activeTagLabel = selectedTagId === 'all'
-    ? ''
-    : selectedTagId === 'untagged'
-      ? 'Sin tag'
-      : tags.find((tag) => tag.id === selectedTagId)?.name || '';
 
   useEffect(() => {
     if (filteredElections.length === 0) {
@@ -292,22 +280,11 @@ export default function ResultadosPage() {
       </div>
 
       <div className="card election-filters-card" style={{ marginBottom: '1.5rem' }}>
-        <div className="election-filter-grid">
+        <div className="election-filter-grid election-filter-grid--inline">
           <label className="monitoring-select-group">
-            <span>Buscar votacion</span>
-            <input
-              type="text"
-              className="input"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Titulo, descripcion o tag"
-            />
-          </label>
-
-          <label className="monitoring-select-group">
-            <span>Filtrar por tag</span>
+            <span>Tag</span>
             <select
-              className="input"
+              className="input election-filter-control"
               value={selectedTagId}
               onChange={(event) => setSelectedTagId(event.target.value)}
             >
@@ -324,7 +301,7 @@ export default function ResultadosPage() {
           <label className="monitoring-select-group">
             <span>Votacion</span>
             <select
-              className="input"
+              className="input election-filter-control"
               value={selectedId ?? ''}
               onChange={(event) => setSelectedId(event.target.value || null)}
               disabled={filteredElections.length === 0}
@@ -334,16 +311,11 @@ export default function ResultadosPage() {
               </option>
               {filteredElections.map((election) => (
                 <option key={election.id} value={election.id}>
-                  {election.title}{election.tag_name ? ` · ${election.tag_name}` : ''}
+                  {election.title}
                 </option>
               ))}
             </select>
           </label>
-        </div>
-
-        <div className="election-filter-summary">
-          Mostrando {filteredElections.length} de {elections.length} votaciones con resultados
-          {activeTagLabel ? ` · ${activeTagLabel}` : ''}
         </div>
       </div>
 
