@@ -632,7 +632,7 @@ export default function MonitorPage() {
             </div>
 
             <div className="stat-card">
-              <div className="label">Participacion</div>
+              <div className="label">Participación</div>
               <div className="stat-card-value">{turnout.toFixed(1)}%</div>
               <div className="monitoring-progress">
                 <div className="monitoring-progress__track">
@@ -681,8 +681,8 @@ export default function MonitorPage() {
             <div className="card monitoring-panel monitoring-panel--side">
               <div className="monitoring-panel__head">
                 <div>
-                  <div className="label">Lectura rapida</div>
-                  <h3>Ritmo de emision</h3>
+                  <div className="label">Lectura rápida</div>
+                  <h3>Ritmo de emisión</h3>
                 </div>
               </div>
 
@@ -692,7 +692,7 @@ export default function MonitorPage() {
                   <strong>{averagePerActiveHour.toFixed(1)}</strong>
                 </div>
                 <div className="monitoring-insight">
-                  <span>Ultimo bloque medido</span>
+                  <span>Último bloque medido</span>
                   <strong>{latestPoint ? `${latestPoint.shortLabel} · ${latestPoint.count}` : 'Sin datos'}</strong>
                 </div>
                 <div className="monitoring-insight">
