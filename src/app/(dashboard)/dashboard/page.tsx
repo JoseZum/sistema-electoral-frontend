@@ -72,15 +72,15 @@ const STATUS_BADGE: Record<string, string> = {
 const RESOURCE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   student: { label: 'Estudiante', color: '#2563eb', bg: '#eff6ff' },
   admin: { label: 'Admin', color: 'var(--accent)', bg: 'var(--accent-light)' },
-  election: { label: 'Eleccion', color: '#7c3aed', bg: '#f5f3ff' },
-  election_option: { label: 'Opcion', color: '#7c3aed', bg: '#f5f3ff' },
+  election: { label: 'Elección', color: '#7c3aed', bg: '#f5f3ff' },
+  election_option: { label: 'Opción', color: '#7c3aed', bg: '#f5f3ff' },
   election_voter: { label: 'Votante', color: '#0891b2', bg: '#ecfeff' },
   tag: { label: 'Tag', color: '#b45309', bg: 'var(--warning-light)' },
   tag_member: { label: 'Tag', color: '#b45309', bg: 'var(--warning-light)' },
   vote: { label: 'Voto', color: 'var(--success)', bg: 'var(--success-light)' },
   scrutiny_key: { label: 'Llave', color: '#d97706', bg: 'var(--warning-light)' },
-  padron: { label: 'Padron', color: '#64748b', bg: '#f8fafc' },
-  padron_upload: { label: 'Padron', color: '#64748b', bg: '#f8fafc' },
+  padron: { label: 'Padrón', color: '#64748b', bg: '#f8fafc' },
+  padron_upload: { label: 'Padrón', color: '#64748b', bg: '#f8fafc' },
 };
 
 const OP_LABELS: Record<string, { label: string; icon: string }> = {
