@@ -1347,7 +1347,7 @@ export default function CrearEleccionPage() {
               <div className="create-election-summary-item">
                 <span>Boleta</span>
                 <strong>
-                  {candidateOptionsCount} opcion{candidateOptionsCount === 1 ? '' : 'es'}
+                  {candidateOptionsCount} opci{candidateOptionsCount === 1 ? 'ón' : 'ones'}
                 </strong>
               </div>
               <div className="create-election-summary-item">
