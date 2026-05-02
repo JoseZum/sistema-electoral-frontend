@@ -787,7 +787,7 @@ export default function CrearEleccionPage() {
                 <input
                   type="text"
                   className="input"
-                  placeholder="Ej: Eleccion Consejo Ejecutivo FITEC 2026"
+                  placeholder="Ej: Elección Consejo Ejecutivo FITEC 2026"
                   value={form.title}
                   onChange={(event) => updateForm('title', event.target.value)}
                 />
