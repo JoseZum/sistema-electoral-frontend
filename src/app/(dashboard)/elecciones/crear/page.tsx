@@ -1003,7 +1003,7 @@ export default function CrearEleccionPage() {
                       <div>
                         <div className="create-election-list-card__title">Seleccionadas</div>
                         <div className="create-election-list-card__subtitle">
-                          Personas que podran votar en esta eleccion
+                          Personas que podrán votar en esta elección
                         </div>
                       </div>
                       <div className="create-election-list-card__count">{selectedStudents.length}</div>
