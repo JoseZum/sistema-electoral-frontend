@@ -531,7 +531,7 @@ export default function CrearEleccionPage() {
       throw new Error(
         adminCountLoading
           ? 'Espera a que cargue el total de administradores'
-          : 'No se pudo calcular el minimo por porcentaje porque no se cargo el total de administradores'
+          : 'No se pudo calcular el mínimo por porcentaje porque no se cargó el total de administradores'
       );
     }
 
@@ -557,7 +557,7 @@ export default function CrearEleccionPage() {
         : null;
 
       if (!trimmedTitle) {
-        throw new Error('Escribe un titulo para la votacion');
+        throw new Error('Escribe un título para la votación');
       }
 
       if (candidateOptions.length < 2) {
