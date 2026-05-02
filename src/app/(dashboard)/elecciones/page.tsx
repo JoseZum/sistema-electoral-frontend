@@ -142,7 +142,7 @@ export default function EleccionesPage() {
       console.error('Error archiving election:', err);
       setFeedback({
         tone: 'error',
-        message: err instanceof Error ? err.message : 'No se pudo archivar la votacion.',
+        message: err instanceof Error ? err.message : 'No se pudo archivar la votación.',
       });
     } finally {
       setArchivingId(null);
