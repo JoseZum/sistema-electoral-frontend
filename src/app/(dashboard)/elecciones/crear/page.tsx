@@ -1012,9 +1012,9 @@ export default function CrearEleccionPage() {
                     <div className="create-election-list-card__body">
                       {selectedStudents.length === 0 ? (
                         <div className="create-election-empty-state">
-                          <p>Todavia no has agregado personas</p>
+                          <p>Todavía no has agregado personas</p>
                           <p className="create-election-empty-state__sub">
-                            Usa la busqueda para seleccionar votantes individuales.
+                            Usa la búsqueda para seleccionar votantes individuales.
                           </p>
                         </div>
                       ) : (
@@ -1060,7 +1060,7 @@ export default function CrearEleccionPage() {
               {options.map((option, index) => (
                 <div key={option.id} className="create-election-option-card">
                   <div className="create-election-option-card__header">
-                    <div className="create-election-option-card__index">Opcion {index + 1}</div>
+                    <div className="create-election-option-card__index">Opción {index + 1}</div>
                     {options.length > 2 && (
                       <button
                         type="button"
@@ -1110,7 +1110,7 @@ export default function CrearEleccionPage() {
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              Agregar opcion
+              Agregar opción
             </button>
 
             <div className="create-election-toggle-grid">
