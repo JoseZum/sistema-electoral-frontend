@@ -9,11 +9,11 @@ export default function LoginCard() {
       </div>
 
       <h1 className="font-display font-normal tracking-tight text-[2.5rem] leading-[1.08] mb-2">
-        Portal de Votacion
+        Portal de Votación
       </h1>
 
       <p className="text-muted text-[0.9375rem] mb-10">
-        Ingresa con tu cuenta institucional para acceder al sistema de votacion.
+        Ingresa con tu cuenta institucional para acceder al sistema de votación.
       </p>
 
       <MicrosoftLoginButton />
