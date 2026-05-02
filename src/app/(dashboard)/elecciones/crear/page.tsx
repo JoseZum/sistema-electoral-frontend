@@ -1147,7 +1147,7 @@ export default function CrearEleccionPage() {
               <ToggleCard
                 checked={form.is_anonymous}
                 title="Voto anonimo"
-                description="Separa criptograficamente la identidad del votante del voto emitido."
+                description="Separa criptográficamente la identidad del votante del voto emitido."
                 onChange={(checked) => updateForm('is_anonymous', checked)}
               />
               <ToggleCard
@@ -1242,8 +1242,8 @@ export default function CrearEleccionPage() {
                         </div>
                         <p className="create-election-inline-help">
                           {percentageMinKeys !== null
-                            ? `Minimo calculado: ${formatKeysLabel(percentageMinKeys)}.`
-                            : 'El minimo se calculara cuando carguen los administradores.'}
+                            ? `Mínimo calculado: ${formatKeysLabel(percentageMinKeys)}.`
+                            : 'El mínimo se calculará cuando carguen los administradores.'}
                         </p>
                       </div>
                     )}
@@ -1274,7 +1274,7 @@ export default function CrearEleccionPage() {
 
           <div className="card create-election-submit-card">
             <div>
-              <div className="create-election-submit-card__title">Listo para crear la votacion</div>
+              <div className="create-election-submit-card__title">Listo para crear la votación</div>
               <div className="create-election-submit-card__description">
                 Revisa el resumen lateral. Si algo falta, salta al bloque correspondiente y ajustalo.
               </div>
