@@ -783,7 +783,7 @@ export default function CrearEleccionPage() {
 
             <div className="create-election-field-stack">
               <div className="input-group">
-                <label>Titulo de la votacion</label>
+                <label>Título de la votación</label>
                 <input
                   type="text"
                   className="input"
