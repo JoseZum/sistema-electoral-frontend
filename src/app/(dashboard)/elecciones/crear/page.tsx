@@ -966,7 +966,7 @@ export default function CrearEleccionPage() {
                         <div className="create-election-empty-state">
                           <p>No se encontraron estudiantes</p>
                           <p className="create-election-empty-state__sub">
-                            Ajusta la busqueda o cambia los filtros.
+                            Ajusta la búsqueda o cambia los filtros.
                           </p>
                         </div>
                       ) : (
