@@ -708,7 +708,7 @@ export default function MonitorPage() {
               <div className="monitoring-hours">
                 <div className="monitoring-hours__title">Horas más activas</div>
                 {busiestHours.length === 0 ? (
-                  <div className="monitoring-hours__empty">Todavia no hay horas con votos emitidos.</div>
+                  <div className="monitoring-hours__empty">Todavía no hay horas con votos emitidos.</div>
                 ) : (
                   busiestHours.map((point) => (
                     <div key={point.hour} className="monitoring-hours__row">
