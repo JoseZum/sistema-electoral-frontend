@@ -91,7 +91,7 @@ const VOTER_SOURCE_OPTIONS: Array<{
   {
     value: 'TAG',
     title: 'Grupo por tag',
-    description: 'Usa una tag guardada para definir rapidamente quienes pueden votar.',
+    description: 'Usa una tag guardada para definir rápidamente quiénes pueden votar.',
     badge: 'Reutilizable',
   },
 ];
