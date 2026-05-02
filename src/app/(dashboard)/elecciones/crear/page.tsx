@@ -144,7 +144,7 @@ function getVoterSummary(form: ElectionForm, selectedStudents: Student[]) {
     case 'MANUAL':
       return selectedStudents.length > 0
         ? `${selectedStudents.length} persona${selectedStudents.length === 1 ? '' : 's'} seleccionada${selectedStudents.length === 1 ? '' : 's'}`
-        : 'Seleccion manual pendiente';
+        : 'Selección manual pendiente';
     case 'TAG':
       return form.tag_id ? 'Tag seleccionada' : 'Falta seleccionar la tag';
     default:
