@@ -152,7 +152,7 @@ export default function PadronPage() {
               margin: 0,
             }}
           >
-            Padron Estudiantil
+            Padrón Estudiantil
           </h2>
           <p
             style={{
