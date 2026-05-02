@@ -8,12 +8,12 @@ interface HeaderProps {
 }
 
 const pageTitles: Record<string, string> = {
-  '/padron': 'Padron Estudiantil',
-  '/padron/cargar': 'Cargar Padron',
+  '/padron': 'Padrón Estudiantil',
+  '/padron/cargar': 'Cargar Padrón',
   '/admin-manager': 'Admin Manager',
-  '/auditoria': 'Auditoria',
+  '/auditoria': 'Auditoría',
   '/elecciones': 'Votaciones',
-  '/elecciones/crear': 'Crear Votacion',
+  '/elecciones/crear': 'Crear Votación',
   '/resultados': 'Resultados',
   '/generar-llaves' : 'Generar LLaves',
   '/escrutinio': 'Escrutinio',
