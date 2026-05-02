@@ -225,7 +225,7 @@ export default function EleccionesPage() {
                 <th>Tag</th>
                 <th>Estado</th>
                 <th>Elegibles</th>
-                <th>Participacion</th>
+                <th>Participación</th>
                 <th>Fecha</th>
                 <th style={{ width: '150px' }}>Archivar</th>
               </tr>
