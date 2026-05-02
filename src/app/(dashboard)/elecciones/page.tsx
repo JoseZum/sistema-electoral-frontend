@@ -115,7 +115,7 @@ export default function EleccionesPage() {
     }
 
     const confirmed = window.confirm(
-      `Se archivara la votacion "${election.title}". Deseas continuar?`
+      `Se archivará la votación "${election.title}". ¿Deseas continuar?`
     );
 
     if (!confirmed) {
