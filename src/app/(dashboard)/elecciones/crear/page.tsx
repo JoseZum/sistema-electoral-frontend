@@ -886,7 +886,7 @@ export default function CrearEleccionPage() {
                 value={form.tag_id}
                 onChange={(tagId) => updateForm('tag_id', tagId)}
                 allowClear={false}
-                helperText="Selecciona el grupo que se usara como padron elegible para esta votacion."
+                helperText="Selecciona el grupo que se usará como padrón elegible para esta votación."
               />
             )}
 
