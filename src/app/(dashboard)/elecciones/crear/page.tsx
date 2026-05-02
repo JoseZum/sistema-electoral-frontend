@@ -135,12 +135,12 @@ function isScheduledWindowValid(startTime: string, endTime: string) {
 function getVoterSummary(form: ElectionForm, selectedStudents: Student[]) {
   switch (form.voter_source) {
     case 'FULL_PADRON':
-      return 'Padron completo';
+      return 'Padrón completo';
     case 'FILTERED':
       if (form.voter_filter_sede || form.voter_filter_career) {
-        return 'Padron filtrado';
+        return 'Padrón filtrado';
       }
-      return 'Sin filtros, equivale al padron completo';
+      return 'Sin filtros, equivale al padrón completo';
     case 'MANUAL':
       return selectedStudents.length > 0
         ? `${selectedStudents.length} persona${selectedStudents.length === 1 ? '' : 's'} seleccionada${selectedStudents.length === 1 ? '' : 's'}`
