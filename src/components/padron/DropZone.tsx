@@ -66,7 +66,7 @@ export default function DropZone({ onFileSelected, disabled }: DropZoneProps) {
         </svg>
       </div>
       <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-        Arrastra el archivo aqui o haz clic para seleccionar
+        Arrastra el archivo aquí o haz clic para seleccionar
       </div>
       <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
         Formato aceptado: .xlsx

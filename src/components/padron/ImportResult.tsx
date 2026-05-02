@@ -36,7 +36,7 @@ export default function ImportResult({ summary, onReset }: ImportResultProps) {
             alignItems: 'center',
           }}
         >
-          <span style={{ fontWeight: 600 }}>Resultado de la importacion</span>
+          <span style={{ fontWeight: 600 }}>Resultado de la importación</span>
           <span className="badge badge-dot badge-scrutinized">Completado</span>
         </div>
 
@@ -112,7 +112,7 @@ export default function ImportResult({ summary, onReset }: ImportResultProps) {
             <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
-          Ver padron
+          Ver padrón
         </Link>
       </div>
     </div>
