@@ -715,7 +715,7 @@ export default function CrearEleccionPage() {
     },
     opciones: {
       complete: candidateOptionsCount >= 2,
-      summary: `${candidateOptionsCount} opcion${candidateOptionsCount === 1 ? '' : 'es'} configurada${candidateOptionsCount === 1 ? '' : 's'}`,
+      summary: `${candidateOptionsCount} opci${candidateOptionsCount === 1 ? 'ón' : 'ones'} configurada${candidateOptionsCount === 1 ? '' : 's'}`,
     },
     seguridad: {
       complete: !requiresKeys || (minKeysPreview !== null && !countExceedsAdmins),
