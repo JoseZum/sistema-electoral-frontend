@@ -32,7 +32,7 @@ function getUnitLabel(unit: ImmediateDurationUnit, value: number): string {
     return value === 1 ? 'hora' : 'horas';
   }
 
-  return value === 1 ? 'dia' : 'dias';
+  return value === 1 ? 'día' : 'días';
 }
 
 export function formatImmediateDuration(value: string, unit: ImmediateDurationUnit): string {
@@ -85,7 +85,7 @@ export default function ImmediateStartConfig({
             <span className="schedule-mode-card__indicator" aria-hidden="true" />
           </div>
           <p className="schedule-mode-card__description">
-            Define una ventana exacta para abrir y cerrar la votacion.
+            Define una ventana exacta para abrir y cerrar la votación.
           </p>
         </button>
 
@@ -114,7 +114,7 @@ export default function ImmediateStartConfig({
           </div>
           <p className="schedule-mode-card__summary">
             {!startsImmediately
-              ? 'La votacion seguira el calendario que definas en estos campos.'
+              ? 'La votación seguirá el calendario que definas en estos campos.'
               : 'Selecciona esta card si necesitas programar la apertura y el cierre.'}
           </p>
         </div>
@@ -129,7 +129,7 @@ export default function ImmediateStartConfig({
         >
           <div className="schedule-mode-card__header">
             <div>
-              <div className="schedule-mode-card__eyebrow">Rapida</div>
+              <div className="schedule-mode-card__eyebrow">Rápida</div>
               <div className="schedule-mode-card__title">Iniciar cuando se cree</div>
             </div>
             <span className="schedule-mode-card__indicator" aria-hidden="true" />
