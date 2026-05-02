@@ -702,7 +702,7 @@ export default function CrearEleccionPage() {
     informacion: {
       complete: Boolean(form.title.trim()) && (form.start_immediately ? Boolean(immediateSummary) : scheduleIsValid),
       summary: form.start_immediately
-        ? (immediateSummary ? `Inmediata por ${immediateSummary}` : 'Falta definir la duracion')
+        ? (immediateSummary ? `Inmediata por ${immediateSummary}` : 'Falta definir la duración')
         : (scheduleIsValid ? 'Programada con apertura y cierre' : 'Falta configurar el horario'),
     },
     votantes: {
