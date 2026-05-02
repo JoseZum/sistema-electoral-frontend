@@ -589,7 +589,7 @@ export default function MonitorPage() {
 
             {lastUpdated && (
               <div className="monitoring-refresh-note">
-                {refreshing ? 'Actualizando...' : `Ultima lectura: ${formatDateTime(lastUpdated)}`}
+                {refreshing ? 'Actualizando...' : `Última lectura: ${formatDateTime(lastUpdated)}`}
               </div>
             )}
           </div>
