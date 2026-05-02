@@ -105,7 +105,7 @@ const KEY_REQUIREMENT_OPTIONS: Array<{
   {
     value: 'COUNT',
     title: 'Cantidad fija',
-    description: 'Define directamente cuantas llaves de administradores se necesitan.',
+    description: 'Define directamente cuántas llaves de administradores se necesitan.',
     badge: 'Cantidad',
   },
   {
