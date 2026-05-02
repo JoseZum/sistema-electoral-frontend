@@ -514,7 +514,7 @@ export default function MonitorPage() {
       <div className="card monitoring-hero">
         <div className="monitoring-hero__content">
           <div>
-            <div className="overline" style={{ marginBottom: '0.8rem' }}>Observacion electoral</div>
+            <div className="overline" style={{ marginBottom: '0.8rem' }}>Observación electoral</div>
             <h2 className="monitoring-hero__title">Monitoreo en vivo</h2>
             <p className="monitoring-hero__description">
               Sigue el ritmo horario de emision, la participacion acumulada y el pulso de cada votacion desde una sola vista.
