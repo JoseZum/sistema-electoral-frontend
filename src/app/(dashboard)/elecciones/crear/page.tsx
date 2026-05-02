@@ -111,7 +111,7 @@ const KEY_REQUIREMENT_OPTIONS: Array<{
   {
     value: 'PERCENTAGE',
     title: 'Porcentaje',
-    description: 'Calcula el minimo requerido con base en el total actual de administradores.',
+    description: 'Calcula el mínimo requerido con base en el total actual de administradores.',
     badge: 'Porcentaje',
   },
 ];
