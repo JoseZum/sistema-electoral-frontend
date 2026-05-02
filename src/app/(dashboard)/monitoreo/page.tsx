@@ -616,8 +616,8 @@ export default function MonitorPage() {
           </h3>
           <p>
             {filteredElections.length === 0
-              ? 'Prueba otro estado, cambia la tag o limpia la busqueda para cargar una votacion.'
-              : 'El monitoreo esta disponible para votaciones abiertas o ya finalizadas. La grafica muestra votos emitidos por hora y se refresca automaticamente.'}
+              ? 'Prueba otro estado, cambia la tag o limpia la búsqueda para cargar una votación.'
+              : 'El monitoreo está disponible para votaciones abiertas o ya finalizadas. La gráfica muestra votos emitidos por hora y se refresca automáticamente.'}
           </p>
         </div>
       ) : (
