@@ -794,7 +794,7 @@ export default function CrearEleccionPage() {
               </div>
 
               <div className="input-group">
-                <label>Descripcion</label>
+                <label>Descripción</label>
                 <input
                   type="text"
                   className="input"
@@ -822,7 +822,7 @@ export default function CrearEleccionPage() {
           >
             <div className="create-election-section__header">
               <div className="create-election-section__eyebrow">2. Votantes</div>
-              <h3 className="create-election-section__title">Define quien puede participar</h3>
+              <h3 className="create-election-section__title">Define quién puede participar</h3>
               <p className="create-election-section__description">
                 Escoge una sola estrategia para construir el padron elegible.
               </p>
@@ -1086,7 +1086,7 @@ export default function CrearEleccionPage() {
                     </div>
 
                     <div className="input-group">
-                      <label>Descripcion</label>
+                      <label>Descripción</label>
                       <input
                         type="text"
                         className="input"
