@@ -655,7 +655,7 @@ export default function CrearEleccionPage() {
 
       router.push('/elecciones');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear la votacion');
+      setError(err instanceof Error ? err.message : 'Error al crear la votación');
     } finally {
       setSaving(false);
     }
