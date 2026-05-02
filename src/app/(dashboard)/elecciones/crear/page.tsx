@@ -1352,7 +1352,7 @@ export default function CrearEleccionPage() {
               </div>
               <div className="create-election-summary-item">
                 <span>Privacidad</span>
-                <strong>{form.is_anonymous ? 'Anonima' : 'No anonima'}</strong>
+                <strong>{form.is_anonymous ? 'Anónima' : 'No anónima'}</strong>
               </div>
               <div className="create-election-summary-item">
                 <span>Escrutinio</span>
