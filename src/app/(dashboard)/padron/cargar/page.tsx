@@ -68,7 +68,7 @@ export default function CargarPadronPage() {
             marginTop: '0.25rem',
           }}
         >
-          Importa el archivo Excel del DAR para actualizar el padron. El sistema
+          Importa el archivo Excel del DAR para actualizar el padrón. El sistema
           hace merge inteligente.
         </p>
       </div>
