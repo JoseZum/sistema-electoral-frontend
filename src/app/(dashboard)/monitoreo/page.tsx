@@ -612,7 +612,7 @@ export default function MonitorPage() {
               ? statusFilter === 'OPEN'
                 ? 'No hay votaciones abiertas con este filtro'
                 : 'No hay votaciones disponibles con este filtro'
-              : 'Selecciona una votacion para ver actividad horaria'}
+              : 'Selecciona una votación para ver actividad horaria'}
           </h3>
           <p>
             {filteredElections.length === 0
