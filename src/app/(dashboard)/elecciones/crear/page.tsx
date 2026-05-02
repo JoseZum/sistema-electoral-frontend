@@ -824,7 +824,7 @@ export default function CrearEleccionPage() {
               <div className="create-election-section__eyebrow">2. Votantes</div>
               <h3 className="create-election-section__title">Define quién puede participar</h3>
               <p className="create-election-section__description">
-                Escoge una sola estrategia para construir el padron elegible.
+                Escoge una sola estrategia para construir el padrón elegible.
               </p>
             </div>
 
