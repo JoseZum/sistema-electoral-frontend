@@ -165,7 +165,7 @@ export default function EleccionesPage() {
         <div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem' }}>Votaciones</h2>
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            Gestion de procesos electorales
+            Gestión de procesos electorales
           </p>
         </div>
         <Link href="/elecciones/crear" className="btn btn-accent">
