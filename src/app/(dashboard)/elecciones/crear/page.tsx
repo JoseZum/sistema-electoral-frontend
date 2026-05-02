@@ -72,8 +72,8 @@ const VOTER_SOURCE_OPTIONS: Array<{
 }> = [
   {
     value: 'FULL_PADRON',
-    title: 'Padron completo',
-    description: 'Todos los estudiantes activos del padron pueden votar.',
+    title: 'Padrón completo',
+    description: 'Todos los estudiantes activos del padrón pueden votar.',
     badge: 'General',
   },
   {
