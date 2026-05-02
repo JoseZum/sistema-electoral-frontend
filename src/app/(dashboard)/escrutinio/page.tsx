@@ -50,7 +50,7 @@ export default function EscrutinioPage() {
         <div className="w-16 h-1 bg-red-600 mb-4"></div>
         <h2 className="text-3xl font-serif font-normal mb-2">Escrutinio</h2>
         <p className="text-gray-600 text-sm">
-          Canje de llaves para elecciones cerradas que requieren escrutinio y aun no estan finalizadas.
+          Canje de llaves para elecciones cerradas que requieren escrutinio y aún no están finalizadas.
         </p>
       </div>
 
