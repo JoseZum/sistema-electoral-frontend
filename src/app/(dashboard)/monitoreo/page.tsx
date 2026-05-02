@@ -697,7 +697,7 @@ export default function MonitorPage() {
                 </div>
                 <div className="monitoring-insight">
                   <span>Modalidad</span>
-                  <strong>{selectedElection.is_anonymous ? 'Voto anonimo' : 'Voto nominal'}</strong>
+                  <strong>{selectedElection.is_anonymous ? 'Voto anónimo' : 'Voto nominal'}</strong>
                 </div>
                 <div className="monitoring-insight">
                   <span>Opciones registradas</span>
@@ -706,7 +706,7 @@ export default function MonitorPage() {
               </div>
 
               <div className="monitoring-hours">
-                <div className="monitoring-hours__title">Horas mas activas</div>
+                <div className="monitoring-hours__title">Horas más activas</div>
                 {busiestHours.length === 0 ? (
                   <div className="monitoring-hours__empty">Todavia no hay horas con votos emitidos.</div>
                 ) : (
