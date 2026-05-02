@@ -79,13 +79,13 @@ const VOTER_SOURCE_OPTIONS: Array<{
   {
     value: 'FILTERED',
     title: 'Filtrar por sede o carrera',
-    description: 'Acota la participacion usando filtros reales cargados en el sistema.',
+    description: 'Acota la participación usando filtros reales cargados en el sistema.',
     badge: 'Segmentado',
   },
   {
     value: 'MANUAL',
     title: 'Seleccion manual',
-    description: 'Busca personas del padron y agregalas una por una.',
+    description: 'Busca personas del padrón y agrégalas una por una.',
     badge: 'Curado',
   },
   {
