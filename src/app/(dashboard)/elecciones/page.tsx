@@ -136,7 +136,7 @@ export default function EleccionesPage() {
       );
       setFeedback({
         tone: 'success',
-        message: `La votacion "${election.title}" fue archivada.`,
+        message: `La votación "${election.title}" fue archivada.`,
       });
     } catch (err) {
       console.error('Error archiving election:', err);
