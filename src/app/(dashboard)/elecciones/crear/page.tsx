@@ -577,7 +577,7 @@ export default function CrearEleccionPage() {
       }
 
       if (form.start_immediately && !immediateMinutes) {
-        throw new Error('Selecciona una duracion valida para el inicio inmediato');
+        throw new Error('Selecciona una duración válida para el inicio inmediato');
       }
 
       if (!form.start_immediately) {
