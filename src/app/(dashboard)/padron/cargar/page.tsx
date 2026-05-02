@@ -59,7 +59,7 @@ export default function CargarPadronPage() {
             margin: 0,
           }}
         >
-          Cargar padron estudiantil
+          Cargar padrón estudiantil
         </h2>
         <p
           style={{
