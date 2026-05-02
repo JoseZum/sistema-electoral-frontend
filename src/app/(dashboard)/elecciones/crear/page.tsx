@@ -569,11 +569,11 @@ export default function CrearEleccionPage() {
       }
 
       if (form.voter_source === 'MANUAL' && selectedStudents.length === 0) {
-        throw new Error('Selecciona al menos una persona del padron para una votacion manual');
+        throw new Error('Selecciona al menos una persona del padrón para una votación manual');
       }
 
       if (form.voter_source === 'TAG' && !form.tag_id) {
-        throw new Error('Selecciona una tag para la votacion');
+        throw new Error('Selecciona una tag para la votación');
       }
 
       if (form.start_immediately && !immediateMinutes) {
