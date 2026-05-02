@@ -226,7 +226,7 @@ export default function AdminManagerPage() {
           </div>
           <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>No hay administradores</p>
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
-            Agrega estudiantes del padron como administradores del sistema
+            Agrega estudiantes del padrón como administradores del sistema
           </p>
           <button className="btn btn-accent btn-sm" onClick={() => setModalOpen(true)}>
             Agregar primer administrador
