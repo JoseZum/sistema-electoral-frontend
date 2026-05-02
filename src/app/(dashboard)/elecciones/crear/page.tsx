@@ -730,7 +730,7 @@ export default function CrearEleccionPage() {
       <div className="card create-election-hero">
         <div className="create-election-hero__content">
           <div>
-            <div className="overline create-election-hero__overline">Nueva votacion</div>
+            <div className="overline create-election-hero__overline">Nueva votación</div>
             <h2 className="create-election-hero__title">Crear proceso electoral</h2>
             <p className="create-election-hero__description">
               Configura toda la votacion en una sola vista. Usa la navegacion lateral para saltar entre
