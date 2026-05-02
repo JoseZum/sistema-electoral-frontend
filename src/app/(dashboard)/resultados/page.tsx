@@ -307,7 +307,7 @@ export default function ResultadosPage() {
               disabled={filteredElections.length === 0}
             >
               <option value="">
-                {filteredElections.length === 0 ? 'Sin coincidencias' : 'Selecciona una votacion'}
+                {filteredElections.length === 0 ? 'Sin coincidencias' : 'Selecciona una votación'}
               </option>
               {filteredElections.map((election) => (
                 <option key={election.id} value={election.id}>
