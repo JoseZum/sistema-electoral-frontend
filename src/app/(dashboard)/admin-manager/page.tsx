@@ -386,7 +386,7 @@ export default function AdminManagerPage() {
               <div>
                 <div style={{ fontWeight: 600, fontSize: '1rem' }}>Agregar administrador</div>
                 <div style={{ fontSize: '0.8125rem', color: 'var(--muted)', marginTop: '0.125rem' }}>
-                  Busca un estudiante del padron para darle permisos
+                  Busca un estudiante del padrón para darle permisos
                 </div>
               </div>
               <button
