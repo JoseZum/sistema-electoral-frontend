@@ -838,7 +838,7 @@ export default function CrearEleccionPage() {
                   description={option.description}
                   onClick={() => setVoterSource(option.value)}
                 >
-                  {form.voter_source === option.value ? 'Seleccionado' : 'Haz clic para usar esta opcion'}
+                  {form.voter_source === option.value ? 'Seleccionado' : 'Haz clic para usar esta opción'}
                 </SelectionCard>
               ))}
             </div>
