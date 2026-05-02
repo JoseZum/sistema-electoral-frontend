@@ -322,7 +322,7 @@ export default function ResultadosPage() {
       {filteredElections.length === 0 && (
         <div className="card election-filters-empty">
           <h3>No hay votaciones que coincidan con los filtros</h3>
-          <p>Ajusta la busqueda o cambia la tag para volver a cargar resultados.</p>
+          <p>Ajusta la búsqueda o cambia la tag para volver a cargar resultados.</p>
         </div>
       )}
 
