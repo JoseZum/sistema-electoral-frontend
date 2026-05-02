@@ -242,9 +242,9 @@ export default function EleccionesPage() {
                 const isArchiving = archivingId === election.id;
                 const archiveDisabled = !canArchive || isArchiving;
                 const archiveHint = isArchived
-                  ? 'Esta votacion ya fue archivada'
+                  ? 'Esta votación ya fue archivada'
                   : canArchive
-                    ? 'Archivar votacion'
+                    ? 'Archivar votación'
                     : 'Solo se pueden archivar votaciones escrutadas o cerradas sin escrutinio';
 
                 return (
