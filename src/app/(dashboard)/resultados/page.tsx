@@ -339,7 +339,7 @@ export default function ResultadosPage() {
               </div>
             </div>
             <div className="stat-card">
-              <div className="label">Participacion</div>
+              <div className="label">Participación</div>
               <div className="stat-card-value" style={{ fontSize: '1.75rem', color: 'var(--success)' }}>
                 {results.participation_rate.toFixed(1)}%
               </div>
