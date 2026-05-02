@@ -282,7 +282,7 @@ function MonitoringChart({
           className="monitoring-chart-svg"
           viewBox={`0 0 ${width} ${height}`}
           role="img"
-          aria-label="Grafica interactiva de votos emitidos por hora"
+          aria-label="Gráfica interactiva de votos emitidos por hora"
         >
           <defs>
             <linearGradient id="monitoring-area" x1="0" x2="0" y1="0" y2="1">
