@@ -70,10 +70,10 @@ export default function EscrutinioPage() {
           <table>
             <thead>
               <tr>
-                <th>Titulo</th>
+                <th>Título</th>
                 <th>Elegibles</th>
-                <th>Participacion</th>
-                <th>Llaves minimas</th>
+                <th>Participación</th>
+                <th>Llaves mínimas</th>
                 <th>Fecha</th>
                 <th></th>
               </tr>
