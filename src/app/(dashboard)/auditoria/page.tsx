@@ -301,7 +301,7 @@ const FIELD_LABELS: Record<string, string> = {
   eligible_count: 'votantes elegibles',
   voter_scope: 'alcance',
   privacy_mode: 'privacidad',
-  publication_mode: 'publicacion',
+  publication_mode: 'publicación',
 };
 
 function fieldLabel(key: string): string {
@@ -668,7 +668,7 @@ function buildNarrative(log: AuditLog): Narrative {
         undefined;
 
       return {
-        lead: 'agrego a la tag',
+        lead: 'agregó a la tag',
         subject: `"${tagName}"`,
         trailer: formatPersonLabel(studentName, studentCarnet, 'persona agregada'),
         opBadge,
@@ -691,7 +691,7 @@ function buildNarrative(log: AuditLog): Narrative {
         undefined;
 
       return {
-        lead: 'quito de la tag',
+        lead: 'quitó de la tag',
         subject: `"${tagName}"`,
         trailer: formatPersonLabel(studentName, studentCarnet, 'persona removida'),
         opBadge,

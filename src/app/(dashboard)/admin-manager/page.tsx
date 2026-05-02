@@ -487,7 +487,7 @@ export default function AdminManagerPage() {
                 >
                   <p style={{ fontSize: '0.875rem' }}>No se encontraron estudiantes</p>
                   <p style={{ fontSize: '0.75rem', color: 'var(--muted-light)' }}>
-                    Verifica el nombre o sube el padron primero
+                    Verifica el nombre o sube el padrón primero
                   </p>
                 </div>
               ) : (
