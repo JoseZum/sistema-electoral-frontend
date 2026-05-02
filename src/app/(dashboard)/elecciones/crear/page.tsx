@@ -1280,7 +1280,7 @@ export default function CrearEleccionPage() {
               </div>
             </div>
             <button type="button" className="btn btn-accent" onClick={handleSubmit} disabled={saving}>
-              {saving ? 'Creando...' : 'Crear votacion'}
+              {saving ? 'Creando...' : 'Crear votación'}
             </button>
           </div>
         </div>
@@ -1288,7 +1288,7 @@ export default function CrearEleccionPage() {
         <aside className="create-election-sidebar">
           <div className="card create-election-sidebar-card">
             <div className="create-election-sidebar-card__header">
-              <div className="overline">Navegacion</div>
+              <div className="overline">Navegación</div>
               <p>Salta a cualquier bloque del formulario.</p>
             </div>
 
@@ -1333,7 +1333,7 @@ export default function CrearEleccionPage() {
 
             <div className="create-election-summary-list">
               <div className="create-election-summary-item">
-                <span>Titulo</span>
+                <span>Título</span>
                 <strong>{form.title.trim() || 'Pendiente'}</strong>
               </div>
               <div className="create-election-summary-item">
@@ -1341,7 +1341,7 @@ export default function CrearEleccionPage() {
                 <strong>{sectionStates.informacion.summary}</strong>
               </div>
               <div className="create-election-summary-item">
-                <span>Padron</span>
+                <span>Padrón</span>
                 <strong>{sectionStates.votantes.summary}</strong>
               </div>
               <div className="create-election-summary-item">
