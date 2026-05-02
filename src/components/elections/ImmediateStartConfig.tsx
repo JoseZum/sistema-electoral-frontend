@@ -135,14 +135,14 @@ export default function ImmediateStartConfig({
             <span className="schedule-mode-card__indicator" aria-hidden="true" />
           </div>
           <p className="schedule-mode-card__description">
-            Util para votaciones express que deben abrirse en cuanto se publiquen.
+            Útil para votaciones express que deben abrirse en cuanto se publiquen.
           </p>
         </button>
 
         <div className="schedule-mode-card__body">
           <div className="create-election-field-grid">
             <div className="input-group">
-              <label>Duracion</label>
+              <label>Duración</label>
               <select
                 className="input"
                 value={durationValue}
@@ -177,15 +177,15 @@ export default function ImmediateStartConfig({
               >
                 <option value="minutes">Minutos</option>
                 <option value="hours">Horas</option>
-                <option value="days">Dias</option>
+                <option value="days">Días</option>
               </select>
             </div>
           </div>
 
           <p className="schedule-mode-card__summary">
             {startsImmediately && summary
-              ? `La votacion se iniciara apenas se cree y durara ${summary}.`
-              : 'Selecciona esta opcion si la votacion debe iniciar de inmediato.'}
+              ? `La votación se iniciará apenas se cree y durará ${summary}.`
+              : 'Selecciona esta opción si la votación debe iniciar de inmediato.'}
           </p>
         </div>
       </div>

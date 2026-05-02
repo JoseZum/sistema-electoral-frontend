@@ -154,7 +154,7 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
         <div className="input-group">
-          <label>Buscar personas del padron</label>
+          <label>Buscar personas del padrón</label>
           <input
             type="text"
             className="input"
@@ -164,7 +164,7 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
             onKeyDown={handleSearchKeyDown}
           />
           <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.4rem' }}>
-            Busca por nombre o carnet, o filtra por sede y carrera. Presiona Enter o el boton Buscar.
+            Busca por nombre o carnet, o filtra por sede y carrera. Presiona Enter o el botón Buscar.
           </p>
         </div>
 
@@ -272,7 +272,7 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
               </div>
             ) : !hasSearched ? (
               <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
-                Aplica filtros y presiona Buscar para ver personas del padron
+                Aplica filtros y presiona Buscar para ver personas del padrón
               </div>
             ) : searching ? (
               <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
@@ -282,7 +282,7 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
               <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
                 {totalResults === 0
                   ? 'No se encontraron estudiantes con esos filtros'
-                  : 'Todos los resultados ya estan agregados'}
+                  : 'Todos los resultados ya están agregados'}
               </div>
             ) : (
               <>
@@ -319,7 +319,7 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
                       textAlign: 'center',
                     }}
                   >
-                    Hay {totalResults - visibleResults} mas. Refina los filtros o usa &quot;Agregar todos&quot;.
+                    Hay {totalResults - visibleResults} más. Refina los filtros o usa &quot;Agregar todos&quot;.
                   </div>
                 )}
               </>
@@ -359,7 +359,7 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
           <div style={{ minHeight: 220, maxHeight: 340, overflowY: 'auto' }}>
             {value.length === 0 ? (
               <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
-                Todavia no has agregado personas a la tag
+                Todavía no has agregado personas a la tag
               </div>
             ) : (
               value.map((student) => (

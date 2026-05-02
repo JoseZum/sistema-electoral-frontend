@@ -91,7 +91,7 @@ export default function TagSelector({
       )}
       {!loading && !hasTags && (
         <p style={{ fontSize: '0.75rem', color: 'var(--error)', marginTop: '0.4rem' }}>
-          No hay tags disponibles todavia. Crea una en la seccion de tags antes de continuar.
+          No hay tags disponibles todavía. Crea una en la sección de tags antes de continuar.
         </p>
       )}
     </div>
