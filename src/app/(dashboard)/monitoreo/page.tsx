@@ -517,7 +517,7 @@ export default function MonitorPage() {
             <div className="overline" style={{ marginBottom: '0.8rem' }}>Observación electoral</div>
             <h2 className="monitoring-hero__title">Monitoreo en vivo</h2>
             <p className="monitoring-hero__description">
-              Sigue el ritmo horario de emision, la participacion acumulada y el pulso de cada votacion desde una sola vista.
+              Sigue el ritmo horario de emisión, la participación acumulada y el pulso de cada votación desde una sola vista.
             </p>
 
             {selectedElection && (
@@ -557,7 +557,7 @@ export default function MonitorPage() {
               </label>
 
               <label className="monitoring-select-group">
-                <span>Votacion a monitorear</span>
+                <span>Votación a monitorear</span>
                 <select
                   value={selectedElectionId}
                   onChange={(event) => {
@@ -571,7 +571,7 @@ export default function MonitorPage() {
                   disabled={filteredElections.length === 0}
                 >
                   <option value="">
-                    {filteredElections.length === 0 ? 'Sin votaciones para este filtro' : 'Seleccionar votacion...'}
+                    {filteredElections.length === 0 ? 'Sin votaciones para este filtro' : 'Seleccionar votación...'}
                   </option>
                   {filteredElections.map((election) => (
                     <option key={election.id} value={election.id}>
