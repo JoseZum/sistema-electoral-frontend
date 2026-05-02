@@ -108,7 +108,7 @@ function formatCountdown(endTime: string | null | undefined) {
   const end = new Date(endTime).getTime();
 
   if (Number.isNaN(end)) {
-    return 'Fecha invalida';
+    return 'Fecha inválida';
   }
 
   const diffMs = end - now;
@@ -263,7 +263,7 @@ function MonitoringChart({
     <div className="monitoring-chart-shell">
       <div className="monitoring-chart-meta">
         <span>Curva horaria de votos emitidos</span>
-        <strong>Maximo {maxCount.toLocaleString('es-CR')} por hora</strong>
+        <strong>Máximo {maxCount.toLocaleString('es-CR')} por hora</strong>
       </div>
 
       <div className="monitoring-chart-canvas">
