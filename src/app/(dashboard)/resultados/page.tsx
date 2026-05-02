@@ -153,7 +153,7 @@ export default function ResultadosPage() {
         <div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem' }}>Resultados</h2>
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            {selectedElection?.title ?? results?.election.title ?? 'Selecciona una votacion'}
+            {selectedElection?.title ?? results?.election.title ?? 'Selecciona una votación'}
           </p>
           {selectedElection?.tag_name && (
             <div style={{ marginTop: '0.75rem' }}>
