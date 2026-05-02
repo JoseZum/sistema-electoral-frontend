@@ -53,7 +53,7 @@ function validateTagForm(form: TagFormState, tags: TagSummary[], selectedTagId: 
   }
 
   if (form.members.length === 0) {
-    errors.members = 'Selecciona al menos una persona del padron';
+    errors.members = 'Selecciona al menos una persona del padrón';
   }
 
   return errors;
@@ -195,7 +195,7 @@ export default function TagsPage() {
   async function handleDelete() {
     if (!selectedTagId) return;
 
-    const confirmed = window.confirm('Esta accion eliminara la tag y su configuracion de miembros. Deseas continuar?');
+    const confirmed = window.confirm('Esta acción eliminará la tag y su configuración de miembros. ¿Deseas continuar?');
     if (!confirmed) return;
 
     try {
@@ -218,10 +218,10 @@ export default function TagsPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
         <div>
-          <div className="overline" style={{ marginBottom: '0.75rem' }}>Padron segmentado</div>
+          <div className="overline" style={{ marginBottom: '0.75rem' }}>Padrón segmentado</div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem' }}>Tags de votantes</h2>
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            Guarda grupos selectos del padron para reutilizarlos al crear votaciones.
+            Guarda grupos selectos del padrón para reutilizarlos al crear votaciones.
           </p>
         </div>
 
@@ -258,7 +258,7 @@ export default function TagsPage() {
           >
             <div>
               <div style={{ fontWeight: 600 }}>Tags disponibles</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Grupos reutilizables del padron</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Grupos reutilizables del padrón</div>
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{tags.length}</div>
           </div>
@@ -268,7 +268,7 @@ export default function TagsPage() {
               <Loader />
             ) : tags.length === 0 ? (
               <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)' }}>
-                Todavia no has creado tags.
+                Todavía no has creado tags.
               </div>
             ) : (
               tags.map((tag) => {
@@ -313,8 +313,8 @@ export default function TagsPage() {
               </div>
               <div style={{ fontSize: '0.8125rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
                 {selectedTagId
-                  ? 'Actualiza el nombre, la descripcion y las personas incluidas en este grupo.'
-                  : 'Crea una configuracion reutilizable con personas especificas del padron.'}
+                  ? 'Actualiza el nombre, la descripción y las personas incluidas en este grupo.'
+                  : 'Crea una configuración reutilizable con personas específicas del padrón.'}
               </div>
               {form.name.trim() && (
                 <div style={{ marginTop: '0.85rem' }}>
@@ -344,11 +344,11 @@ export default function TagsPage() {
             </div>
 
             <div className="input-group">
-              <label>Descripcion (opcional)</label>
+              <label>Descripción (opcional)</label>
               <textarea
                 className="input"
                 rows={3}
-                placeholder="Describe para que se usa este grupo"
+                placeholder="Describe para qué se usa este grupo"
                 value={form.description}
                 onChange={(event) => {
                   setError(null);
@@ -398,7 +398,7 @@ export default function TagsPage() {
                 })}
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.45rem' }}>
-                El color que elijas se mantendra en todos los lugares donde aparezca esta tag.
+                El color que elijas se mantendrá en todos los lugares donde aparezca esta tag.
               </p>
             </div>
 
@@ -425,7 +425,7 @@ export default function TagsPage() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', maxWidth: 420 }}>
-              Las tags no crean la votacion por si solas. Deben tener nombre unico y al menos una persona del padron.
+              Las tags no crean la votación por sí solas. Deben tener nombre único y al menos una persona del padrón.
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem' }}>

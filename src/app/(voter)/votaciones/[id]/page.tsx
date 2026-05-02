@@ -33,7 +33,7 @@ export default function VotingBoothPage() {
         setStage('voting');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar la votacion');
+      setError(err instanceof Error ? err.message : 'Error al cargar la votación');
       setStage('error');
     }
   }, [electionId]);
@@ -105,7 +105,7 @@ export default function VotingBoothPage() {
 
           <div className="receipt">
             <div className="receipt-row">
-              <span className="receipt-label">Votacion</span>
+              <span className="receipt-label">Votación</span>
               <span className="receipt-value">{election?.title}</span>
             </div>
             <div className="receipt-row">
@@ -117,7 +117,7 @@ export default function VotingBoothPage() {
             </div>
             {selectedLabel && !election?.is_anonymous && (
               <div className="receipt-row">
-                <span className="receipt-label">Seleccion</span>
+                <span className="receipt-label">Selección</span>
                 <span className="receipt-value">{selectedLabel}</span>
               </div>
             )}
@@ -155,11 +155,11 @@ export default function VotingBoothPage() {
           <div className="modal">
             <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: '0.75rem' }}>Confirmar voto</h3>
             <p style={{ color: 'var(--muted)', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
-              Estas a punto de emitir tu voto por{' '}
+              Estás a punto de emitir tu voto por{' '}
               <strong style={{ color: 'var(--ink)' }}>
                 {election.options.find((o) => o.id === selectedOption)?.label}
               </strong>
-              . Esta accion no se puede deshacer.
+              . Esta acción no se puede deshacer.
             </p>
             {error && (
               <div style={{ padding: '0.75rem', background: 'var(--error-light)', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.8125rem', color: 'var(--error)' }}>
@@ -199,10 +199,10 @@ export default function VotingBoothPage() {
         <div className="ballot">
           <div className="ballot-header">
             <div className="label" style={{ marginBottom: '0.5rem' }}>
-              {election.is_anonymous ? 'Voto secreto y anonimo' : 'Voto nominal'}
+              {election.is_anonymous ? 'Voto secreto y anónimo' : 'Voto nominal'}
             </div>
             <h2 style={{ fontFamily: 'var(--font-display)' }}>{election.title}</h2>
-            <p>Selecciona una opcion para emitir tu voto</p>
+            <p>Selecciona una opción para emitir tu voto</p>
           </div>
 
           <div className="ballot-body">
@@ -242,7 +242,7 @@ export default function VotingBoothPage() {
                       </div>
                       <div className="vote-card-desc">
                         {option.option_type === 'BLANK'
-                          ? 'No seleccionar ninguna opcion'
+                          ? 'No seleccionar ninguna opción'
                           : 'Anular mi voto intencionalmente'}
                       </div>
                     </div>
