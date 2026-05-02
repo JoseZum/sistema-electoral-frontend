@@ -56,7 +56,7 @@ interface AdminSummary {
 type KeyRequirementMode = 'COUNT' | 'PERCENTAGE';
 
 const SECTION_ITEMS = [
-  { id: 'informacion', label: 'Informacion', description: 'Detalles y horario' },
+  { id: 'informacion', label: 'Información', description: 'Detalles y horario' },
   { id: 'votantes', label: 'Votantes', description: 'Padron elegible' },
   { id: 'opciones', label: 'Opciones', description: 'Boleta electoral' },
   { id: 'seguridad', label: 'Seguridad', description: 'Privacidad y escrutinio' },

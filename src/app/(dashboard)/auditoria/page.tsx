@@ -1358,7 +1358,7 @@ function EventDetail({ log, narrative }: { log: AuditLog; narrative: Narrative }
         </div>
         {description && (
           <div className="audit-detail-list-row">
-            <dt>Descripcion</dt>
+            <dt>Descripción</dt>
             <dd>{prettyValue('description', description)}</dd>
           </div>
         )}
