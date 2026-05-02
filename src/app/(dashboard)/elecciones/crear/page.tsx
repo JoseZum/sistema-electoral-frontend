@@ -892,8 +892,8 @@ export default function CrearEleccionPage() {
 
             {form.voter_source === 'FILTERED' && (
               <div className="create-election-helper">
-                Puedes combinar sede y carrera. Si ambos filtros quedan vacios, la votacion usara el
-                padron completo.
+                Puedes combinar sede y carrera. Si ambos filtros quedan vacíos, la votación usará el
+                padrón completo.
               </div>
             )}
 
@@ -943,7 +943,7 @@ export default function CrearEleccionPage() {
                     )}
                   </div>
                   <p className="create-election-inline-help">
-                    Busca igual que en Admin Manager. Tambien puedes filtrar antes por sede o carrera.
+                    Busca igual que en Admin Manager. También puedes filtrar antes por sede o carrera.
                   </p>
                 </div>
 
