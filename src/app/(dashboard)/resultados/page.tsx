@@ -422,9 +422,9 @@ export default function ResultadosPage() {
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Votacion anonima</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Votación anónima</div>
                   <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-                    La lista de votantes no esta disponible porque esta votacion es anonima.
+                    La lista de votantes no está disponible porque esta votación es anónima.
                   </div>
                 </div>
               </div>
@@ -443,7 +443,7 @@ export default function ResultadosPage() {
                 </h3>
               </div>
               {!results.voters || results.voters.length === 0 ? (
-                <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Ninguna persona voto.</p>
+                <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Ninguna persona votó.</p>
               ) : (
                 <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
