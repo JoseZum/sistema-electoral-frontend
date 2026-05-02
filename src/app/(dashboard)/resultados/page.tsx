@@ -299,7 +299,7 @@ export default function ResultadosPage() {
           </label>
 
           <label className="monitoring-select-group">
-            <span>Votacion</span>
+            <span>Votación</span>
             <select
               className="input election-filter-control"
               value={selectedId ?? ''}
