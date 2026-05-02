@@ -127,7 +127,7 @@ export default function CargarPadronPage() {
           textAlign: 'center',
         }}
       >
-        El padron anterior no se borra — los registros se marcan como inactivos
+        El padrón anterior no se borra — los registros se marcan como inactivos
         para preservar el historial de votaciones.
       </p>
     </div>
