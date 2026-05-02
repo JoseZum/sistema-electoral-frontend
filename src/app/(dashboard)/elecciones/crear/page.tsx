@@ -512,7 +512,7 @@ export default function CrearEleccionPage() {
     if (keyRequirementMode === 'COUNT') {
       const parsedCount = parsePositiveInteger(keyCount);
       if (parsedCount === null) {
-        throw new Error('Define una cantidad valida de llaves de escrutinio');
+        throw new Error('Define una cantidad válida de llaves de escrutinio');
       }
 
       if (adminCount !== null && adminCount > 0 && parsedCount > adminCount) {
