@@ -774,10 +774,10 @@ export default function CrearEleccionPage() {
             className="card create-election-section"
           >
             <div className="create-election-section__header">
-              <div className="create-election-section__eyebrow">1. Informacion</div>
+              <div className="create-election-section__eyebrow">1. Información</div>
               <h3 className="create-election-section__title">Define la base del proceso electoral</h3>
               <p className="create-election-section__description">
-                Titulo, descripcion y modo de apertura. Solo eliges una modalidad: programada o inmediata.
+                Título, descripción y modo de apertura. Solo eliges una modalidad: programada o inmediata.
               </p>
             </div>
 
