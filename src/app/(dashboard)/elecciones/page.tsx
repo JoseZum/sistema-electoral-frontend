@@ -221,7 +221,7 @@ export default function EleccionesPage() {
           <table>
             <thead>
               <tr>
-                <th>Titulo</th>
+                <th>Título</th>
                 <th>Tag</th>
                 <th>Estado</th>
                 <th>Elegibles</th>
