@@ -440,7 +440,21 @@ export default function EleccionesPage() {
                       textAlign: 'left',
                     }}
                   >
-                    <TagBadge label={tag.name} color={tag.color} size="sm" leadingIcon="tag" />
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                      <span
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: '50%',
+                          background: resolveTagColor(tag.name, tag.color),
+                          flexShrink: 0,
+                        }}
+                        aria-hidden="true"
+                      />
+                      <span style={{ fontSize: '0.8125rem', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {tag.name}
+                      </span>
+                    </span>
                     <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{tag.count}</span>
                   </button>
                 );
