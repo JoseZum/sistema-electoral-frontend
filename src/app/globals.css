@@ -4232,6 +4232,51 @@ body {
   background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,249,247,0.88));
 }
 
+.monitoring-recharts {
+  min-height: 360px;
+  padding: 0.85rem 0.65rem 0.45rem 0.25rem;
+  border: 1px solid rgba(27, 54, 93, 0.08);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,249,247,0.94));
+}
+
+.monitoring-recharts .recharts-cartesian-axis-tick-value {
+  font-family: var(--font-body);
+}
+
+.monitoring-recharts .recharts-bar-rectangle path {
+  transition: opacity 0.18s var(--ease-out);
+}
+
+.monitoring-recharts .recharts-bar-rectangle:hover path {
+  opacity: 0.82;
+}
+
+.monitoring-recharts-tooltip {
+  min-width: 150px;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(27, 54, 93, 0.12);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 14px 34px rgba(27, 54, 93, 0.16);
+  color: var(--ink);
+}
+
+.monitoring-recharts-tooltip span,
+.monitoring-recharts-tooltip small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.monitoring-recharts-tooltip strong {
+  display: block;
+  margin: 0.18rem 0;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
 .monitoring-bar-chart {
   display: flex;
   gap: 0.55rem;
