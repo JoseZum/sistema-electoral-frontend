@@ -334,21 +334,8 @@ export default function EleccionesPage() {
         </Link>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-        <button className={`filter-chip ${filter === 'ALL' ? 'active' : ''}`} onClick={() => setFilter('ALL')}>
-          Todas ({visibleElections.length})
-        </button>
-        {(['OPEN', 'DRAFT', 'SCHEDULED', 'CLOSED', 'SCRUTINIZED', 'ARCHIVED'] as StatusFilter[]).map((status) => (
-          <button
-            key={status}
-            className={`filter-chip ${filter === status ? 'active' : ''}`}
-            onClick={() => setFilter(status)}
-          >
-            {STATUS_LABELS[status]} ({counts[status] || 0})
-          </button>
-        ))}
-
-        <div ref={tagMenuRef} style={{ position: 'relative', display: 'inline-flex' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center', position: 'relative', zIndex: 5 }}>
+        <div ref={tagMenuRef} style={{ position: 'relative', display: 'inline-flex', zIndex: 200 }}>
           <button
             type="button"
             onClick={() => setTagMenuOpen((open) => !open)}
@@ -391,14 +378,14 @@ export default function EleccionesPage() {
                 position: 'absolute',
                 top: 'calc(100% + 6px)',
                 left: 0,
-                zIndex: 50,
-                minWidth: 220,
-                maxHeight: 280,
+                zIndex: 1000,
+                minWidth: 240,
+                maxHeight: 320,
                 overflowY: 'auto',
                 background: 'var(--surface-raised, #fff)',
                 border: '1px solid var(--border, #d4d2cf)',
                 borderRadius: 8,
-                boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+                boxShadow: '0 16px 40px rgba(0,0,0,0.18)',
                 padding: '0.375rem',
                 display: 'flex',
                 flexDirection: 'column',
@@ -484,6 +471,19 @@ export default function EleccionesPage() {
             <span aria-hidden="true" style={{ fontSize: '0.85rem', lineHeight: 1 }}>×</span>
           </button>
         )}
+
+        <button className={`filter-chip ${filter === 'ALL' ? 'active' : ''}`} onClick={() => setFilter('ALL')}>
+          Todas ({visibleElections.length})
+        </button>
+        {(['OPEN', 'DRAFT', 'SCHEDULED', 'CLOSED', 'SCRUTINIZED', 'ARCHIVED'] as StatusFilter[]).map((status) => (
+          <button
+            key={status}
+            className={`filter-chip ${filter === status ? 'active' : ''}`}
+            onClick={() => setFilter(status)}
+          >
+            {STATUS_LABELS[status]} ({counts[status] || 0})
+          </button>
+        ))}
       </div>
 
       {feedback && (
