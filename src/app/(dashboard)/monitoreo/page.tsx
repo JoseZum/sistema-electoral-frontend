@@ -211,6 +211,28 @@ function formatVoteCount(count: number) {
   return `${count.toLocaleString('es-CR')} voto${count === 1 ? '' : 's'}`;
 }
 
+function MonitoringChartTooltip({
+  active,
+  payload,
+}: Partial<TooltipContentProps<number, string>>) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  const point = payload[0]?.payload as MonitoringChartDatum | undefined;
+  if (!point) {
+    return null;
+  }
+
+  return (
+    <div className="monitoring-recharts-tooltip">
+      <span>{point.fullLabel}</span>
+      <strong>{formatVoteCount(point.votes)} emitido{point.votes === 1 ? '' : 's'}</strong>
+      <small>Acumulado: {point.cumulative.toLocaleString('es-CR')}</small>
+    </div>
+  );
+}
+
 function MonitoringChart({
   points,
   loading,
@@ -405,32 +427,52 @@ function MonitoringBarChart({
     );
   }
 
-  const maxCount = Math.max(...points.map((point) => point.count), 1);
-  const labelStep = Math.max(1, Math.ceil(points.length / 8));
+  const chartData: MonitoringChartDatum[] = points.map((point) => ({
+    ...point,
+    label: point.shortLabel,
+    votes: point.count,
+  }));
+  const tickInterval = Math.max(0, Math.ceil(points.length / 8) - 1);
 
   return (
-    <div className="monitoring-bar-chart" role="img" aria-label="Votos emitidos por hora">
-      {points.map((point, index) => {
-        const heightPercent = Math.max(point.count > 0 ? 8 : 0, (point.count / maxCount) * 100);
-        const showLabel = index % labelStep === 0 || index === points.length - 1;
-
-        return (
-          <div key={point.hour} className="monitoring-bar-chart__item">
-            <div className="monitoring-bar-chart__value">
-              {point.count > 0 ? point.count.toLocaleString('es-CR') : ''}
-            </div>
-            <div className="monitoring-bar-chart__track" title={`${point.fullLabel}: ${formatVoteCount(point.count)}`}>
-              <div
-                className="monitoring-bar-chart__bar"
-                style={{ height: `${heightPercent}%` }}
-              />
-            </div>
-            <div className="monitoring-bar-chart__label">
-              {showLabel ? point.shortLabel : ''}
-            </div>
-          </div>
-        );
-      })}
+    <div className="monitoring-recharts">
+      <ResponsiveContainer width="100%" height={340}>
+        <RechartsBarChart
+          data={chartData}
+          margin={{ top: 18, right: 18, bottom: 6, left: -12 }}
+          barCategoryGap="24%"
+          accessibilityLayer
+        >
+          <CartesianGrid vertical={false} stroke="rgba(27, 54, 93, 0.09)" strokeDasharray="3 5" />
+          <XAxis
+            dataKey="label"
+            tickLine={false}
+            axisLine={false}
+            interval={tickInterval}
+            minTickGap={16}
+            tick={{ fill: 'var(--muted)', fontSize: 12 }}
+          />
+          <YAxis
+            allowDecimals={false}
+            tickLine={false}
+            axisLine={false}
+            width={42}
+            tick={{ fill: 'var(--muted)', fontSize: 12 }}
+          />
+          <Tooltip
+            cursor={{ fill: 'rgba(190, 30, 45, 0.07)' }}
+            content={<MonitoringChartTooltip />}
+          />
+          <Bar
+            dataKey="votes"
+            name="Votos emitidos"
+            fill="var(--accent)"
+            radius={[7, 7, 0, 0]}
+            maxBarSize={46}
+            minPointSize={2}
+          />
+        </RechartsBarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
