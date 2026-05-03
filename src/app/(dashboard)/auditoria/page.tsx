@@ -1115,10 +1115,6 @@ export default function AuditPage() {
           <span aria-hidden="true">{Icon.upload}</span>
           Exportar / vaciar
         </button>
-        <div className="audit-toolbar-meta">
-          Mostrando <strong>{logs.length}</strong> de{' '}
-          <strong>{total.toLocaleString('es-CR')}</strong>
-        </div>
       </div>
 
       {exportOpen && (

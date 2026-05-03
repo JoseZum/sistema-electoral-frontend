@@ -3058,7 +3058,7 @@ body {
 .audit-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 1rem;
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
@@ -3104,21 +3104,11 @@ body {
   box-shadow: 0 0 0 3px rgba(27, 54, 93, 0.08);
 }
 
-.audit-toolbar-meta {
-  font-size: 0.8125rem;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.audit-toolbar-meta strong {
-  color: var(--ink);
-  font-weight: 600;
-}
-
 .audit-export-trigger {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  margin-left: auto;
   padding: 0.55rem 0.9rem;
   border: 1px solid var(--border);
   border-radius: 8px;
