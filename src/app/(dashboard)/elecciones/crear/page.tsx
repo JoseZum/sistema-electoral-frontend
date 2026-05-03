@@ -94,6 +94,15 @@ const KEY_REQUIREMENT_OPTIONS: Array<{
   },
 ];
 
+const CREATE_VOTER_EDITOR_COPY = {
+  helperText: 'Busca por nombre o carnet, o filtra por sede y carrera. Puedes agregar personas individuales o todos los resultados.',
+  resultsSubtitle: 'Personas encontradas en el padrón',
+  selectedSubtitle: 'Personas que podrán votar en esta elección',
+  searchPrompt: 'Aplica filtros y presiona Buscar para ver personas del padrón',
+  selectedEmpty: 'Todavía no has agregado votantes',
+  addAllTitle: 'Agrega todas las personas que cumplen con los filtros actuales al padrón de la votación',
+};
+
 const DEFAULT_IMMEDIATE_DURATION_VALUE = '15';
 const DEFAULT_IMMEDIATE_DURATION_UNIT: ImmediateDurationUnit = 'minutes';
 const DEFAULT_KEY_COUNT = '1';
@@ -729,14 +738,7 @@ export default function CrearEleccionPage() {
                     setError(null);
                     setSelectedStudents(members);
                   }}
-                  copy={{
-                    helperText: 'Busca por nombre o carnet, o filtra por sede y carrera. Puedes agregar personas individuales o todos los resultados.',
-                    resultsSubtitle: 'Personas encontradas en el padrón',
-                    selectedSubtitle: 'Personas que podrán votar en esta elección',
-                    searchPrompt: 'Aplica filtros y presiona Buscar para ver personas del padrón',
-                    selectedEmpty: 'Todavía no has agregado votantes',
-                    addAllTitle: 'Agrega todas las personas que cumplen con los filtros actuales al padrón de la votación',
-                  }}
+                  copy={CREATE_VOTER_EDITOR_COPY}
                 />
 
                 <div className="create-election-helper">
