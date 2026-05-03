@@ -267,16 +267,28 @@ function MonitoringChart({
       </div>
 
       <div className="monitoring-chart-canvas">
-        <div
-          className="monitoring-chart-tooltip"
-          style={{
-            left: `${activePoint.leftPercent}%`,
-            top: `${Math.max(activePoint.topPercent - 8, 9)}%`,
-          }}
-        >
-          <span>{activePoint.fullLabel}</span>
-          <strong>{activePoint.count.toLocaleString('es-CR')} votos</strong>
-        </div>
+        {(() => {
+          const tooltipBelow = activePoint.topPercent < 28;
+          const tooltipLeft = Math.max(10, Math.min(90, activePoint.leftPercent));
+          const tooltipTop = tooltipBelow
+            ? Math.min(activePoint.topPercent + 6, 88)
+            : Math.max(activePoint.topPercent - 6, 8);
+          return (
+            <div
+              className={`monitoring-chart-tooltip${tooltipBelow ? ' is-below' : ''}`}
+              style={{
+                left: `${tooltipLeft}%`,
+                top: `${tooltipTop}%`,
+              }}
+            >
+              <span>{activePoint.fullLabel}</span>
+              <strong>
+                {activePoint.count.toLocaleString('es-CR')}{' '}
+                {activePoint.count === 1 ? 'voto' : 'votos'}
+              </strong>
+            </div>
+          );
+        })()}
 
         <svg
           className="monitoring-chart-svg"
