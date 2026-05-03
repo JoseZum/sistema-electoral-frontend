@@ -1510,3 +1510,319 @@ function EventDetail({ log, narrative }: { log: AuditLog; narrative: Narrative }
     </p>
   );
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Export + purge panel
+// ────────────────────────────────────────────────────────────────────────────
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+function todayISO(offsetDays = 0): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function buildAuditQuery(params: {
+  from: string;
+  to: string;
+  selectedCategoryIds: string[];
+}): URLSearchParams {
+  const qs = new URLSearchParams();
+  if (params.from) qs.set('from', params.from);
+  if (params.to) qs.set('to', params.to);
+
+  // Resolve selected category IDs → resource_types list
+  const types = new Set<string>();
+  let allSelected = false;
+  for (const id of params.selectedCategoryIds) {
+    const cat = CATEGORIES.find((c) => c.id === id);
+    if (!cat) continue;
+    if (cat.id === 'all') {
+      allSelected = true;
+      break;
+    }
+    cat.resourceTypes.forEach((t) => types.add(t));
+  }
+  if (!allSelected && types.size > 0) {
+    qs.set('resource_types', Array.from(types).join(','));
+  }
+  return qs;
+}
+
+function ExportPanel({
+  onClose,
+  onPurged,
+}: {
+  onClose: () => void;
+  onPurged: () => void;
+}) {
+  const [from, setFrom] = useState<string>(todayISO(-30));
+  const [to, setTo] = useState<string>(todayISO(0));
+  const [format, setFormat] = useState<'csv' | 'json'>('csv');
+  const [selectedCats, setSelectedCats] = useState<string[]>(['all']);
+  const [previewCount, setPreviewCount] = useState<number | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exported, setExported] = useState<{ count: number; signature: string } | null>(null);
+  const [purgeText, setPurgeText] = useState('');
+  const [purging, setPurging] = useState(false);
+  const [purgeError, setPurgeError] = useState<string | null>(null);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const filterSignature = useMemo(
+    () => `${from}|${to}|${[...selectedCats].sort().join(',')}`,
+    [from, to, selectedCats],
+  );
+
+  // Reset post-export state if the user changes filters after exporting.
+  useEffect(() => {
+    if (exported && exported.signature !== filterSignature) {
+      setExported(null);
+      setPurgeText('');
+      setPurgeError(null);
+    }
+  }, [filterSignature, exported]);
+
+  // Debounced live preview of matching count.
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!from || !to) {
+      setPreviewCount(null);
+      return;
+    }
+    setPreviewLoading(true);
+    setPreviewError(null);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const qs = buildAuditQuery({ from, to, selectedCategoryIds: selectedCats });
+        qs.set('page', '1');
+        qs.set('limit', '1');
+        const res = await apiClient<AuditResponse>(`/api/audit?${qs.toString()}`);
+        setPreviewCount(res.total);
+      } catch (err) {
+        setPreviewError(err instanceof Error ? err.message : 'Error al consultar');
+        setPreviewCount(null);
+      } finally {
+        setPreviewLoading(false);
+      }
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [from, to, selectedCats]);
+
+  const toggleCat = (id: string) => {
+    setSelectedCats((prev) => {
+      if (id === 'all') return ['all'];
+      const without = prev.filter((p) => p !== 'all');
+      if (without.includes(id)) {
+        const next = without.filter((p) => p !== id);
+        return next.length === 0 ? ['all'] : next;
+      }
+      return [...without, id];
+    });
+  };
+
+  const datesValid = Boolean(from && to && from <= to);
+
+  const handleExport = async () => {
+    if (!datesValid) return;
+    setExporting(true);
+    setPreviewError(null);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('tee_token') : null;
+      const qs = buildAuditQuery({ from, to, selectedCategoryIds: selectedCats });
+      qs.set('format', format);
+
+      const res = await fetch(`${API_URL}/api/audit/export?${qs.toString()}`, {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!res.ok) {
+        let msg = `HTTP ${res.status}`;
+        try {
+          const body = await res.json();
+          if (body?.error) msg = body.error;
+        } catch {
+          /* ignore */
+        }
+        throw new Error(msg);
+      }
+
+      const count = parseInt(res.headers.get('X-Audit-Export-Count') ?? '0', 10);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      a.download = `auditoria_${from}_a_${to}_${stamp}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setExported({ count, signature: filterSignature });
+    } catch (err) {
+      setPreviewError(err instanceof Error ? err.message : 'Error al exportar');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handlePurge = async () => {
+    if (!exported) return;
+    if (purgeText.trim().toUpperCase() !== 'ELIMINAR') {
+      setPurgeError('Escriba ELIMINAR para confirmar.');
+      return;
+    }
+    setPurging(true);
+    setPurgeError(null);
+    try {
+      const qs = buildAuditQuery({ from, to, selectedCategoryIds: selectedCats });
+      const res = await apiClient<{ deleted: number }>(
+        `/api/audit?${qs.toString()}`,
+        { method: 'DELETE' },
+      );
+      alert(
+        `Se eliminaron ${res.deleted.toLocaleString('es-CR')} eventos de auditoría.`,
+      );
+      onPurged();
+    } catch (err) {
+      setPurgeError(err instanceof Error ? err.message : 'Error al purgar');
+    } finally {
+      setPurging(false);
+    }
+  };
+
+  return (
+    <div className="audit-export-overlay" role="dialog" aria-modal="true">
+      <div className="audit-export-panel">
+        <header className="audit-export-head">
+          <h3>Exportar y vaciar auditoría</h3>
+          <button
+            type="button"
+            className="audit-export-close"
+            onClick={onClose}
+            aria-label="Cerrar"
+          >
+            ×
+          </button>
+        </header>
+
+        <p className="audit-export-intro">
+          Descarga los eventos del rango y categorías seleccionadas. Una vez
+          descargado el archivo podrás vaciarlos de la base de datos.
+        </p>
+
+        <div className="audit-export-grid">
+          <label className="audit-export-field">
+            <span>Desde</span>
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              max={to || undefined}
+            />
+          </label>
+          <label className="audit-export-field">
+            <span>Hasta</span>
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              min={from || undefined}
+            />
+          </label>
+          <label className="audit-export-field">
+            <span>Formato</span>
+            <select
+              value={format}
+              onChange={(e) => setFormat(e.target.value as 'csv' | 'json')}
+            >
+              <option value="csv">CSV (Excel)</option>
+              <option value="json">JSON</option>
+            </select>
+          </label>
+        </div>
+
+        <fieldset className="audit-export-cats">
+          <legend>Categorías</legend>
+          {CATEGORIES.map((c) => {
+            const checked = selectedCats.includes(c.id);
+            return (
+              <label key={c.id} className="audit-export-cat">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleCat(c.id)}
+                />
+                <span style={{ color: c.tone, background: c.tint }} className="audit-export-cat-chip">
+                  {c.label}
+                </span>
+              </label>
+            );
+          })}
+        </fieldset>
+
+        <div className="audit-export-preview">
+          {!datesValid ? (
+            <span className="audit-export-warn">El rango de fechas no es válido.</span>
+          ) : previewLoading ? (
+            <span>Calculando…</span>
+          ) : previewError ? (
+            <span className="audit-export-warn">{previewError}</span>
+          ) : previewCount !== null ? (
+            <>
+              <strong>{previewCount.toLocaleString('es-CR')}</strong> evento
+              {previewCount === 1 ? '' : 's'} coinciden con estos filtros.
+            </>
+          ) : null}
+        </div>
+
+        <div className="audit-export-actions">
+          <button
+            type="button"
+            className="audit-export-btn primary"
+            onClick={handleExport}
+            disabled={!datesValid || exporting || previewCount === 0}
+          >
+            {exporting ? 'Exportando…' : `Descargar ${format.toUpperCase()}`}
+          </button>
+        </div>
+
+        {exported && (
+          <div className="audit-export-purge">
+            <h4>2. Vaciar de la base de datos</h4>
+            <p>
+              Se descargaron <strong>{exported.count.toLocaleString('es-CR')}</strong>{' '}
+              eventos. Esta acción es <strong>irreversible</strong> y eliminará{' '}
+              <strong>exactamente</strong> los registros del rango y categorías
+              actuales. Escribe <code>ELIMINAR</code> para confirmar.
+            </p>
+            <input
+              type="text"
+              className="audit-export-confirm-input"
+              placeholder="Escriba ELIMINAR"
+              value={purgeText}
+              onChange={(e) => setPurgeText(e.target.value)}
+              autoCapitalize="characters"
+            />
+            {purgeError && <span className="audit-export-warn">{purgeError}</span>}
+            <button
+              type="button"
+              className="audit-export-btn danger"
+              onClick={handlePurge}
+              disabled={purging || purgeText.trim().toUpperCase() !== 'ELIMINAR'}
+            >
+              {purging ? 'Eliminando…' : 'Vaciar registros exportados'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
