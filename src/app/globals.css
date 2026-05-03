@@ -2619,19 +2619,10 @@ body {
   text-decoration: none;
   line-height: 0;
 }
-.voter-brand-block {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
 .voter-brand-logo {
   width: auto;
   height: 70px;
   max-width: min(100px, 18vw);
-}
-.voter-admin-link {
-  margin-left: 0.25rem;
 }
 .voter-user {
   display: flex;
@@ -2648,6 +2639,13 @@ body {
     radial-gradient(circle at 18% 20%, rgba(24, 71, 122, 0.06) 0, rgba(24, 71, 122, 0.06) 8%, transparent 32%),
     radial-gradient(circle at 82% 12%, rgba(190, 30, 45, 0.05) 0, rgba(190, 30, 45, 0.05) 7%, transparent 28%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(251, 249, 246, 0.98) 100%);
+}
+.voter-main-admin-link {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-start;
+  padding: 1.25rem 0 0 1.25rem;
 }
 .voter-main::before {
   content: '';
