@@ -1433,12 +1433,6 @@ body {
   margin-bottom: 1.75rem;
 }
 
-.voter-hero-admin-link {
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 1rem;
-}
-
 .voter-hero-row {
   display: flex;
   align-items: flex-end;
@@ -2625,10 +2619,19 @@ body {
   text-decoration: none;
   line-height: 0;
 }
+.voter-brand-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
 .voter-brand-logo {
   width: auto;
   height: 70px;
   max-width: min(100px, 18vw);
+}
+.voter-admin-link {
+  margin-left: 0.25rem;
 }
 .voter-user {
   display: flex;

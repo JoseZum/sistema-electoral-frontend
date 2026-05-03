@@ -30,16 +30,30 @@ export default function VoterLayout({
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Voter Header */}
       <header className="voter-header">
-        <a className="voter-brand" href="/votaciones">
-          <Image
-            src="/logo-color.png"
-            alt="Tribunal Electoral Estudiantil"
-            width={96}
-            height={96}
-            priority
-            className="voter-brand-logo"
-          />
-        </a>
+        <div className="voter-brand-block">
+          <a className="voter-brand" href="/votaciones">
+            <Image
+              src="/logo-color.png"
+              alt="Tribunal Electoral Estudiantil"
+              width={96}
+              height={96}
+              priority
+              className="voter-brand-logo"
+            />
+          </a>
+          {user?.role === 'admin' && (
+            <button
+              type="button"
+              className="btn btn-outline btn-sm voter-admin-link"
+              onClick={() => router.push('/padron')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+              Panel Admin
+            </button>
+          )}
+        </div>
         <div className="voter-user">
           <span>{user?.fullName}</span>
           <div
