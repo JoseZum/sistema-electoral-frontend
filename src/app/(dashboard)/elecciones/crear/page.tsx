@@ -696,7 +696,7 @@ export default function CrearEleccionPage() {
       : keyRequirementMode === 'PERCENTAGE'
         ? 'Porcentaje pendiente'
         : 'Cantidad pendiente';
-  const securitySummary = `${form.is_anonymous ? 'Voto anonimo' : 'Voto identificable'} - ${keyRequirementSummary}`;
+  const securitySummary = `${form.is_anonymous ? 'Voto anónimo' : 'Voto identificable'} - ${keyRequirementSummary}`;
 
   const sectionStates: Record<SectionId, { complete: boolean; summary: string }> = {
     informacion: {
@@ -1148,7 +1148,7 @@ export default function CrearEleccionPage() {
             <div className="create-election-toggle-grid">
               <ToggleCard
                 checked={form.is_anonymous}
-                title="Voto anonimo"
+                title="Voto anónimo"
                 description="Separa criptográficamente la identidad del votante del voto emitido."
                 onChange={(checked) => updateForm('is_anonymous', checked)}
               />
