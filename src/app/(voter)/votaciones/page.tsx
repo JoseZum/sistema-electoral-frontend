@@ -223,6 +223,20 @@ export default function VotacionesPage() {
     <div className="voter-content">
       <header className="voter-hero">
         <div className="swiss-bar" />
+        {user?.role === 'admin' && (
+          <div className="voter-hero-admin-link">
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => router.push('/padron')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+              Panel Admin
+            </button>
+          </div>
+        )}
         <div className="voter-hero-row">
           <div>
             <h2 className="voter-hero-title">Tus <em>votaciones</em></h2>
@@ -238,18 +252,6 @@ export default function VotacionesPage() {
                 {counts.ACTIVE === 1 ? 'Activa ahora' : 'Activas ahora'}
               </span>
             </div>
-            {user?.role === 'admin' && (
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={() => router.push('/padron')}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 18l-6-6 6-6" />
-                </svg>
-                Panel Admin
-              </button>
-            )}
           </div>
         </div>
       </header>

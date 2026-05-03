@@ -1433,6 +1433,12 @@ body {
   margin-bottom: 1.75rem;
 }
 
+.voter-hero-admin-link {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+
 .voter-hero-row {
   display: flex;
   align-items: flex-end;
