@@ -1,12 +1,13 @@
 'use client';
 
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import TagBadge from '@/components/tags/TagBadge';
 import Badge, { type BadgeVariant } from '@/components/ui/Badge';
 import type { Election } from '@/types/elections';
 import Loader from '@/components/Loader';
+import { resolveTagColor } from '@/lib/tag-colors';
 
 type StatusFilter = 'ALL' | 'OPEN' | 'DRAFT' | 'CLOSED' | 'ARCHIVED' | 'SCHEDULED' | 'SCRUTINIZED';
 type FeedbackState = { tone: 'success' | 'error'; message: string } | null;
@@ -102,6 +103,9 @@ export default function EleccionesPage() {
   const [elections, setElections] = useState<Election[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StatusFilter>('ALL');
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [tagMenuOpen, setTagMenuOpen] = useState(false);
+  const tagMenuRef = useRef<HTMLDivElement | null>(null);
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [unarchivingId, setUnarchivingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -254,13 +258,61 @@ export default function EleccionesPage() {
     setDeleteConfirmText('');
   }
 
-  const visibleElections = elections.filter((election) => election.status !== 'ARCHIVED');
+  const availableTags = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; color: string | null; count: number }>();
+    for (const election of elections) {
+      if (!election.tag_id || !election.tag_name) continue;
+      const existing = map.get(election.tag_id);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        map.set(election.tag_id, {
+          id: election.tag_id,
+          name: election.tag_name,
+          color: election.tag_color ?? null,
+          count: 1,
+        });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  }, [elections]);
+
+  const activeTag = tagFilter ? availableTags.find((t) => t.id === tagFilter) ?? null : null;
+
+  useEffect(() => {
+    if (tagFilter && !availableTags.some((t) => t.id === tagFilter)) {
+      setTagFilter(null);
+    }
+  }, [availableTags, tagFilter]);
+
+  useEffect(() => {
+    if (!tagMenuOpen) return;
+    const handler = (event: MouseEvent) => {
+      if (tagMenuRef.current && !tagMenuRef.current.contains(event.target as Node)) {
+        setTagMenuOpen(false);
+      }
+    };
+    const escHandler = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setTagMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('keydown', escHandler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', escHandler);
+    };
+  }, [tagMenuOpen]);
+
+  const tagFiltered = tagFilter
+    ? elections.filter((election) => election.tag_id === tagFilter)
+    : elections;
+  const visibleElections = tagFiltered.filter((election) => election.status !== 'ARCHIVED');
   const filtered = filter === 'ALL'
     ? visibleElections
-    : elections.filter((election) => election.status === filter);
+    : tagFiltered.filter((election) => election.status === filter);
 
   const counts: Record<string, number> = {};
-  for (const election of elections) {
+  for (const election of tagFiltered) {
     counts[election.status] = (counts[election.status] || 0) + 1;
   }
 
@@ -282,7 +334,7 @@ export default function EleccionesPage() {
         </Link>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <button className={`filter-chip ${filter === 'ALL' ? 'active' : ''}`} onClick={() => setFilter('ALL')}>
           Todas ({visibleElections.length})
         </button>
@@ -295,6 +347,143 @@ export default function EleccionesPage() {
             {STATUS_LABELS[status]} ({counts[status] || 0})
           </button>
         ))}
+
+        <div ref={tagMenuRef} style={{ position: 'relative', display: 'inline-flex' }}>
+          <button
+            type="button"
+            onClick={() => setTagMenuOpen((open) => !open)}
+            disabled={availableTags.length === 0}
+            aria-label={activeTag ? `Filtro de tag: ${activeTag.name}` : 'Filtrar por tag'}
+            aria-haspopup="true"
+            aria-expanded={tagMenuOpen}
+            title={
+              availableTags.length === 0
+                ? 'No hay tags asociados a votaciones'
+                : activeTag
+                  ? `Filtrando por tag «${activeTag.name}»`
+                  : 'Filtrar por tag'
+            }
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              border: `1.5px solid ${activeTag ? resolveTagColor(activeTag.name, activeTag.color) : 'var(--border, #d4d2cf)'}`,
+              background: activeTag ? resolveTagColor(activeTag.name, activeTag.color) : 'var(--surface-raised, #fff)',
+              color: activeTag ? '#fff' : 'var(--muted)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: availableTags.length === 0 ? 'not-allowed' : 'pointer',
+              opacity: availableTags.length === 0 ? 0.5 : 1,
+              padding: 0,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M20.59 13.41 12 22l-9-9V4h9l8.59 8.59a2 2 0 0 1 0 2.82Z" />
+              <circle cx="7.5" cy="7.5" r="1.25" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+
+          {tagMenuOpen && availableTags.length > 0 && (
+            <div
+              role="menu"
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                left: 0,
+                zIndex: 50,
+                minWidth: 220,
+                maxHeight: 280,
+                overflowY: 'auto',
+                background: 'var(--surface-raised, #fff)',
+                border: '1px solid var(--border, #d4d2cf)',
+                borderRadius: 8,
+                boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+                padding: '0.375rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.25rem',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setTagFilter(null);
+                  setTagMenuOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  padding: '0.4rem 0.6rem',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: !tagFilter ? 'var(--surface-sunken, #ececea)' : 'transparent',
+                  color: 'var(--ink)',
+                  fontSize: '0.8125rem',
+                  fontWeight: !tagFilter ? 600 : 500,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <span>Todas las tags</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{elections.length}</span>
+              </button>
+              {availableTags.map((tag) => {
+                const selected = tag.id === tagFilter;
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => {
+                      setTagFilter(selected ? null : tag.id);
+                      setTagMenuOpen(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.5rem',
+                      padding: '0.4rem 0.6rem',
+                      borderRadius: 6,
+                      border: 'none',
+                      background: selected ? 'var(--surface-sunken, #ececea)' : 'transparent',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <TagBadge label={tag.name} color={tag.color} size="sm" leadingIcon="tag" />
+                    <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{tag.count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {activeTag && (
+          <button
+            type="button"
+            onClick={() => setTagFilter(null)}
+            className="filter-chip active"
+            title="Quitar filtro de tag"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: resolveTagColor(activeTag.name, activeTag.color),
+                display: 'inline-block',
+              }}
+              aria-hidden="true"
+            />
+            Tag: {activeTag.name}
+            <span aria-hidden="true" style={{ fontSize: '0.85rem', lineHeight: 1 }}>×</span>
+          </button>
+        )}
       </div>
 
       {feedback && (
