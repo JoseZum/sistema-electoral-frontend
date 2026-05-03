@@ -728,44 +728,6 @@ export default function CrearEleccionPage() {
               ))}
             </div>
 
-            {(form.voter_source === 'FILTERED' || form.voter_source === 'MANUAL') && (
-              <div className="create-election-field-grid">
-                <div className="input-group">
-                  <label>Sede</label>
-                  <select
-                    className="input"
-                    value={form.voter_filter_sede}
-                    onChange={(event) => updateForm('voter_filter_sede', event.target.value)}
-                    disabled={catalogLoading}
-                  >
-                    <option value="">Todas las sedes</option>
-                    {catalog.sedes.map((sede) => (
-                      <option key={sede} value={sede}>
-                        {sede}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="input-group">
-                  <label>Carrera</label>
-                  <select
-                    className="input"
-                    value={form.voter_filter_career}
-                    onChange={(event) => updateForm('voter_filter_career', event.target.value)}
-                    disabled={catalogLoading}
-                  >
-                    <option value="">Todas las carreras</option>
-                    {catalog.careers.map((career) => (
-                      <option key={career} value={career}>
-                        {career}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-
             {form.voter_source === 'TAG' && (
               <TagSelector
                 value={form.tag_id}
@@ -775,154 +737,27 @@ export default function CrearEleccionPage() {
               />
             )}
 
-            {form.voter_source === 'FILTERED' && (
-              <div className="create-election-helper">
-                Puedes combinar sede y carrera. Si ambos filtros quedan vacíos, la votación usará el
-                padrón completo.
-              </div>
-            )}
-
             {form.voter_source === 'MANUAL' && (
               <div className="create-election-manual-stack">
-                <div className="input-group">
-                  <label>Buscar personas del padron</label>
-                  <div style={{ position: 'relative' }}>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="var(--muted)"
-                      strokeWidth="2"
-                      style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }}
-                    >
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <input
-                      type="text"
-                      className="input"
-                      placeholder="Nombre o carnet"
-                      value={manualSearch}
-                      onChange={(event) => setManualSearch(event.target.value)}
-                      style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
-                    />
-                    {manualSearching && (
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--accent)"
-                        strokeWidth="2"
-                        style={{
-                          position: 'absolute',
-                          right: '0.75rem',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          animation: 'spin 1s linear infinite',
-                        }}
-                      >
-                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                      </svg>
-                    )}
-                  </div>
-                  <p className="create-election-inline-help">
-                    Busca igual que en Admin Manager. También puedes filtrar antes por sede o carrera.
-                  </p>
-                </div>
+                <TagMembersEditor
+                  value={selectedStudents}
+                  onChange={(members) => {
+                    setError(null);
+                    setSelectedStudents(members);
+                  }}
+                  copy={{
+                    helperText: 'Busca por nombre o carnet, o filtra por sede y carrera. Puedes agregar personas individuales o todos los resultados.',
+                    resultsSubtitle: 'Personas encontradas en el padron',
+                    selectedSubtitle: 'Personas que podran votar en esta eleccion',
+                    searchPrompt: 'Aplica filtros y presiona Buscar para ver personas del padron',
+                    selectedEmpty: 'Todavia no has agregado votantes',
+                    addAllTitle: 'Agrega todas las personas que cumplen con los filtros actuales al padron de la votacion',
+                  }}
+                />
 
-                <div className="create-election-results-grid">
-                  <div className="card create-election-list-card">
-                    <div className="create-election-list-card__header">
-                      <div>
-                        <div className="create-election-list-card__title">Resultados</div>
-                        <div className="create-election-list-card__subtitle">Personas encontradas en el padron</div>
-                      </div>
-                      <div className="create-election-list-card__count">{manualResults.length}</div>
-                    </div>
-
-                    <div className="create-election-list-card__body">
-                      {manualSearch.trim().length < 2 ? (
-                        <div className="create-election-empty-state">
-                          <p>Escribe al menos 2 caracteres para buscar</p>
-                        </div>
-                      ) : manualResults.length === 0 && !manualSearching ? (
-                        <div className="create-election-empty-state">
-                          <p>No se encontraron estudiantes</p>
-                          <p className="create-election-empty-state__sub">
-                            Ajusta la búsqueda o cambia los filtros.
-                          </p>
-                        </div>
-                      ) : (
-                        manualResults.map((student) => (
-                          <div key={student.id} className="create-election-person-row">
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div className="create-election-person-row__name">{student.full_name}</div>
-                              <div className="create-election-person-row__meta">{student.carnet}</div>
-                              <div className="create-election-person-row__submeta">
-                                {student.sede} | {student.career}
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              className="btn btn-accent btn-sm"
-                              onClick={() => addManualStudent(student)}
-                              style={{ flexShrink: 0 }}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <line x1="12" y1="5" x2="12" y2="19" />
-                                <line x1="5" y1="12" x2="19" y2="12" />
-                              </svg>
-                              Agregar
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="card create-election-list-card">
-                    <div className="create-election-list-card__header">
-                      <div>
-                        <div className="create-election-list-card__title">Seleccionadas</div>
-                        <div className="create-election-list-card__subtitle">
-                          Personas que podrán votar en esta elección
-                        </div>
-                      </div>
-                      <div className="create-election-list-card__count">{selectedStudents.length}</div>
-                    </div>
-
-                    <div className="create-election-list-card__body">
-                      {selectedStudents.length === 0 ? (
-                        <div className="create-election-empty-state">
-                          <p>Todavía no has agregado personas</p>
-                          <p className="create-election-empty-state__sub">
-                            Usa la búsqueda para seleccionar votantes individuales.
-                          </p>
-                        </div>
-                      ) : (
-                        selectedStudents.map((student) => (
-                          <div key={student.id} className="create-election-person-row">
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div className="create-election-person-row__name">{student.full_name}</div>
-                              <div className="create-election-person-row__meta">{student.carnet}</div>
-                            </div>
-
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-sm"
-                              onClick={() => removeManualStudent(student.id)}
-                              style={{ color: 'var(--error)', flexShrink: 0 }}
-                            >
-                              Quitar
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
+                <div className="create-election-helper">
+                  Esta modalidad reemplaza el filtrado segmentado y la seleccion curada: puedes escoger personas una
+                  por una o agregar de una vez a todas las que coincidan con sede, carrera o busqueda.
                 </div>
               </div>
             )}
