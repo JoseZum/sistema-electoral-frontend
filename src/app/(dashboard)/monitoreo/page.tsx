@@ -198,8 +198,12 @@ function getPeakPoint(points: HourlyVotePoint[]) {
       return point;
     }
 
-    return best;
+  return best;
   }, null);
+}
+
+function formatVoteCount(count: number) {
+  return `${count.toLocaleString('es-CR')} voto${count === 1 ? '' : 's'}`;
 }
 
 function MonitoringChart({
@@ -226,7 +230,7 @@ function MonitoringChart({
   if (points.length === 0) {
     return (
       <div className="monitoring-chart-empty">
-        No hay suficientes datos para dibujar la curva.
+        No hay actividad horaria disponible.
       </div>
     );
   }
@@ -373,6 +377,93 @@ function MonitoringChart({
   );
 }
 
+function MonitoringBarChart({
+  points,
+  loading,
+}: {
+  points: HourlyVotePoint[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="monitoring-chart-empty">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (points.length === 0) {
+    return (
+      <div className="monitoring-chart-empty">
+        No hay actividad horaria disponible.
+      </div>
+    );
+  }
+
+  const maxCount = Math.max(...points.map((point) => point.count), 1);
+  const labelStep = Math.max(1, Math.ceil(points.length / 8));
+
+  return (
+    <div className="monitoring-bar-chart" role="img" aria-label="Votos emitidos por hora">
+      {points.map((point, index) => {
+        const heightPercent = Math.max(point.count > 0 ? 8 : 0, (point.count / maxCount) * 100);
+        const showLabel = index % labelStep === 0 || index === points.length - 1;
+
+        return (
+          <div key={point.hour} className="monitoring-bar-chart__item">
+            <div className="monitoring-bar-chart__value">
+              {point.count > 0 ? point.count.toLocaleString('es-CR') : ''}
+            </div>
+            <div className="monitoring-bar-chart__track" title={`${point.fullLabel}: ${formatVoteCount(point.count)}`}>
+              <div
+                className="monitoring-bar-chart__bar"
+                style={{ height: `${heightPercent}%` }}
+              />
+            </div>
+            <div className="monitoring-bar-chart__label">
+              {showLabel ? point.shortLabel : ''}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function MonitoringActivityList({
+  title,
+  rows,
+  emptyText,
+  showZeroRows = false,
+}: {
+  title: string;
+  rows: HourlyVotePoint[];
+  emptyText: string;
+  showZeroRows?: boolean;
+}) {
+  return (
+    <div className="monitoring-activity-list">
+      <h4>{title}</h4>
+      {rows.length === 0 ? (
+        <div className="monitoring-activity-list__empty">{emptyText}</div>
+      ) : (
+        <div className="monitoring-activity-list__rows">
+          {rows.map((point) => (
+            <div key={`${title}-${point.hour}`} className="monitoring-activity-list__row">
+              <span>{point.shortLabel}</span>
+              <strong>
+                {point.count === 0 && showZeroRows
+                  ? 'Sin votos nuevos'
+                  : `${formatVoteCount(point.count)} emitido${point.count === 1 ? '' : 's'}`}
+              </strong>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function MonitorPage() {
   const [elections, setElections] = useState<Election[]>([]);
   const [selectedElectionId, setSelectedElectionId] = useState('');
@@ -486,12 +577,12 @@ export default function MonitorPage() {
     : 0;
   const peakPoint = getPeakPoint(points);
   const activeHours = points.filter((point) => point.count > 0).length;
-  const averagePerActiveHour = activeHours > 0 ? totalVotes / activeHours : 0;
-  const latestPoint = points[points.length - 1] || null;
-  const busiestHours = [...points]
+  const lastVotePoint = [...points].reverse().find((point) => point.count > 0) || null;
+  const peakHours = [...points]
     .filter((point) => point.count > 0)
     .sort((first, second) => second.count - first.count)
-    .slice(0, 5);
+    .slice(0, 3);
+  const recentEvents = points.slice(-3).reverse();
 
   useEffect(() => {
     if (filteredElections.length === 0) {
@@ -654,28 +745,28 @@ export default function MonitorPage() {
             </div>
 
             <div className="stat-card">
-              <div className="label">Hora pico</div>
-              <div className="stat-card-value">{peakPoint ? peakPoint.count.toLocaleString('es-CR') : '0'}</div>
+              <div className="label">Última emisión</div>
+              <div className="stat-card-value">{lastVotePoint ? lastVotePoint.shortLabel : '-'}</div>
               <div className="stat-card-change">
-                {peakPoint ? peakPoint.fullLabel : 'Sin votos registrados'}
+                {lastVotePoint ? `${formatVoteCount(lastVotePoint.count)} en ese bloque` : 'Sin votos registrados'}
               </div>
             </div>
 
             <div className="stat-card">
-              <div className="label">Tiempo restante</div>
-              <div className="stat-card-value">{formatCountdown(selectedElection.end_time)}</div>
+              <div className="label">Estado</div>
+              <div className="stat-card-value">{STATUS_LABELS[selectedElection.status]}</div>
               <div className="stat-card-change">
-                {selectedElection.status === 'OPEN' ? 'ventana abierta' : 'proceso consolidado'}
+                {selectedElection.status === 'OPEN' ? 'Actualizando cada 30s' : formatCountdown(selectedElection.end_time)}
               </div>
             </div>
           </div>
 
           <div className="monitoring-layout">
-            <div className="card monitoring-panel">
+            <div className="card monitoring-panel monitoring-panel--chart">
               <div className="monitoring-panel__head">
                 <div>
-                  <div className="label">Serie principal</div>
-                  <h3>Votos emitidos por hora</h3>
+                  <div className="label">Actividad por hora</div>
+                  <h3>Gráfica de barras</h3>
                 </div>
                 <div className="monitoring-panel__meta">
                   {activeHours > 0
@@ -684,46 +775,27 @@ export default function MonitorPage() {
                 </div>
               </div>
 
-              <MonitoringChart points={points} loading={loadingStats && !monitoringData} />
+              <MonitoringBarChart points={points} loading={loadingStats && !monitoringData} />
             </div>
 
-            <div className="card monitoring-panel monitoring-panel--side">
+            <div className="monitoring-activity-column">
+              <div className="card monitoring-panel monitoring-panel--compact">
               <div className="monitoring-panel__head">
                 <div>
-                  <div className="label">Lectura rápida</div>
-                  <h3>Ritmo de emisión</h3>
-                </div>
-              </div>
-
-              <div className="monitoring-insights">
-                <div className="monitoring-insight">
-                  <span>Promedio por hora activa</span>
-                  <strong>{averagePerActiveHour.toFixed(1)}</strong>
-                </div>
-                <div className="monitoring-insight">
-                  <span>Último bloque medido</span>
-                  <strong>{latestPoint ? `${latestPoint.shortLabel} · ${latestPoint.count}` : 'Sin datos'}</strong>
-                </div>
-                <div className="monitoring-insight">
-                  <span>Modalidad</span>
-                  <strong>{selectedElection.is_anonymous ? 'Voto anónimo' : 'Voto nominal'}</strong>
-                </div>
-                <div className="monitoring-insight">
-                  <span>Opciones registradas</span>
-                  <strong>{selectedElection.options_count.toLocaleString('es-CR')}</strong>
+                  <div className="label">Actividad</div>
+                  <h3>Picos de actividad</h3>
                 </div>
               </div>
 
               <div className="monitoring-hours">
-                <div className="monitoring-hours__title">Horas más activas</div>
-                {busiestHours.length === 0 ? (
+                {peakHours.length === 0 ? (
                   <div className="monitoring-hours__empty">Todavía no hay horas con votos emitidos.</div>
                 ) : (
-                  busiestHours.map((point) => (
+                  peakHours.map((point) => (
                     <div key={point.hour} className="monitoring-hours__row">
                       <div>
-                        <strong>{point.fullLabel}</strong>
-                        <span>{point.count.toLocaleString('es-CR')} votos</span>
+                        <strong>{point.shortLabel}</strong>
+                        <span>{formatVoteCount(point.count)} emitido{point.count === 1 ? '' : 's'}</span>
                       </div>
                       <div className="monitoring-hours__bar">
                         <div
@@ -738,40 +810,14 @@ export default function MonitorPage() {
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="card monitoring-panel monitoring-panel--details">
-            <div className="monitoring-panel__head">
-              <div>
-                <div className="label">Contexto operativo</div>
-                <h3>Detalle del proceso</h3>
-              </div>
-            </div>
-
-            <div className="monitoring-detail-grid">
-              <div className="monitoring-detail-item">
-                <span>Inicio</span>
-                <strong>{formatDateTime(selectedElection.start_time || selectedElection.created_at)}</strong>
-              </div>
-              <div className="monitoring-detail-item">
-                <span>Cierre</span>
-                <strong>{formatDateTime(selectedElection.end_time)}</strong>
-              </div>
-              <div className="monitoring-detail-item">
-                <span>Electores</span>
-                <strong>{selectedElection.total_voters.toLocaleString('es-CR')}</strong>
-              </div>
-              <div className="monitoring-detail-item">
-                <span>Estado</span>
-                <strong>{STATUS_LABELS[selectedElection.status]}</strong>
-              </div>
-              <div className="monitoring-detail-item">
-                <span>Fuente de votantes</span>
-                <strong>{selectedElection.voter_source.replace(/_/g, ' ')}</strong>
-              </div>
-              <div className="monitoring-detail-item">
-                <span>Identificador</span>
-                <strong className="mono">{selectedElection.id.split('-')[0]}</strong>
+              <div className="card monitoring-panel monitoring-panel--compact">
+                <MonitoringActivityList
+                  title="Eventos recientes"
+                  rows={recentEvents}
+                  emptyText="No hay bloques recientes para mostrar."
+                  showZeroRows
+                />
               </div>
             </div>
           </div>
