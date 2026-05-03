@@ -1,6 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import {
+  Bar,
+  BarChart as RechartsBarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  type TooltipContentProps,
+} from 'recharts';
 import { apiClient } from '@/lib/api-client';
 import TagBadge from '@/components/tags/TagBadge';
 import Loader from '@/components/Loader';
@@ -21,6 +31,11 @@ type HourlyVotePoint = {
   cumulative: number;
   shortLabel: string;
   fullLabel: string;
+};
+
+type MonitoringChartDatum = HourlyVotePoint & {
+  label: string;
+  votes: number;
 };
 
 type MonitoringStatusFilter = 'OPEN' | 'FINISHED' | 'ALL';
