@@ -398,7 +398,6 @@ export default function TagsPage() {
                 })}
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.45rem' }}>
-                El color que elijas se mantendrá en todos los lugares donde aparezca esta tag.
               </p>
             </div>
 
