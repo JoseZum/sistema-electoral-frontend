@@ -86,11 +86,18 @@ function canArchiveElection(election: Election) {
     || (election.status === 'CLOSED' && !election.requires_keys);
 }
 
+function unarchiveTargetStatus(election: Election): Election['status'] {
+  // requires_keys=true → only path to ARCHIVED was via SCRUTINIZED, so revert there.
+  // requires_keys=false → safest reverse is CLOSED (admin can re-scrutinize from there).
+  return election.requires_keys ? 'SCRUTINIZED' : 'CLOSED';
+}
+
 export default function EleccionesPage() {
   const [elections, setElections] = useState<Election[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StatusFilter>('ALL');
   const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [unarchivingId, setUnarchivingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const fetchElections = useCallback(async () => {
@@ -146,6 +153,48 @@ export default function EleccionesPage() {
       });
     } finally {
       setArchivingId(null);
+    }
+  }
+
+  async function handleUnarchive(election: Election) {
+    if (election.status !== 'ARCHIVED') {
+      return;
+    }
+
+    const target = unarchiveTargetStatus(election);
+    const targetLabel = STATUS_LABELS[target] ?? target;
+    const confirmed = window.confirm(
+      `Se desarchivará la votación "${election.title}" y volverá a estado "${targetLabel}". ¿Deseas continuar?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setUnarchivingId(election.id);
+      setFeedback(null);
+
+      const updatedElection = await apiClient<Partial<Election> & Pick<Election, 'id' | 'status'>>(`/api/elections/${election.id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: target }),
+      });
+
+      setElections((current) =>
+        current.map((item) => (item.id === updatedElection.id ? { ...item, ...updatedElection } : item))
+      );
+      setFeedback({
+        tone: 'success',
+        message: `La votación "${election.title}" fue desarchivada (${targetLabel}).`,
+      });
+    } catch (err) {
+      console.error('Error unarchiving election:', err);
+      setFeedback({
+        tone: 'error',
+        message: err instanceof Error ? err.message : 'No se pudo desarchivar la votación.',
+      });
+    } finally {
+      setUnarchivingId(null);
     }
   }
 
@@ -240,9 +289,10 @@ export default function EleccionesPage() {
                 const canArchive = canArchiveElection(election);
                 const isArchived = election.status === 'ARCHIVED';
                 const isArchiving = archivingId === election.id;
+                const isUnarchiving = unarchivingId === election.id;
                 const archiveDisabled = !canArchive || isArchiving;
                 const archiveHint = isArchived
-                  ? 'Esta votación ya fue archivada'
+                  ? `Restaurar a ${STATUS_LABELS[unarchiveTargetStatus(election)]}`
                   : canArchive
                     ? 'Archivar votación'
                     : 'Solo se pueden archivar votaciones escrutadas o cerradas sin escrutinio';
@@ -298,32 +348,37 @@ export default function EleccionesPage() {
                       <span title={archiveHint} style={{ display: 'inline-flex' }}>
                         <button
                           type="button"
-                          className={`btn btn-sm ${canArchive ? 'btn-outline' : 'btn-ghost'}`}
-                          onClick={() => void handleArchive(election)}
-                          disabled={archiveDisabled}
+                          className={`btn btn-sm ${isArchived || canArchive ? 'btn-outline' : 'btn-ghost'}`}
+                          onClick={() =>
+                            isArchived
+                              ? void handleUnarchive(election)
+                              : void handleArchive(election)
+                          }
+                          disabled={isArchived ? isUnarchiving : archiveDisabled}
                           style={{
                             minWidth: '122px',
                             justifyContent: 'center',
-                            opacity: archiveDisabled ? 0.65 : 1,
-                            cursor: archiveDisabled ? 'not-allowed' : 'pointer',
-                            color: canArchive ? 'var(--ink)' : isArchived ? 'var(--ink-soft)' : 'var(--muted)',
+                            opacity: (isArchived ? isUnarchiving : archiveDisabled) ? 0.65 : 1,
+                            cursor: (isArchived ? isUnarchiving : archiveDisabled) ? 'not-allowed' : 'pointer',
+                            color: canArchive || isArchived ? 'var(--ink)' : 'var(--muted)',
                           }}
                         >
-                          {isArchiving ? (
+                          {isArchiving || isUnarchiving ? (
                             <>
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }} aria-hidden="true">
                                 <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                               </svg>
-                              Archivando...
+                              {isArchiving ? 'Archivando...' : 'Desarchivando...'}
                             </>
                           ) : isArchived ? (
                             <>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                                <rect x="3" y="4" width="18" height="4" rx="1" />
-                                <path d="M5 8h14v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2Z" />
-                                <path d="M10 12h4" />
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M21 8v13H3V8" />
+                                <path d="M1 3h22v5H1z" />
+                                <path d="M9 12h6" />
+                                <path d="M12 9v6" />
                               </svg>
-                              Archivada
+                              Desarchivar
                             </>
                           ) : (
                             <>
