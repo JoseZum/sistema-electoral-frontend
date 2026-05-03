@@ -221,38 +221,38 @@ export default function VotacionesPage() {
 
   return (
     <div className="voter-content">
-      <div style={{ marginBottom: '2.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <header className="voter-hero">
+        <div className="swiss-bar" />
+        <div className="voter-hero-row">
           <div>
-            <div className="overline" style={{ marginBottom: '0.75rem' }}>Votaciones disponibles</div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem' }}>Tus votaciones</h2>
-            <p style={{ color: 'var(--muted)', marginTop: '0.5rem' }}>Filtra entre activas, inactivas o ya votadas. Por defecto se muestran todas.</p>
+            <h2 className="voter-hero-title">Tus <em>votaciones</em></h2>
+            <p className="voter-hero-sub">
+              Aquí aparecen las votaciones disponibles para ti. Filtra entre activas,
+              inactivas o ya votadas según prefieras.
+            </p>
           </div>
-          {user?.role === 'admin' && (
-            <button
-              onClick={() => router.push('/padron')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                color: 'var(--text)',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-              Panel Admin
-            </button>
-          )}
+          <div className="voter-hero-meta">
+            <div className="voter-hero-stat">
+              <span className="voter-hero-stat-value">{counts.ACTIVE}</span>
+              <span className="voter-hero-stat-label">
+                {counts.ACTIVE === 1 ? 'Activa ahora' : 'Activas ahora'}
+              </span>
+            </div>
+            {user?.role === 'admin' && (
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => router.push('/padron')}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+                Panel Admin
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      </header>
 
       {loading ? (
         <Loader />
