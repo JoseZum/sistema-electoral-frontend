@@ -333,7 +333,7 @@ export default function EleccionesPage() {
                 <th>Participación</th>
                 <th>Fecha</th>
                 <th style={{ width: '150px' }}>Archivar</th>
-                <th style={{ width: '56px' }}>Eliminar</th>
+                <th style={{ width: '56px' }} />
               </tr>
             </thead>
             <tbody>
