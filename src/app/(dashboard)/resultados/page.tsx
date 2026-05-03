@@ -161,6 +161,7 @@ export default function ResultadosPage() {
                 label={selectedElection.tag_name}
                 color={selectedElection.tag_color}
                 size="sm"
+                className="tag-badge--table"
                 leadingIcon="tag"
               />
             </div>
