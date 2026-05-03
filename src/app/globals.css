@@ -4403,23 +4403,29 @@ body {
 }
 
 .monitoring-hours__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 92px;
-  gap: 0.75rem;
-  align-items: center;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(27, 54, 93, 0.08);
 }
 
 .monitoring-hours__row strong {
-  display: block;
+  display: inline;
   font-size: 0.9rem;
   color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .monitoring-hours__row span {
-  display: block;
-  margin-top: 0.12rem;
+  display: inline;
+  margin-left: 1rem;
   font-size: 0.78rem;
   color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .monitoring-hours__bar {

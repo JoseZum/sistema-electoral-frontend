@@ -192,16 +192,6 @@ function buildHourlySeries(election: Election | null, votesByHour: VotesByHour[]
   return points;
 }
 
-function getPeakPoint(points: HourlyVotePoint[]) {
-  return points.reduce<HourlyVotePoint | null>((best, point) => {
-    if (!best || point.count > best.count) {
-      return point;
-    }
-
-  return best;
-  }, null);
-}
-
 function formatVoteCount(count: number) {
   return `${count.toLocaleString('es-CR')} voto${count === 1 ? '' : 's'}`;
 }
@@ -575,7 +565,6 @@ export default function MonitorPage() {
   const turnout = selectedElection?.total_voters
     ? (totalVotes / selectedElection.total_voters) * 100
     : 0;
-  const peakPoint = getPeakPoint(points);
   const activeHours = points.filter((point) => point.count > 0).length;
   const lastVotePoint = [...points].reverse().find((point) => point.count > 0) || null;
   const peakHours = [...points]
@@ -796,14 +785,6 @@ export default function MonitorPage() {
                       <div>
                         <strong>{point.shortLabel}</strong>
                         <span>{formatVoteCount(point.count)} emitido{point.count === 1 ? '' : 's'}</span>
-                      </div>
-                      <div className="monitoring-hours__bar">
-                        <div
-                          className="monitoring-hours__bar-fill"
-                          style={{
-                            width: `${peakPoint && peakPoint.count > 0 ? (point.count / peakPoint.count) * 100 : 0}%`,
-                          }}
-                        />
                       </div>
                     </div>
                   ))
