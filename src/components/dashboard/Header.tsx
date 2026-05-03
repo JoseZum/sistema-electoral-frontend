@@ -15,7 +15,7 @@ const pageTitles: Record<string, string> = {
   '/elecciones': 'Votaciones',
   '/elecciones/crear': 'Crear Votación',
   '/resultados': 'Resultados',
-  '/generar-llaves' : 'Generar LLaves',
+  '/generar-llaves' : 'Generar Llaves',
   '/escrutinio': 'Escrutinio',
   '/escrutinio/agregar-llaves': 'Agregar Llaves',
 };
