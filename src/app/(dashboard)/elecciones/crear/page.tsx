@@ -1060,7 +1060,9 @@ export default function CrearEleccionPage() {
               {options.map((option, index) => (
                 <div key={option.id} className="create-election-option-card">
                   <div className="create-election-option-card__header">
-                    <div className="create-election-option-card__index">Opción {index + 1}</div>
+                    <div className="create-election-option-card__index create-election-option-card__index--candidate">
+                      Opción {index + 1}
+                    </div>
                     {options.length > 2 && (
                       <button
                         type="button"

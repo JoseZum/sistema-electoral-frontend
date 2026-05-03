@@ -2365,6 +2365,10 @@ body {
   text-transform: uppercase;
 }
 
+.create-election-option-card__index--candidate {
+  background: rgba(190, 30, 45, 0.16);
+}
+
 .create-election-choice-card__indicator,
 .schedule-mode-card__indicator {
   width: 20px;
