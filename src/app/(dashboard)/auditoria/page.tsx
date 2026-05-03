@@ -937,6 +937,7 @@ export default function AuditPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showRaw, setShowRaw] = useState<Record<string, boolean>>({});
   const [stats, setStats] = useState<AuditStatRow[]>([]);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1106,11 +1107,34 @@ export default function AuditPage() {
             aria-label="Buscar eventos"
           />
         </div>
+        <button
+          type="button"
+          className="audit-export-trigger"
+          onClick={() => setExportOpen(true)}
+        >
+          <span aria-hidden="true">{Icon.upload}</span>
+          Exportar / vaciar
+        </button>
         <div className="audit-toolbar-meta">
           Mostrando <strong>{logs.length}</strong> de{' '}
           <strong>{total.toLocaleString('es-CR')}</strong>
         </div>
       </div>
+
+      {exportOpen && (
+        <ExportPanel
+          onClose={() => setExportOpen(false)}
+          onPurged={() => {
+            setExportOpen(false);
+            setPage(1);
+            fetchLogs();
+            // refresh sidebar counts
+            apiClient<AuditStatRow[]>(`/api/audit/stats`)
+              .then((rows) => setStats(rows))
+              .catch(() => {});
+          }}
+        />
+      )}
 
       {/* ─── Timeline feed ──────────────────────────────────────── */}
       {loading ? (
