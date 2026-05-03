@@ -2366,7 +2366,8 @@ body {
 }
 
 .create-election-option-card__index--candidate {
-  background: rgba(190, 30, 45, 0.16);
+  background: #1E4A7A;
+  color: white;
 }
 
 .create-election-choice-card__indicator,
