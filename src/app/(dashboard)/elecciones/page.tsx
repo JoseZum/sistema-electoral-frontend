@@ -554,13 +554,14 @@ function DeleteElectionModal({
     >
       <div
         style={{
-          background: 'var(--bg)',
+          background: 'var(--surface-raised, #ffffff)',
           borderRadius: 'var(--radius-md)',
           maxWidth: '520px',
           width: '100%',
           padding: '1.5rem',
           boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
           border: '1px solid var(--error)',
+          position: 'relative',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
