@@ -552,6 +552,24 @@ function buildNarrative(log: AuditLog): Narrative {
       };
     }
 
+    case 'election.delete': {
+      const title =
+        (details.election_title as string | undefined) ||
+        log.election_title ||
+        (oldRow.title as string | undefined) ||
+        log.resource_id ||
+        'sin título';
+      const previousStatus = oldRow.status as string | undefined;
+      return {
+        lead: 'eliminó la votación',
+        subject: `«${title}»`,
+        trailer: previousStatus
+          ? `estaba en ${STATUS_LABELS[previousStatus] || previousStatus}`
+          : undefined,
+        opBadge: { label: 'Votación eliminada', variant: 'delete' },
+      };
+    }
+
     case 'election_option.insert': {
       const label = (newRow.label as string | undefined) || log.resource_id || '';
       return { lead: 'agregó la opción', subject: `«${label}»`, opBadge };

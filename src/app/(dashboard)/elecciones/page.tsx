@@ -92,12 +92,21 @@ function unarchiveTargetStatus(election: Election): Election['status'] {
   return election.requires_keys ? 'SCRUTINIZED' : 'CLOSED';
 }
 
+type DeleteSeverity = 'low' | 'high';
+
+function deleteSeverity(status: Election['status']): DeleteSeverity {
+  return status === 'DRAFT' || status === 'SCHEDULED' ? 'low' : 'high';
+}
+
 export default function EleccionesPage() {
   const [elections, setElections] = useState<Election[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StatusFilter>('ALL');
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [unarchivingId, setUnarchivingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Election | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const fetchElections = useCallback(async () => {
@@ -198,6 +207,53 @@ export default function EleccionesPage() {
     }
   }
 
+  function requestDelete(election: Election) {
+    setFeedback(null);
+    if (deleteSeverity(election.status) === 'low') {
+      const confirmed = window.confirm(
+        `Se eliminará la votación "${election.title}" (${STATUS_LABELS[election.status]}). ¿Deseas continuar?`
+      );
+      if (!confirmed) return;
+      void performDelete(election);
+      return;
+    }
+
+    setDeleteConfirmText('');
+    setDeleteTarget(election);
+  }
+
+  async function performDelete(election: Election) {
+    try {
+      setDeletingId(election.id);
+      setFeedback(null);
+
+      await apiClient<{ success: boolean }>(`/api/elections/${election.id}`, {
+        method: 'DELETE',
+      });
+
+      setElections((current) => current.filter((item) => item.id !== election.id));
+      setFeedback({
+        tone: 'success',
+        message: `La votación "${election.title}" fue eliminada.`,
+      });
+    } catch (err) {
+      console.error('Error deleting election:', err);
+      setFeedback({
+        tone: 'error',
+        message: err instanceof Error ? err.message : 'No se pudo eliminar la votación.',
+      });
+    } finally {
+      setDeletingId(null);
+      setDeleteTarget(null);
+      setDeleteConfirmText('');
+    }
+  }
+
+  function cancelDelete() {
+    setDeleteTarget(null);
+    setDeleteConfirmText('');
+  }
+
   const visibleElections = elections.filter((election) => election.status !== 'ARCHIVED');
   const filtered = filter === 'ALL'
     ? visibleElections
@@ -277,6 +333,7 @@ export default function EleccionesPage() {
                 <th>Participación</th>
                 <th>Fecha</th>
                 <th style={{ width: '150px' }}>Archivar</th>
+                <th style={{ width: '140px' }}>Eliminar</th>
               </tr>
             </thead>
             <tbody>
@@ -296,6 +353,11 @@ export default function EleccionesPage() {
                   : canArchive
                     ? 'Archivar votación'
                     : 'Solo se pueden archivar votaciones escrutadas o cerradas sin escrutinio';
+                const isDeleting = deletingId === election.id;
+                const severity = deleteSeverity(election.status);
+                const deleteHint = severity === 'low'
+                  ? 'Eliminar votación'
+                  : 'Eliminar votación (acción destructiva: borra votos, opciones y configuración)';
 
                 return (
                   <tr key={election.id} className="table-row-enter" style={{ animationDelay: `${0.05 * (index + 1)}s` }}>
@@ -393,6 +455,44 @@ export default function EleccionesPage() {
                         </button>
                       </span>
                     </td>
+                    <td>
+                      <span title={deleteHint} style={{ display: 'inline-flex' }}>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline"
+                          onClick={() => requestDelete(election)}
+                          disabled={isDeleting}
+                          style={{
+                            minWidth: '112px',
+                            justifyContent: 'center',
+                            opacity: isDeleting ? 0.65 : 1,
+                            cursor: isDeleting ? 'not-allowed' : 'pointer',
+                            color: severity === 'high' ? 'var(--error)' : 'var(--ink)',
+                            borderColor: severity === 'high' ? 'var(--error)' : undefined,
+                          }}
+                        >
+                          {isDeleting ? (
+                            <>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }} aria-hidden="true">
+                                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                              </svg>
+                              Eliminando...
+                            </>
+                          ) : (
+                            <>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
+                              Eliminar
+                            </>
+                          )}
+                        </button>
+                      </span>
+                    </td>
                   </tr>
                 );
               })}
@@ -400,6 +500,166 @@ export default function EleccionesPage() {
           </table>
         </div>
       )}
+
+      {deleteTarget && (
+        <DeleteElectionModal
+          election={deleteTarget}
+          confirmText={deleteConfirmText}
+          onConfirmTextChange={setDeleteConfirmText}
+          onCancel={cancelDelete}
+          onConfirm={() => void performDelete(deleteTarget)}
+          deleting={deletingId === deleteTarget.id}
+        />
+      )}
     </>
+  );
+}
+
+const DELETE_CONFIRM_PHRASE = 'ELIMINAR';
+
+function DeleteElectionModal({
+  election,
+  confirmText,
+  onConfirmTextChange,
+  onCancel,
+  onConfirm,
+  deleting,
+}: {
+  election: Election;
+  confirmText: string;
+  onConfirmTextChange: (value: string) => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+  deleting: boolean;
+}) {
+  const statusLabel = STATUS_LABELS[election.status] ?? election.status;
+  const canConfirm = confirmText.trim().toUpperCase() === DELETE_CONFIRM_PHRASE && !deleting;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-election-title"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15, 18, 32, 0.55)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '1rem',
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget && !deleting) {
+          onCancel();
+        }
+      }}
+    >
+      <div
+        style={{
+          background: 'var(--bg)',
+          borderRadius: 'var(--radius-md)',
+          maxWidth: '520px',
+          width: '100%',
+          padding: '1.5rem',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
+          border: '1px solid var(--error)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              background: 'var(--error-light)',
+              color: 'var(--error)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+            aria-hidden="true"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
+          <h3
+            id="delete-election-title"
+            style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', margin: 0 }}
+          >
+            Eliminar votación
+          </h3>
+        </div>
+
+        <p style={{ fontSize: '0.9375rem', marginBottom: '0.75rem' }}>
+          Estás por eliminar la votación{' '}
+          <strong>«{election.title}»</strong> que se encuentra en estado{' '}
+          <strong>{statusLabel}</strong>.
+        </p>
+
+        <div
+          style={{
+            background: 'var(--error-light)',
+            color: 'var(--error)',
+            border: '1px solid var(--error)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '0.75rem 1rem',
+            fontSize: '0.875rem',
+            marginBottom: '1rem',
+          }}
+        >
+          <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Esta acción es irreversible.</strong>
+          Se eliminarán de forma permanente la votación y <strong>todos sus datos asociados</strong>:
+          opciones, padrón de votantes elegibles, votos emitidos, llaves de escrutinio y tokens.
+          {election.status === 'OPEN' && (
+            <> La votación está <strong>abierta</strong>: los votos en curso se perderán.</>
+          )}
+        </div>
+
+        <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+          Para confirmar, escribe <code style={{ background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: 4 }}>{DELETE_CONFIRM_PHRASE}</code>:
+        </label>
+        <input
+          type="text"
+          value={confirmText}
+          onChange={(event) => onConfirmTextChange(event.target.value)}
+          autoFocus
+          disabled={deleting}
+          className="input"
+          style={{ width: '100%', marginBottom: '1.25rem' }}
+          placeholder={DELETE_CONFIRM_PHRASE}
+        />
+
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={onCancel}
+            disabled={deleting}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={onConfirm}
+            disabled={!canConfirm}
+            style={{
+              background: 'var(--error)',
+              color: '#fff',
+              opacity: canConfirm ? 1 : 0.6,
+              cursor: canConfirm ? 'pointer' : 'not-allowed',
+            }}
+          >
+            {deleting ? 'Eliminando...' : 'Eliminar definitivamente'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
