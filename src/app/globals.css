@@ -4058,3 +4058,478 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Dashboard (admin home) — editorial layout matching the audit page tone.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.dash-page {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+/* ─── Hero ─────────────────────────────────────────────────────── */
+.dash-hero {
+  margin-bottom: 1.75rem;
+}
+
+.dash-hero-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.dash-hero-title {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+  margin: 0;
+  color: var(--ink);
+}
+
+.dash-hero-title em {
+  font-style: italic;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.dash-hero-sub {
+  margin-top: 0.5rem;
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.dash-hero-meta {
+  display: flex;
+  align-items: stretch;
+  gap: 1.25rem;
+}
+
+.dash-hero-stat {
+  text-align: right;
+  padding-left: 1.25rem;
+  border-left: 3px solid var(--accent);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.dash-hero-stat-value {
+  font-family: var(--font-display);
+  font-size: 2.75rem;
+  line-height: 0.95;
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-hero-stat-label {
+  margin-top: 0.4rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted-light);
+  font-weight: 600;
+}
+
+/* ─── Live banner (active elections) ───────────────────────────── */
+.dash-live {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1.75rem;
+  background: linear-gradient(90deg, var(--accent-light) 0%, rgba(253, 241, 242, 0) 75%);
+  border: 1px solid rgba(190, 30, 45, 0.18);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.dash-live::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 0% 50%, rgba(190, 30, 45, 0.08), transparent 45%);
+  pointer-events: none;
+}
+
+.dash-live-pulse {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.dash-live-pulse::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.35;
+  animation: dashLivePing 1.8s ease-out infinite;
+}
+
+@keyframes dashLivePing {
+  0% { transform: scale(0.5); opacity: 0.45; }
+  80%, 100% { transform: scale(1.6); opacity: 0; }
+}
+
+.dash-live-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--accent);
+  flex: 1;
+  position: relative;
+}
+
+.dash-live-text strong {
+  font-weight: 700;
+}
+
+.dash-live-text span {
+  font-weight: 400;
+  color: var(--ink-soft);
+  margin-left: 0.4rem;
+}
+
+.dash-live-link {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+  position: relative;
+  transition: transform 0.2s var(--ease-out);
+}
+
+.dash-live-link:hover { transform: translateX(2px); }
+
+/* ─── Stat cards ───────────────────────────────────────────────── */
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.dash-stat {
+  position: relative;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.4rem 1.35rem;
+  overflow: hidden;
+  transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
+}
+
+.dash-stat::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease-out);
+}
+
+.dash-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+
+.dash-stat:hover::before { transform: scaleX(1); }
+
+.dash-stat.is-accent {
+  background: linear-gradient(160deg, var(--surface-raised) 0%, var(--accent-light) 140%);
+  border-color: rgba(190, 30, 45, 0.22);
+}
+
+.dash-stat.is-accent::before { transform: scaleX(1); }
+
+.dash-stat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.dash-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.dash-stat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-stat.is-accent .dash-stat-icon {
+  background: rgba(190, 30, 45, 0.12);
+  color: var(--accent);
+}
+
+.dash-stat-value {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  line-height: 1;
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.dash-stat.is-accent .dash-stat-value { color: var(--accent); }
+
+.dash-stat-sub {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* ─── Two-column panels ────────────────────────────────────────── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.dash-panel {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.dash-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.dash-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+
+.dash-panel-title::before {
+  content: '';
+  width: 3px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.dash-panel-link {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  transition: transform 0.2s var(--ease-out);
+}
+
+.dash-panel-link:hover { transform: translateX(2px); }
+
+.dash-panel-empty {
+  padding: 2.75rem 1.5rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* ─── Ongoing election row ─────────────────────────────────────── */
+.dash-election {
+  padding: 1.05rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.18s var(--ease-out);
+}
+
+.dash-election:last-child { border-bottom: none; }
+
+.dash-election:hover { background: var(--accent-glow); }
+
+.dash-election-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.dash-election-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.dash-election-meta {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  padding-top: 0.15rem;
+}
+
+.dash-progress-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.dash-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent) 0%, #df4a58 100%);
+  transition: width 0.5s var(--ease-out);
+}
+
+.dash-progress-foot {
+  margin-top: 0.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.dash-progress-foot strong {
+  font-family: var(--font-mono);
+  color: var(--ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Activity row ─────────────────────────────────────────────── */
+.dash-activity {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.18s var(--ease-out);
+}
+
+.dash-activity:last-child { border-bottom: none; }
+
+.dash-activity:hover { background: var(--accent-glow); }
+
+.dash-activity-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.dash-activity-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-activity-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.15rem;
+}
+
+.dash-activity-tag {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 100px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dash-activity-op {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.dash-activity-summary {
+  font-size: 0.75rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-activity-actor {
+  font-size: 0.7rem;
+  color: var(--muted-light);
+  margin-top: 0.1rem;
+}
+
+.dash-activity-time {
+  font-size: 0.7rem;
+  color: var(--muted-light);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .dash-stats { grid-template-columns: repeat(2, 1fr); }
+  .dash-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .dash-hero-title { font-size: 1.7rem; }
+  .dash-hero-stat-value { font-size: 2rem; }
+  .dash-stats { grid-template-columns: 1fr; }
+  .dash-stat-value { font-size: 1.85rem; }
+  .dash-live { flex-wrap: wrap; }
+}

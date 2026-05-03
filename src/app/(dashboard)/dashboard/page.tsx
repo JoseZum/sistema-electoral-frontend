@@ -51,24 +51,6 @@ interface DashboardStats {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Borrador',
-  SCHEDULED: 'Programada',
-  OPEN: 'Abierta',
-  CLOSED: 'Cerrada',
-  SCRUTINIZED: 'Escrutada',
-  ARCHIVED: 'Archivada',
-};
-
-const STATUS_BADGE: Record<string, string> = {
-  DRAFT: 'badge-draft',
-  SCHEDULED: 'badge-scheduled',
-  OPEN: 'badge-open',
-  CLOSED: 'badge-closed',
-  SCRUTINIZED: 'badge-scrutinized',
-  ARCHIVED: 'badge-archived',
-};
-
 const RESOURCE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   student: { label: 'Estudiante', color: '#2563eb', bg: '#eff6ff' },
   admin: { label: 'Admin', color: 'var(--accent)', bg: 'var(--accent-light)' },
@@ -114,7 +96,6 @@ function formatResourceId(resourceId: string | null) {
   if (!resourceId || resourceId.trim().length === 0) {
     return 'Sin recurso';
   }
-
   return resourceId.length > 8 ? resourceId.slice(0, 8) : resourceId;
 }
 
@@ -134,58 +115,13 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div
-      className="stat-card"
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '1rem',
-        padding: '1.25rem 1.5rem',
-      }}
-    >
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 'var(--radius-md)',
-          background: accent ? 'var(--accent-light)' : 'var(--surface-sunken)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          color: accent ? 'var(--accent)' : 'var(--muted)',
-        }}
-      >
-        {icon}
+    <div className={`dash-stat${accent ? ' is-accent' : ''}`}>
+      <div className="dash-stat-head">
+        <div className="dash-stat-label">{label}</div>
+        <div className="dash-stat-icon">{icon}</div>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            color: 'var(--muted)',
-            marginBottom: '0.25rem',
-          }}
-        >
-          {label}
-        </div>
-        <div
-          className="stat-card-value"
-          style={{
-            fontSize: '1.75rem',
-            color: accent ? 'var(--accent)' : 'var(--ink)',
-          }}
-        >
-          {value}
-        </div>
-        {sub && (
-          <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
-            {sub}
-          </div>
-        )}
-      </div>
+      <div className="dash-stat-value">{value}</div>
+      {sub && <div className="dash-stat-sub">{sub}</div>}
     </div>
   );
 }
@@ -252,6 +188,9 @@ export default function DashboardPage() {
   const openElectionItems = data.stats.ongoingElections;
   const recentAuditLogs = data.auditLogs.slice(0, 3);
   const scheduledElections = data.elections.filter((e) => e.status === 'SCHEDULED');
+  const closedElections = data.elections.filter(
+    (e) => e.status === 'CLOSED' || e.status === 'SCRUTINIZED'
+  );
   const participationLabel = Number(data.stats.participation).toFixed(1);
 
   if (loading) {
@@ -271,78 +210,54 @@ export default function DashboardPage() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const firstName = user?.fullName?.split(' ')[0] ?? 'Administrador';
 
   return (
-    <div className="animate-fadeInUp">
-      {/* ─── Header ─── */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h2
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '1.75rem',
-            fontWeight: 500,
-            marginBottom: '0.25rem',
-          }}
-        >
-          {greeting}, {user?.fullName?.split(' ')[0] ?? 'Administrador'}
-        </h2>
-        <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>
-          Panel de control · TEE Sistema Electoral
-        </p>
-      </div>
+    <div className="dash-page view-enter">
+      {/* ─── Editorial hero ─── */}
+      <header className="dash-hero">
+        <div className="swiss-bar" />
+        <div className="dash-hero-row">
+          <div>
+            <h2 className="dash-hero-title">
+              {greeting}, <em>{firstName}</em>
+            </h2>
+            <p className="dash-hero-sub">
+              Panel de control · TEE Sistema Electoral. Una vista rápida del estado actual
+              de los procesos, padrón y actividad del sistema.
+            </p>
+          </div>
+          <div className="dash-hero-meta">
+            <div className="dash-hero-stat">
+              <span className="dash-hero-stat-value">{participationLabel}%</span>
+              <span className="dash-hero-stat-label">Participación promedio</span>
+            </div>
+          </div>
+        </div>
+      </header>
 
-      {/* ─── Alert: elecciones abiertas ─── */}
+      {/* ─── Live banner ─── */}
       {data.stats.openElections > 0 && (
-        <div
-          className="card"
-          style={{
-            background: 'var(--accent-light)',
-            borderColor: 'var(--accent)',
-            borderLeft: '3px solid var(--accent)',
-            padding: '1rem 1.25rem',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-          }}
-        >
-          <div
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: 'var(--accent)',
-              flexShrink: 0,
-              boxShadow: '0 0 0 3px rgba(190,30,45,0.2)',
-            }}
-          />
-          <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--accent)' }}>
-            {data.stats.openElections === 1
-              ? `Hay 1 votación abierta ahora mismo`
-              : `Hay ${data.stats.openElections} votaciones abiertas ahora mismo`}
-            {openElectionItems[0]?.endTime && ` · Cierra ${formatDate(openElectionItems[0].endTime)}`}
+        <div className="dash-live" role="status">
+          <span className="dash-live-pulse" aria-hidden="true" />
+          <span className="dash-live-text">
+            <strong>
+              {data.stats.openElections === 1
+                ? 'Hay 1 votación abierta ahora mismo'
+                : `Hay ${data.stats.openElections} votaciones abiertas ahora mismo`}
+            </strong>
+            {openElectionItems[0]?.endTime && (
+              <span>· Cierra {formatDate(openElectionItems[0].endTime)}</span>
+            )}
           </span>
-          <Link
-            href="/elecciones"
-            style={{
-              marginLeft: 'auto',
-              fontSize: '0.8125rem',
-              color: 'var(--accent)',
-              fontWeight: 600,
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
+          <Link href="/elecciones" className="dash-live-link">
             Ver →
           </Link>
         </div>
       )}
 
-      {/* ─── Stat Cards ─── */}
-      <div
-        className="stats-grid animation-delay-200 animate-fadeInUp"
-        style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '1.5rem' }}
-      >
+      {/* ─── Stat cards ─── */}
+      <section className="dash-stats" aria-label="Métricas generales">
         <StatCard
           label="Elecciones activas"
           value={data.stats.openElections}
@@ -353,7 +268,7 @@ export default function DashboardPage() {
           }
           accent={data.stats.openElections > 0}
           icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
@@ -362,9 +277,9 @@ export default function DashboardPage() {
         <StatCard
           label="Total de elecciones"
           value={data.stats.totalElections}
-          sub={`${data.elections.filter((e) => e.status === 'CLOSED' || e.status === 'SCRUTINIZED').length} cerradas`}
+          sub={`${closedElections.length} cerrada${closedElections.length === 1 ? '' : 's'}`}
           icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="7" height="7" />
               <rect x="14" y="3" width="7" height="7" />
               <rect x="14" y="14" width="7" height="7" />
@@ -377,7 +292,7 @@ export default function DashboardPage() {
           value={data.stats.totalVotes.toLocaleString()}
           sub={`${participationLabel}% participación promedio`}
           icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="20" x2="18" y2="10" />
               <line x1="12" y1="20" x2="12" y2="4" />
               <line x1="6" y1="20" x2="6" y2="14" />
@@ -389,7 +304,7 @@ export default function DashboardPage() {
           value={data.stats.activeStudents.toLocaleString()}
           sub={`De ${data.stats.totalStudents.toLocaleString()} en el padrón`}
           icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
               <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -397,130 +312,67 @@ export default function DashboardPage() {
             </svg>
           }
         />
-      </div>
+      </section>
 
-      {/* ─── Ongoing Elections ─── */}
-      <div style={{ marginBottom: '1.25rem' }}>
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div
-            style={{
-              padding: '1rem 1.25rem',
-              borderBottom: '1px solid var(--border)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <h3 style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Elecciones en curso</h3>
-            <Link
-              href="/elecciones"
-              style={{ fontSize: '0.8125rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}
-            >
+      {/* ─── Two-column panels ─── */}
+      <div className="dash-grid">
+        {/* Ongoing elections */}
+        <section className="dash-panel" aria-label="Elecciones en curso">
+          <div className="dash-panel-head">
+            <h3 className="dash-panel-title">Elecciones en curso</h3>
+            <Link href="/elecciones" className="dash-panel-link">
               Ver elecciones →
             </Link>
           </div>
 
           {data.stats.ongoingElections.length === 0 ? (
-            <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
-              No hay elecciones en curso
-            </div>
+            <div className="dash-panel-empty">No hay elecciones en curso</div>
           ) : (
             <div>
-              {data.stats.ongoingElections.map((e, i) => {
+              {data.stats.ongoingElections.map((e) => {
                 const progress = Math.max(0, Math.min(100, Number(e.progressPercentage || 0)));
                 return (
-                  <div
-                    key={e.id}
-                    style={{
-                      padding: '1rem 1.25rem',
-                      borderBottom: i < data.stats.ongoingElections.length - 1 ? '1px solid var(--border)' : 'none',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
-                      <div
-                        style={{
-                          fontWeight: 500,
-                          fontSize: '0.875rem',
-                          marginBottom: '0.35rem',
-                        }}
-                      >
-                        {e.title}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                        {e.totalVoters > 0
-                          ? `${e.votesCount} / ${e.totalVoters} votos · Cierra ${formatDate(e.endTime)}`
-                          : `Cierra ${formatDate(e.endTime)}`}
+                  <div key={e.id} className="dash-election">
+                    <div className="dash-election-top">
+                      <div className="dash-election-title">{e.title}</div>
+                      <div className="dash-election-meta">
+                        {e.totalVoters > 0 && (
+                          <div>{e.votesCount.toLocaleString()} / {e.totalVoters.toLocaleString()} votos</div>
+                        )}
+                        <div>Cierra {formatDate(e.endTime)}</div>
                       </div>
                     </div>
-                    <div style={{ marginTop: '0.75rem' }}>
+                    <div className="dash-progress-track">
                       <div
-                        style={{
-                          width: '100%',
-                          height: 8,
-                          borderRadius: 999,
-                          background: 'var(--surface-sunken)',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: `${progress}%`,
-                            height: '100%',
-                            background: 'linear-gradient(90deg, #be1e2d 0%, #df4a58 100%)',
-                            transition: 'width 0.35s ease',
-                          }}
-                        />
-                      </div>
-                      <div
-                        style={{
-                          marginTop: '0.45rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          fontSize: '0.75rem',
-                          color: 'var(--muted)',
-                        }}
-                      >
-                        <span>Participación</span>
-                        <span style={{ fontWeight: 700, color: 'var(--ink)' }}>{progress.toFixed(0)}%</span>
-                      </div>
+                        className="dash-progress-fill"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <div className="dash-progress-foot">
+                      <span>Participación</span>
+                      <strong>{progress.toFixed(0)}%</strong>
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </div>
-      </div>
+        </section>
 
-      {/* ─── Auditoría reciente ─── */}
-      <div>
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div
-            style={{
-              padding: '1rem 1.25rem',
-              borderBottom: '1px solid var(--border)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <h3 style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Actividad reciente</h3>
-            <Link
-              href="/auditoria"
-              style={{ fontSize: '0.8125rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}
-            >
+        {/* Recent activity */}
+        <section className="dash-panel" aria-label="Actividad reciente">
+          <div className="dash-panel-head">
+            <h3 className="dash-panel-title">Actividad reciente</h3>
+            <Link href="/auditoria" className="dash-panel-link">
               Ver log →
             </Link>
           </div>
 
           {recentAuditLogs.length === 0 ? (
-            <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
-              Sin actividad registrada
-            </div>
+            <div className="dash-panel-empty">Sin actividad registrada</div>
           ) : (
             <div>
-              {recentAuditLogs.map((log, i) => {
+              {recentAuditLogs.map((log) => {
                 const [resourceKey, opKey] = log.action.split('.');
                 const resource = RESOURCE_LABELS[resourceKey] || {
                   label: resourceKey || log.resource_type || 'Sistema',
@@ -532,99 +384,40 @@ export default function DashboardPage() {
                 const actor = log.actor_name?.trim() || log.actor_carnet?.trim();
 
                 return (
-                  <div
-                    key={log.id}
-                    className="table-row-enter"
-                    style={{
-                      borderBottom: i < recentAuditLogs.length - 1 ? '1px solid var(--border)' : 'none',
-                      animationDelay: `${i * 0.015}s`,
-                    }}
-                  >
+                  <div key={log.id} className="dash-activity">
                     <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        padding: '0.75rem 1.25rem',
-                        transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-glow)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      className="dash-activity-dot"
+                      style={{ background: resource.bg, color: resource.color }}
                     >
-                      <div
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: '50%',
-                          background: resource.bg,
-                          color: resource.color,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 700,
-                          fontSize: '0.875rem',
-                          fontFamily: 'var(--font-mono)',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {op.icon}
-                      </div>
-
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              padding: '0.125rem 0.5rem',
-                              borderRadius: '100px',
-                              fontSize: '0.6875rem',
-                              fontWeight: 600,
-                              background: resource.bg,
-                              color: resource.color,
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.04em',
-                            }}
-                          >
-                            {resource.label}
-                          </span>
-                          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' }}>
-                            {op.label}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                          <span
-                            style={{
-                              fontSize: '0.75rem',
-                              color: 'var(--muted)',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                            title={summary}
-                          >
-                            {summary}
-                          </span>
-                          {actor && (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--muted-light)' }}>
-                              por {actor}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <span
-                        style={{ fontSize: '0.75rem', color: 'var(--muted-light)', whiteSpace: 'nowrap', flexShrink: 0 }}
-                        title={formatDate(log.created_at)}
-                      >
-                        {formatRelative(log.created_at)}
-                      </span>
+                      {op.icon}
                     </div>
+                    <div className="dash-activity-body">
+                      <div className="dash-activity-head">
+                        <span
+                          className="dash-activity-tag"
+                          style={{ background: resource.bg, color: resource.color }}
+                        >
+                          {resource.label}
+                        </span>
+                        <span className="dash-activity-op">{op.label}</span>
+                      </div>
+                      <div className="dash-activity-summary" title={summary}>
+                        {summary}
+                      </div>
+                      {actor && <div className="dash-activity-actor">por {actor}</div>}
+                    </div>
+                    <span
+                      className="dash-activity-time"
+                      title={formatDate(log.created_at)}
+                    >
+                      {formatRelative(log.created_at)}
+                    </span>
                   </div>
                 );
               })}
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );
