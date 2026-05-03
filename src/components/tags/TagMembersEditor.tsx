@@ -17,12 +17,44 @@ interface StudentCatalogResponse {
 interface TagMembersEditorProps {
   value: TagStudent[];
   onChange: (members: TagStudent[]) => void;
+  copy?: Partial<TagMembersEditorCopy>;
 }
 
 const RESULT_LIMIT = 50;
 const BULK_LIMIT = 10000;
 
-export default function TagMembersEditor({ value, onChange }: TagMembersEditorProps) {
+type TagMembersEditorCopy = {
+  searchLabel: string;
+  searchPlaceholder: string;
+  helperText: string;
+  resultsTitle: string;
+  resultsSubtitle: string;
+  selectedTitle: string;
+  selectedSubtitle: string;
+  searchPrompt: string;
+  noResults: string;
+  allResultsSelected: string;
+  selectedEmpty: string;
+  addAllTitle: string;
+};
+
+const DEFAULT_COPY: TagMembersEditorCopy = {
+  searchLabel: 'Buscar personas del padrón',
+  searchPlaceholder: 'Nombre o carnet...',
+  helperText: 'Busca por nombre o carnet, o filtra por sede y carrera. Presiona Enter o el botón Buscar.',
+  resultsTitle: 'Resultados',
+  resultsSubtitle: 'Personas encontradas',
+  selectedTitle: 'Seleccionadas',
+  selectedSubtitle: 'Personas incluidas en la tag',
+  searchPrompt: 'Aplica filtros y presiona Buscar para ver personas del padrón',
+  noResults: 'No se encontraron estudiantes con esos filtros',
+  allResultsSelected: 'Todos los resultados ya están agregados',
+  selectedEmpty: 'Todavía no has agregado personas a la tag',
+  addAllTitle: 'Agrega todas las personas que cumplen con los filtros actuales',
+};
+
+export default function TagMembersEditor({ value, onChange, copy }: TagMembersEditorProps) {
+  const text = { ...DEFAULT_COPY, ...copy };
   const [search, setSearch] = useState('');
   const [sede, setSede] = useState('');
   const [career, setCareer] = useState('');
@@ -154,17 +186,17 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
         <div className="input-group">
-          <label>Buscar personas del padrón</label>
+          <label>{text.searchLabel}</label>
           <input
             type="text"
             className="input"
-            placeholder="Nombre o carnet..."
+            placeholder={text.searchPlaceholder}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             onKeyDown={handleSearchKeyDown}
           />
           <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.4rem' }}>
-            Busca por nombre o carnet, o filtra por sede y carrera. Presiona Enter o el botón Buscar.
+            {text.helperText}
           </p>
         </div>
 
@@ -237,13 +269,13 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
               <div>
-                <div style={{ fontWeight: 600 }}>Resultados</div>
+                <div style={{ fontWeight: 600 }}>{text.resultsTitle}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                   {hasSearched
                     ? totalResults === 0
                       ? 'Ninguna coincidencia'
                       : `Mostrando ${visibleResults} de ${totalResults} coincidencia${totalResults === 1 ? '' : 's'}`
-                    : 'Personas encontradas'}
+                    : text.resultsSubtitle}
                 </div>
                 {filterDescription && hasSearched && (
                   <div style={{ fontSize: '0.7rem', color: 'var(--muted-light)', marginTop: '0.2rem' }}>
@@ -257,7 +289,7 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
                   className="btn btn-accent btn-sm"
                   onClick={addAllMatching}
                   disabled={bulkAdding || searching}
-                  title="Agrega todas las personas que cumplen con los filtros actuales"
+                  title={text.addAllTitle}
                 >
                   {bulkAdding ? 'Agregando...' : `Agregar todos (${totalResults})`}
                 </button>
@@ -272,7 +304,7 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
               </div>
             ) : !hasSearched ? (
               <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
-                Aplica filtros y presiona Buscar para ver personas del padrón
+                {text.searchPrompt}
               </div>
             ) : searching ? (
               <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
@@ -281,8 +313,8 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
             ) : results.length === 0 ? (
               <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
                 {totalResults === 0
-                  ? 'No se encontraron estudiantes con esos filtros'
-                  : 'Todos los resultados ya están agregados'}
+                  ? text.noResults
+                  : text.allResultsSelected}
               </div>
             ) : (
               <>
@@ -338,8 +370,8 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
             }}
           >
             <div>
-              <div style={{ fontWeight: 600 }}>Seleccionadas</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Personas incluidas en la tag</div>
+              <div style={{ fontWeight: 600 }}>{text.selectedTitle}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{text.selectedSubtitle}</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{value.length}</div>
@@ -359,7 +391,7 @@ export default function TagMembersEditor({ value, onChange }: TagMembersEditorPr
           <div style={{ minHeight: 220, maxHeight: 340, overflowY: 'auto' }}>
             {value.length === 0 ? (
               <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
-                Todavía no has agregado personas a la tag
+                {text.selectedEmpty}
               </div>
             ) : (
               value.map((student) => (

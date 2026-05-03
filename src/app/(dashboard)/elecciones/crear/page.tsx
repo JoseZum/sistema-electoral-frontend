@@ -8,7 +8,9 @@ import ImmediateStartConfig, {
   getImmediateDurationMinutes,
   type ImmediateDurationUnit,
 } from '@/components/elections/ImmediateStartConfig';
+import TagMembersEditor from '@/components/tags/TagMembersEditor';
 import TagSelector from '@/components/tags/TagSelector';
+import type { TagStudent } from '@/types/tags';
 
 interface ElectionForm {
   title: string;
@@ -31,23 +33,7 @@ interface OptionForm {
   description: string;
 }
 
-interface Student {
-  id: string;
-  carnet: string;
-  full_name: string;
-  sede: string;
-  career: string;
-}
-
-interface StudentsResponse {
-  students: Student[];
-  total: number;
-}
-
-interface StudentCatalogResponse {
-  sedes: string[];
-  careers: string[];
-}
+type Student = TagStudent;
 
 interface AdminSummary {
   id: string;
@@ -77,16 +63,10 @@ const VOTER_SOURCE_OPTIONS: Array<{
     badge: 'General',
   },
   {
-    value: 'FILTERED',
-    title: 'Filtrar por sede o carrera',
-    description: 'Acota la participación usando filtros reales cargados en el sistema.',
-    badge: 'Segmentado',
-  },
-  {
     value: 'MANUAL',
-    title: 'Seleccion manual',
-    description: 'Busca personas del padrón y agrégalas una por una.',
-    badge: 'Curado',
+    title: 'Seleccion por filtros',
+    description: 'Combina busqueda individual con sede, carrera y agregar todos los resultados.',
+    badge: 'Segmentado + curado',
   },
   {
     value: 'TAG',
@@ -238,7 +218,6 @@ function ToggleCard({
 
 export default function CrearEleccionPage() {
   const router = useRouter();
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const optionCounterRef = useRef(2);
   const sectionRefs = useRef<Record<SectionId, HTMLElement | null>>({
     informacion: null,
@@ -249,11 +228,6 @@ export default function CrearEleccionPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionId>('informacion');
-  const [catalogLoading, setCatalogLoading] = useState(true);
-  const [catalog, setCatalog] = useState<StudentCatalogResponse>({ sedes: [], careers: [] });
-  const [manualSearch, setManualSearch] = useState('');
-  const [manualResults, setManualResults] = useState<Student[]>([]);
-  const [manualSearching, setManualSearching] = useState(false);
   const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
   const [adminCount, setAdminCount] = useState<number | null>(null);
   const [adminCountLoading, setAdminCountLoading] = useState(true);
@@ -289,32 +263,6 @@ export default function CrearEleccionPage() {
   useEffect(() => {
     let cancelled = false;
 
-    async function fetchCatalog() {
-      try {
-        const response = await apiClient<StudentCatalogResponse>('/api/users/students/catalog');
-        if (!cancelled) {
-          setCatalog({
-            sedes: response.sedes || [],
-            careers: response.careers || [],
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching student catalog:', err);
-      } finally {
-        if (!cancelled) setCatalogLoading(false);
-      }
-    }
-
-    fetchCatalog();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
     async function fetchAdminCount() {
       try {
         const admins = await apiClient<AdminSummary[]>('/api/users/admins');
@@ -337,12 +285,6 @@ export default function CrearEleccionPage() {
 
     return () => {
       cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
   }, []);
 
@@ -377,55 +319,6 @@ export default function CrearEleccionPage() {
       observer.disconnect();
     };
   }, []);
-
-  useEffect(() => {
-    if (form.voter_source !== 'MANUAL') {
-      setManualResults([]);
-      setManualSearching(false);
-      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-      return;
-    }
-
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-
-    if (manualSearch.trim().length < 2) {
-      setManualResults([]);
-      setManualSearching(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    searchTimerRef.current = setTimeout(async () => {
-      setManualSearching(true);
-      try {
-        const params = new URLSearchParams();
-        params.set('search', manualSearch.trim());
-        params.set('limit', '10');
-        if (form.voter_filter_sede) params.set('sede', form.voter_filter_sede);
-        if (form.voter_filter_career) params.set('career', form.voter_filter_career);
-
-        const response = await apiClient<StudentsResponse>(`/api/users/students?${params.toString()}`);
-        const selectedIds = new Set(selectedStudents.map((student) => student.id));
-
-        if (!cancelled) {
-          setManualResults((response.students || []).filter((student) => !selectedIds.has(student.id)));
-        }
-      } catch (err) {
-        if (!cancelled) {
-          console.error('Error searching students:', err);
-          setManualResults([]);
-        }
-      } finally {
-        if (!cancelled) setManualSearching(false);
-      }
-    }, 300);
-
-    return () => {
-      cancelled = true;
-      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    };
-  }, [form.voter_filter_career, form.voter_filter_sede, form.voter_source, manualSearch, selectedStudents]);
 
   function setSectionRef(sectionId: SectionId, node: HTMLElement | null) {
     sectionRefs.current[sectionId] = node;
@@ -494,14 +387,6 @@ export default function CrearEleccionPage() {
         currentIndex === index ? { ...option, [field]: value } : option
       ))
     );
-  }
-
-  function addManualStudent(student: Student) {
-    setSelectedStudents((prev) => (prev.some((current) => current.id === student.id) ? prev : [...prev, student]));
-  }
-
-  function removeManualStudent(studentId: string) {
-    setSelectedStudents((prev) => prev.filter((student) => student.id !== studentId));
   }
 
   function resolveMinKeysForSubmit() {
