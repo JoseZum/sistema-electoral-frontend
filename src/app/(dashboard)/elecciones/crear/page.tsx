@@ -16,9 +16,7 @@ interface ElectionForm {
   title: string;
   description: string;
   is_anonymous: boolean;
-  voter_source: 'FULL_PADRON' | 'FILTERED' | 'MANUAL' | 'TAG';
-  voter_filter_sede: string;
-  voter_filter_career: string;
+  voter_source: 'FULL_PADRON' | 'MANUAL' | 'TAG';
   tag_id: string | null;
   start_immediately: boolean;
   immediate_duration_value: string;
@@ -64,8 +62,8 @@ const VOTER_SOURCE_OPTIONS: Array<{
   },
   {
     value: 'MANUAL',
-    title: 'Seleccion por filtros',
-    description: 'Combina busqueda individual con sede, carrera y agregar todos los resultados.',
+    title: 'Selección por filtros',
+    description: 'Combina búsqueda individual con sede, carrera y agregar todos los resultados.',
     badge: 'Segmentado + curado',
   },
   {
@@ -116,15 +114,10 @@ function getVoterSummary(form: ElectionForm, selectedStudents: Student[]) {
   switch (form.voter_source) {
     case 'FULL_PADRON':
       return 'Padrón completo';
-    case 'FILTERED':
-      if (form.voter_filter_sede || form.voter_filter_career) {
-        return 'Padrón filtrado';
-      }
-      return 'Sin filtros, equivale al padrón completo';
     case 'MANUAL':
       return selectedStudents.length > 0
         ? `${selectedStudents.length} persona${selectedStudents.length === 1 ? '' : 's'} seleccionada${selectedStudents.length === 1 ? '' : 's'}`
-        : 'Selección manual pendiente';
+        : 'Selección por filtros pendiente';
     case 'TAG':
       return form.tag_id ? 'Tag seleccionada' : 'Falta seleccionar la tag';
     default:
@@ -238,8 +231,6 @@ export default function CrearEleccionPage() {
     description: '',
     is_anonymous: true,
     voter_source: 'FULL_PADRON',
-    voter_filter_sede: '',
-    voter_filter_career: '',
     tag_id: null,
     start_immediately: false,
     immediate_duration_value: DEFAULT_IMMEDIATE_DURATION_VALUE,
@@ -454,7 +445,7 @@ export default function CrearEleccionPage() {
       }
 
       if (form.voter_source === 'MANUAL' && selectedStudents.length === 0) {
-        throw new Error('Selecciona al menos una persona del padrón para una votación manual');
+        throw new Error('Selecciona al menos una persona del padrón para esta votación');
       }
 
       if (form.voter_source === 'TAG' && !form.tag_id) {
@@ -515,13 +506,6 @@ export default function CrearEleccionPage() {
         electionData.end_time = form.end_time;
       }
 
-      if (form.voter_source === 'FILTERED') {
-        const filter: Record<string, string> = {};
-        if (form.voter_filter_sede) filter.sede = form.voter_filter_sede;
-        if (form.voter_filter_career) filter.career = form.voter_filter_career;
-        electionData.voter_filter = filter;
-        electionData.populate = filter;
-      }
       if (form.voter_source === 'MANUAL') {
         electionData.populate = {
           student_ids: selectedStudents.map((student) => student.id),
@@ -747,17 +731,17 @@ export default function CrearEleccionPage() {
                   }}
                   copy={{
                     helperText: 'Busca por nombre o carnet, o filtra por sede y carrera. Puedes agregar personas individuales o todos los resultados.',
-                    resultsSubtitle: 'Personas encontradas en el padron',
-                    selectedSubtitle: 'Personas que podran votar en esta eleccion',
-                    searchPrompt: 'Aplica filtros y presiona Buscar para ver personas del padron',
-                    selectedEmpty: 'Todavia no has agregado votantes',
-                    addAllTitle: 'Agrega todas las personas que cumplen con los filtros actuales al padron de la votacion',
+                    resultsSubtitle: 'Personas encontradas en el padrón',
+                    selectedSubtitle: 'Personas que podrán votar en esta elección',
+                    searchPrompt: 'Aplica filtros y presiona Buscar para ver personas del padrón',
+                    selectedEmpty: 'Todavía no has agregado votantes',
+                    addAllTitle: 'Agrega todas las personas que cumplen con los filtros actuales al padrón de la votación',
                   }}
                 />
 
                 <div className="create-election-helper">
-                  Esta modalidad reemplaza el filtrado segmentado y la seleccion curada: puedes escoger personas una
-                  por una o agregar de una vez a todas las que coincidan con sede, carrera o busqueda.
+                  Esta modalidad reemplaza el filtrado segmentado y la selección curada: puedes escoger personas una
+                  por una o agregar de una vez a todas las que coincidan con sede, carrera o búsqueda.
                 </div>
               </div>
             )}
