@@ -425,7 +425,7 @@ export default function TagsPage() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', maxWidth: 420 }}>
-              Las tags no crean la votación por sí solas. Deben tener nombre único y al menos una persona del padrón.
+              Cada tag debe tener nombre único y al menos una persona del padrón.
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem' }}>

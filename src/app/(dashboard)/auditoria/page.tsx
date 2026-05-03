@@ -1564,6 +1564,25 @@ function buildAuditQuery(params: {
   return qs;
 }
 
+type ActiveDay = { date: string; count: number };
+
+function formatActiveDayLabel(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.toLocaleDateString('es-CR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  });
+}
+
+function isWithinDays(date: string, days: number): boolean {
+  const today = todayISO();
+  const cutoff = todayISO(-days + 1);
+  return date >= cutoff && date <= today;
+}
+
 function ExportPanel({
   onClose,
   onPurged,
@@ -1571,8 +1590,10 @@ function ExportPanel({
   onClose: () => void;
   onPurged: () => void;
 }) {
-  const [from, setFrom] = useState<string>(todayISO(-30));
-  const [to, setTo] = useState<string>(todayISO(0));
+  const [activeDays, setActiveDays] = useState<ActiveDay[] | null>(null);
+  const [activeDaysError, setActiveDaysError] = useState<string | null>(null);
+  const [from, setFrom] = useState<string>('');
+  const [to, setTo] = useState<string>('');
   const [format, setFormat] = useState<'csv' | 'json'>('csv');
   const [selectedCats, setSelectedCats] = useState<string[]>(['all']);
   const [previewCount, setPreviewCount] = useState<number | null>(null);
@@ -1585,6 +1606,82 @@ function ExportPanel({
   const [purgeError, setPurgeError] = useState<string | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiClient<ActiveDay[]>('/api/audit/active-days');
+        if (cancelled) return;
+        setActiveDays(res);
+        if (res.length > 0) {
+          setFrom(res[res.length - 1].date);
+          setTo(res[0].date);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setActiveDaysError(err instanceof Error ? err.message : 'No se pudieron cargar los días con actividad');
+        setActiveDays([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const totalEvents = useMemo(
+    () => (activeDays ?? []).reduce((acc, d) => acc + d.count, 0),
+    [activeDays],
+  );
+
+  const applyPreset = (preset: 'today' | '7d' | '30d' | 'all') => {
+    const days = activeDays ?? [];
+    if (days.length === 0) return;
+    const earliest = days[days.length - 1].date;
+    const latest = days[0].date;
+    if (preset === 'all') {
+      setFrom(earliest);
+      setTo(latest);
+      return;
+    }
+    const window =
+      preset === 'today' ? days.filter((d) => d.date === todayISO())
+      : preset === '7d' ? days.filter((d) => isWithinDays(d.date, 7))
+      : days.filter((d) => isWithinDays(d.date, 30));
+    if (window.length === 0) {
+      setFrom(latest);
+      setTo(latest);
+      return;
+    }
+    setFrom(window[window.length - 1].date);
+    setTo(window[0].date);
+  };
+
+  const handleDayClick = (date: string) => {
+    if (!from || !to) {
+      setFrom(date);
+      setTo(date);
+      return;
+    }
+    if (date === from && date === to) {
+      // click on the only selected day → keep it
+      return;
+    }
+    if (date < from) {
+      setFrom(date);
+      return;
+    }
+    if (date > to) {
+      setTo(date);
+      return;
+    }
+    // date is within current range → collapse to single day
+    setFrom(date);
+    setTo(date);
+  };
+
+  const isDayInRange = (date: string) =>
+    Boolean(from && to && date >= from && date <= to);
 
   const filterSignature = useMemo(
     () => `${from}|${to}|${[...selectedCats].sort().join(',')}`,
@@ -1732,35 +1829,125 @@ function ExportPanel({
           descargado el archivo podrás vaciarlos de la base de datos.
         </p>
 
-        <div className="audit-export-grid">
-          <label className="audit-export-field">
-            <span>Desde</span>
-            <input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              max={to || undefined}
-            />
-          </label>
-          <label className="audit-export-field">
-            <span>Hasta</span>
-            <input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              min={from || undefined}
-            />
-          </label>
-          <label className="audit-export-field">
-            <span>Formato</span>
-            <select
-              value={format}
-              onChange={(e) => setFormat(e.target.value as 'csv' | 'json')}
-            >
-              <option value="csv">CSV (Excel)</option>
-              <option value="json">JSON</option>
-            </select>
-          </label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--muted)', fontWeight: 600, marginRight: '0.25rem' }}>
+              Rango:
+            </span>
+            {([
+              { id: 'today', label: 'Hoy' },
+              { id: '7d', label: 'Últimos 7 días' },
+              { id: '30d', label: 'Últimos 30 días' },
+              { id: 'all', label: 'Todo el historial' },
+            ] as const).map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="filter-chip"
+                onClick={() => applyPreset(preset.id)}
+                disabled={!activeDays || activeDays.length === 0}
+              >
+                {preset.label}
+              </button>
+            ))}
+            <label style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
+              <span style={{ color: 'var(--muted)', fontWeight: 600 }}>Formato:</span>
+              <select
+                value={format}
+                onChange={(e) => setFormat(e.target.value as 'csv' | 'json')}
+                style={{ padding: '0.375rem 0.5rem', borderRadius: 6, border: '1px solid var(--border, #d4d2cf)' }}
+              >
+                <option value="csv">CSV (Excel)</option>
+                <option value="json">JSON</option>
+              </select>
+            </label>
+          </div>
+
+          <div
+            style={{
+              border: '1px solid var(--border, #d4d2cf)',
+              borderRadius: 8,
+              padding: '0.75rem',
+              background: 'var(--surface, #faf9f7)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
+              <strong style={{ fontSize: '0.8125rem' }}>Días con actividad</strong>
+              <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                {from && to
+                  ? from === to
+                    ? `Seleccionado: ${formatActiveDayLabel(from)}`
+                    : `Seleccionado: ${formatActiveDayLabel(from)} → ${formatActiveDayLabel(to)}`
+                  : 'Click en un día para empezar; click en otro para cerrar el rango'}
+              </span>
+            </div>
+
+            {activeDaysError ? (
+              <span className="audit-export-warn">{activeDaysError}</span>
+            ) : activeDays === null ? (
+              <span style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>Cargando…</span>
+            ) : activeDays.length === 0 ? (
+              <span style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
+                No hay eventos de auditoría registrados todavía.
+              </span>
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.375rem',
+                  maxHeight: 180,
+                  overflowY: 'auto',
+                }}
+              >
+                {activeDays.map((day) => {
+                  const selected = isDayInRange(day.date);
+                  const isEdge = day.date === from || day.date === to;
+                  return (
+                    <button
+                      key={day.date}
+                      type="button"
+                      onClick={() => handleDayClick(day.date)}
+                      title={`${formatActiveDayLabel(day.date)} · ${day.count} evento${day.count === 1 ? '' : 's'}`}
+                      style={{
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: 999,
+                        border: `1px solid ${isEdge ? 'var(--accent, #2563eb)' : selected ? 'var(--accent, #2563eb)' : 'var(--border, #d4d2cf)'}`,
+                        background: selected ? 'var(--accent, #2563eb)' : 'var(--surface-raised, #fff)',
+                        color: selected ? '#fff' : 'var(--ink, #1f2937)',
+                        fontSize: '0.75rem',
+                        fontWeight: isEdge ? 700 : 500,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      <span>{formatActiveDayLabel(day.date)}</span>
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          opacity: 0.85,
+                          background: selected ? 'rgba(255,255,255,0.2)' : 'var(--surface-sunken, #ececea)',
+                          color: selected ? '#fff' : 'var(--muted)',
+                          padding: '0.05rem 0.4rem',
+                          borderRadius: 999,
+                        }}
+                      >
+                        {day.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {activeDays && activeDays.length > 0 && (
+              <div style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--muted)' }}>
+                {activeDays.length} día{activeDays.length === 1 ? '' : 's'} con actividad · {totalEvents.toLocaleString('es-CR')} evento{totalEvents === 1 ? '' : 's'} en total
+              </div>
+            )}
+          </div>
         </div>
 
         <fieldset className="audit-export-cats">
