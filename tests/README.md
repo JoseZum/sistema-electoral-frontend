@@ -3,12 +3,14 @@ Estructura base de pruebas para el frontend.
 Convencion:
 - `tests/unit`: pruebas unitarias y de componentes aislados.
 - `tests/integration`: pruebas de integracion de flujos entre pagina, componentes y llamadas HTTP mockeadas.
+- `tests/lighthouse`: placeholder para futuras auditorias Lighthouse del frontend.
 
 Estructura inicial:
 
 ```text
 tests/
   integration/
+  lighthouse/
   unit/
     auth/
     dashboard/
