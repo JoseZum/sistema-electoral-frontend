@@ -217,7 +217,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.78);
   margin-bottom: 0.5rem;
 }
 
@@ -303,7 +303,7 @@ body {
 
 .sidebar-user-role {
   font-size: 0.6875rem;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.76);
 }
 
 .sidebar-overlay {

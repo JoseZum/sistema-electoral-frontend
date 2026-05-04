@@ -35,7 +35,7 @@ export default function DashboardLayout({
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="main">
         <Header onToggleSidebar={() => setSidebarOpen((o) => !o)} />
-        <div className="main-body view-enter">{children}</div>
+        <main className="main-body view-enter">{children}</main>
       </div>
     </div>
   );

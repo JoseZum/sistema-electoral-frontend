@@ -1,6 +1,6 @@
 'use client';
 
-import { KeyboardEvent, useEffect, useState } from 'react';
+import { KeyboardEvent, useEffect, useId, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
 import type { TagStudent } from '@/types/tags';
 
@@ -55,6 +55,9 @@ const DEFAULT_COPY: TagMembersEditorCopy = {
 
 export default function TagMembersEditor({ value, onChange, copy }: TagMembersEditorProps) {
   const text = { ...DEFAULT_COPY, ...copy };
+  const searchInputId = useId();
+  const sedeSelectId = useId();
+  const careerSelectId = useId();
   const [search, setSearch] = useState('');
   const [sede, setSede] = useState('');
   const [career, setCareer] = useState('');
@@ -186,8 +189,9 @@ export default function TagMembersEditor({ value, onChange, copy }: TagMembersEd
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
         <div className="input-group">
-          <label>{text.searchLabel}</label>
+          <label htmlFor={searchInputId}>{text.searchLabel}</label>
           <input
+            id={searchInputId}
             type="text"
             className="input"
             placeholder={text.searchPlaceholder}
@@ -202,8 +206,9 @@ export default function TagMembersEditor({ value, onChange, copy }: TagMembersEd
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.875rem' }}>
           <div className="input-group">
-            <label>Sede</label>
+            <label htmlFor={sedeSelectId}>Sede</label>
             <select
+              id={sedeSelectId}
               className="input"
               value={sede}
               onChange={(event) => setSede(event.target.value)}
@@ -219,8 +224,9 @@ export default function TagMembersEditor({ value, onChange, copy }: TagMembersEd
           </div>
 
           <div className="input-group">
-            <label>Carrera</label>
+            <label htmlFor={careerSelectId}>Carrera</label>
             <select
+              id={careerSelectId}
               className="input"
               value={career}
               onChange={(event) => setCareer(event.target.value)}
