@@ -1,6 +1,6 @@
 # Lighthouse tests
 
-Placeholder para auditorias Lighthouse del frontend.
+Auditorias Lighthouse del frontend.
 
 Division:
 - Se agrupan por modulo funcional.
@@ -24,7 +24,7 @@ tests/lighthouse/
   voting/
 ```
 
-Rutas cubiertas por placeholder:
+Rutas cubiertas:
 - `auth/login-page.test.ts`: `/`
 - `dashboard/dashboard-page.test.ts`: `/dashboard`
 - `elections/elections-list-page.test.ts`: `/elecciones`
@@ -43,7 +43,8 @@ Rutas cubiertas por placeholder:
 - `admin/key-generation-page.test.ts`: `/generar-llaves`
 
 Configuracion futura sugerida:
-- Agregar Lighthouse CI o Playwright + Lighthouse.
+- `tags/tags-page.test.mjs` ya es ejecutable con `npm run test:lighthouse:tags`.
+- Los demas archivos siguen como placeholders hasta que se implemente su runner.
 - Levantar el frontend en modo produccion con `npm run build` y `npm run start`.
 - Usar datos seed o autenticacion mockeada para rutas protegidas.
 - Definir presupuestos para performance, accessibility, best practices y SEO.

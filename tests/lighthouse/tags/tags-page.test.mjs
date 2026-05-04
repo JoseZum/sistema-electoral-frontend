@@ -108,9 +108,10 @@ test('Tags page meets Lighthouse budgets', { timeout: TEST_TIMEOUT_MS }, async (
   let chrome;
 
   try {
-    apiServer = await startMockTagsApi();
+    const mockApiConfig = resolveMockApiConfig();
+    apiServer = await startMockTagsApi(mockApiConfig.port);
     const frontendPort = await getFreePort();
-    const apiUrl = `http://127.0.0.1:${apiServer.port}`;
+    const apiUrl = mockApiConfig.origin || `http://127.0.0.1:${apiServer.port}`;
     const frontendUrl = `http://127.0.0.1:${frontendPort}`;
     const env = createNextEnv(apiUrl);
 
@@ -168,7 +169,25 @@ function createNextEnv(apiUrl) {
   };
 }
 
-async function startMockTagsApi() {
+function resolveMockApiConfig() {
+  const rawUrl = process.env.LIGHTHOUSE_MOCK_API_URL || process.env.NEXT_PUBLIC_API_URL;
+  if (!rawUrl) {
+    return { origin: null, port: 0 };
+  }
+
+  const url = new URL(rawUrl);
+  const isLocalHost = url.hostname === '127.0.0.1' || url.hostname === 'localhost';
+  if (url.protocol !== 'http:' || !isLocalHost) {
+    throw new Error('LIGHTHOUSE_MOCK_API_URL/NEXT_PUBLIC_API_URL must be an http localhost URL');
+  }
+
+  return {
+    origin: url.origin,
+    port: Number(url.port || '80'),
+  };
+}
+
+async function startMockTagsApi(port = 0) {
   const server = createServer((request, response) => {
     const origin = request.headers.origin || '*';
     response.setHeader('Access-Control-Allow-Origin', origin);
@@ -237,7 +256,7 @@ async function startMockTagsApi() {
 
   await new Promise((resolve, reject) => {
     server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => {
+    server.listen(port, '127.0.0.1', () => {
       server.off('error', reject);
       resolve();
     });
@@ -280,10 +299,8 @@ async function runNextCommand(args, env, label) {
   const child = spawn(process.execPath, [NEXT_BIN, ...args], {
     cwd: PROJECT_ROOT,
     env,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['ignore', 'inherit', 'inherit'],
   });
-
-  pipeProcessOutput(child, label);
 
   await new Promise((resolve, reject) => {
     child.once('error', reject);
@@ -301,20 +318,9 @@ function startNextServer(port, env) {
   const child = spawn(process.execPath, [NEXT_BIN, 'start', '-p', String(port)], {
     cwd: PROJECT_ROOT,
     env,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['ignore', 'inherit', 'inherit'],
   });
-
-  pipeProcessOutput(child, 'next-start');
   return child;
-}
-
-function pipeProcessOutput(child, label) {
-  child.stdout.on('data', (chunk) => {
-    process.stdout.write(`[${label}] ${chunk}`);
-  });
-  child.stderr.on('data', (chunk) => {
-    process.stderr.write(`[${label}] ${chunk}`);
-  });
 }
 
 async function waitForHttp(url, timeoutMs) {
