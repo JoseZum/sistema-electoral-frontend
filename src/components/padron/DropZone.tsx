@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, DragEvent } from 'react';
+import { useRef, useState, DragEvent, KeyboardEvent } from 'react';
 
 interface DropZoneProps {
   onFileSelected: (file: File) => void;
@@ -32,6 +32,14 @@ export default function DropZone({ onFileSelected, disabled }: DropZoneProps) {
     if (!disabled) inputRef.current?.click();
   };
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (disabled) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      inputRef.current?.click();
+    }
+  };
+
   const handleChange = () => {
     const file = inputRef.current?.files?.[0];
     if (file) onFileSelected(file);
@@ -44,6 +52,11 @@ export default function DropZone({ onFileSelected, disabled }: DropZoneProps) {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-label="Seleccionar archivo Excel del padron"
+      aria-disabled={disabled}
       style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
     >
       <input

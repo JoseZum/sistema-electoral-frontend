@@ -64,6 +64,7 @@ export default function StudentTable({ students, onSaveStudent, sedes, careers }
             {columns.map((col) => (
               <th
                 key={col.key}
+                scope="col"
                 className={sortKey === col.key ? 'sorted' : ''}
                 onClick={() => handleSort(col.key)}
               >
@@ -73,7 +74,7 @@ export default function StudentTable({ students, onSaveStudent, sedes, careers }
                 </span>
               </th>
             ))}
-            <th style={{ width: '60px' }}></th>
+            <th scope="col" style={{ width: '60px' }}>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -103,6 +104,7 @@ export default function StudentTable({ students, onSaveStudent, sedes, careers }
                       className="btn btn-ghost btn-sm"
                       style={{ padding: '0.25rem 0.5rem' }}
                       onClick={() => setEditingId(student.id)}
+                      aria-label={`Editar estudiante ${student.full_name}`}
                     >
                       <svg
                         width="14"

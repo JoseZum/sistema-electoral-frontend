@@ -46,6 +46,7 @@ export default function StudentFilters({
           ref={inputRef}
           type="text"
           className="search-input"
+          aria-label="Buscar estudiantes por carnet o nombre"
           placeholder="Buscar por carnet o nombre..."
           defaultValue={search}
           onChange={(e) => handleSearchInput(e.target.value)}
@@ -54,6 +55,7 @@ export default function StudentFilters({
       <div className="padron-toolbar-right">
         <select
           className="input"
+          aria-label="Filtrar por sede"
           style={{ width: 'auto', paddingRight: '2rem' }}
           value={sede}
           onChange={(e) => onSedeChange(e.target.value)}
@@ -67,6 +69,7 @@ export default function StudentFilters({
         </select>
         <select
           className="input"
+          aria-label="Filtrar por carrera"
           style={{ width: 'auto', paddingRight: '2rem' }}
           value={career}
           onChange={(e) => onCareerChange(e.target.value)}
