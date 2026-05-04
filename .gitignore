@@ -22,3 +22,4 @@ yarn-error.log*
 *~
 tests/lighthouse/**/.reports/
 .next-lighthouse-admin/
+.next-lighthouse-scrutiny/

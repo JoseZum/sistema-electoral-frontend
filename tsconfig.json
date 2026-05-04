@@ -35,7 +35,9 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     ".next-lighthouse-admin/types/**/*.ts",
-    ".next-lighthouse-admin/dev/types/**/*.ts"
+    ".next-lighthouse-admin/dev/types/**/*.ts",
+    ".next-lighthouse-scrutiny/types/**/*.ts",
+    ".next-lighthouse-scrutiny/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
