@@ -49,7 +49,7 @@ const sections: NavSection[] = [
         ),
       },
       {
-        label: 'Crear votación',
+        label: 'Crear votacion',
         href: '/elecciones/crear',
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -70,7 +70,7 @@ const sections: NavSection[] = [
       },
       {
         label: 'Escrutinio',
-        href:'/escrutinio',
+        href: '/escrutinio',
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -84,7 +84,7 @@ const sections: NavSection[] = [
     label: 'Datos',
     items: [
       {
-        label: 'Padrón',
+        label: 'Padron',
         href: '/padron',
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -106,7 +106,7 @@ const sections: NavSection[] = [
         ),
       },
       {
-        label: 'Cargar padrón',
+        label: 'Cargar padron',
         href: '/padron/cargar',
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -142,7 +142,7 @@ const sections: NavSection[] = [
     label: 'Sistema',
     items: [
       {
-        label: 'Admin Manager',
+        label: 'Administradores',
         href: '/admin-manager',
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -153,7 +153,7 @@ const sections: NavSection[] = [
         ),
       },
       {
-        label: 'Auditoría',
+        label: 'Auditoria',
         href: '/auditoria',
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -229,6 +229,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     href={item.href}
                     className={`sidebar-link ${isActive ? 'active' : ''}`}
                     onClick={onClose}
+                    aria-current={isActive ? 'page' : undefined}
                   >
                     {item.icon}
                     {item.label}

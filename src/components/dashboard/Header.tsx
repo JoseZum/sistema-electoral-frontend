@@ -8,16 +8,16 @@ interface HeaderProps {
 }
 
 const pageTitles: Record<string, string> = {
-  '/padron': 'Padrón Estudiantil',
-  '/padron/cargar': 'Cargar Padrón',
-  '/admin-manager': 'Admin Manager',
-  '/auditoria': 'Auditoría',
+  '/padron': 'Padron estudiantil',
+  '/padron/cargar': 'Cargar padron',
+  '/admin-manager': 'Administradores',
+  '/auditoria': 'Auditoria',
   '/elecciones': 'Votaciones',
-  '/elecciones/crear': 'Crear Votación',
+  '/elecciones/crear': 'Crear votacion',
   '/resultados': 'Resultados',
-  '/generar-llaves' : 'Generar Llaves',
+  '/generar-llaves': 'Generar llaves',
   '/escrutinio': 'Escrutinio',
-  '/escrutinio/agregar-llaves': 'Agregar Llaves',
+  '/escrutinio/agregar-llaves': 'Agregar llaves',
 };
 
 export default function Header({ onToggleSidebar }: HeaderProps) {
@@ -27,7 +27,12 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
   return (
     <header className="main-header">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button className="mobile-menu-btn" onClick={onToggleSidebar}>
+        <button
+          type="button"
+          className="mobile-menu-btn"
+          onClick={onToggleSidebar}
+          aria-label="Abrir menu de navegacion"
+        >
           <svg
             width="20"
             height="20"

@@ -3,8 +3,8 @@ import './globals.css';
 import { MsalProviderWrapper } from './providers';
 
 export const metadata: Metadata = {
-  title: 'TEE — Sistema Electoral Estudiantil',
-  description: 'Sistema de votación electrónica del Tribunal Electoral Estudiantil del TEC',
+  title: 'TEE | Sistema Electoral Estudiantil',
+  description: 'Sistema de votacion electronica del Tribunal Electoral Estudiantil del TEC',
 };
 
 export default function RootLayout({
