@@ -36,7 +36,7 @@ Rutas cubiertas:
 - `voting/voting-pages.test.mjs`: `/votaciones`, `/votaciones/:id`
 - `monitoring/monitoring-page.test.ts`: `/monitoreo`
 - `results/results-page.test.ts`: `/resultados`
-- `audit/audit-page.test.ts`: `/auditoria`
+- `audit/audit-page.test.mjs`: `/auditoria`
 - `admin/admin-manager-page.test.ts`: `/admin-manager`
 - `admin/key-generation-page.test.ts`: `/generar-llaves`
 
@@ -44,6 +44,7 @@ Configuracion futura sugerida:
 - `tags/tags-page.test.mjs` ya es ejecutable con `npm run test:lighthouse:tags`.
 - `voting/voting-pages.test.mjs` ya es ejecutable con `npm run test:lighthouse:voting`.
 - `padron/padron-pages.test.mjs` ya es ejecutable con `npm run test:lighthouse:padron`.
+- `audit/audit-page.test.mjs` ya es ejecutable con `npm run test:lighthouse:audit`.
 - Los demas archivos siguen como placeholders hasta que se implemente su runner.
 - Levantar el frontend en modo produccion con `npm run build` y `npm run start`.
 - Usar datos seed o autenticacion mockeada para rutas protegidas.
