@@ -451,7 +451,17 @@ function EscrutinioSubirContent() {
                   type="button"
                   onClick={() => setVisible((current) => !current)}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
-                  style={{ color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--muted)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                   aria-label={visible ? 'Ocultar llave' : 'Mostrar llave'}
                   disabled={!canSubmit}
                 >
