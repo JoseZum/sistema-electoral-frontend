@@ -7,9 +7,10 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "test:lighthouse": "npm run test:lighthouse:tags && npm run test:lighthouse:voting",
+    "test:lighthouse": "npm run test:lighthouse:tags && npm run test:lighthouse:voting && npm run test:lighthouse:padron",
     "test:lighthouse:tags": "node tests/lighthouse/tags/tags-page.test.mjs",
-    "test:lighthouse:voting": "node tests/lighthouse/voting/voting-pages.test.mjs"
+    "test:lighthouse:voting": "node tests/lighthouse/voting/voting-pages.test.mjs",
+    "test:lighthouse:padron": "node tests/lighthouse/padron/padron-pages.test.mjs"
   },
   "dependencies": {
     "@azure/msal-browser": "^5.4.0",
