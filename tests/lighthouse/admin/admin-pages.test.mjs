@@ -471,9 +471,17 @@ async function waitForHttp(url, timeoutMs) {
 
 async function launchChrome() {
   return launch({
-    chromePath: process.env.LIGHTHOUSE_CHROME_PATH || process.env.CHROME_PATH,
+    chromePath: resolveChromePath(),
     chromeFlags: ['--headless=new', '--disable-gpu', '--disable-dev-shm-usage', '--no-sandbox'],
   });
+}
+
+function resolveChromePath() {
+  return (
+    process.env.LIGHTHOUSE_CHROME_PATH ||
+    process.env.CHROME_PATH ||
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+  );
 }
 
 async function seedAdminSession(chromePort, frontendUrl) {
@@ -497,17 +505,31 @@ async function seedAdminSession(chromePort, frontendUrl) {
 }
 
 async function createCdpClient(chromePort, startingUrl) {
-  const response = await fetch(
-    `http://127.0.0.1:${chromePort}/json/new?${encodeURIComponent(startingUrl)}`,
-    { method: 'PUT' }
-  );
+  const startedAt = Date.now();
+  let lastError;
 
-  if (!response.ok) {
-    throw new Error(`Could not create Chrome debugging target: HTTP ${response.status}`);
+  while (Date.now() - startedAt < 15_000) {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:${chromePort}/json/new?${encodeURIComponent(startingUrl)}`,
+        { method: 'PUT' }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Could not create Chrome debugging target: HTTP ${response.status}`);
+      }
+
+      const target = await response.json();
+      return new CdpClient(target.webSocketDebuggerUrl);
+    } catch (error) {
+      lastError = error;
+      await sleep(250);
+    }
   }
 
-  const target = await response.json();
-  return new CdpClient(target.webSocketDebuggerUrl);
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('Could not create Chrome debugging target');
 }
 
 class CdpClient {
