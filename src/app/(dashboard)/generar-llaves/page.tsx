@@ -72,7 +72,7 @@ export default function GenerarLlavesPage() {
   };
 
   const getVoterSource = (election: Election): string => {
-    if (election.voter_source === 'FULL_PADRON') return 'Padrón completo';
+    if (election.voter_source === 'FULL_PADRON') return 'Padron completo';
     if (election.voter_source === 'FILTERED') return 'Filtro personalizado';
     if (election.voter_source === 'TAG') return election.tag_name ? `Tag: ${election.tag_name}` : 'Tag';
     return 'Lista manual';
@@ -105,7 +105,7 @@ export default function GenerarLlavesPage() {
 
       const token = getResponseKey(response.keys);
       if (!token) {
-        throw new Error('El servidor no devolvió la llave generada.');
+        throw new Error('El servidor no devolvio la llave generada.');
       }
 
       setGeneratedKey({
@@ -114,12 +114,12 @@ export default function GenerarLlavesPage() {
         nombre: user.fullName,
         token,
       });
-      setGenerationMessage('Llave generada. Guárdala ahora; por seguridad solo se muestra en este momento.');
+      setGenerationMessage('Llave generada. Guardala ahora; por seguridad solo se muestra en este momento.');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Error al generar la llave';
       setGenerationError(
         message.toLowerCase().includes('duplic')
-          ? 'Ya existe una llave asignada para este usuario en esta elección. No es posible volver a mostrarla.'
+          ? 'Ya existe una llave asignada para este usuario en esta eleccion. No es posible volver a mostrarla.'
           : message
       );
     } finally {
@@ -135,7 +135,7 @@ export default function GenerarLlavesPage() {
       setGenerationMessage('Llave copiada al portapapeles.');
       setGenerationError(null);
     } catch {
-      setGenerationError('No se pudo copiar la llave automáticamente.');
+      setGenerationError('No se pudo copiar la llave automaticamente.');
     }
   };
 
@@ -151,7 +151,7 @@ export default function GenerarLlavesPage() {
 
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4 shadow-sm">
         <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-4">
-          Elección pendiente de escrutinio
+          Eleccion pendiente de escrutinio
         </div>
 
         {loadingElections ? (
@@ -163,18 +163,24 @@ export default function GenerarLlavesPage() {
             No hay elecciones cerradas que requieran llaves de escrutinio.
           </div>
         ) : (
-          <select
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-            value={selectedElection?.id || ''}
-            onChange={(event) => handleElectionChange(event.target.value)}
-          >
-            <option value="">Elegir una elección...</option>
-            {eligibleElections.map((election) => (
-              <option key={election.id} value={election.id}>
-                {election.title}
-              </option>
-            ))}
-          </select>
+          <>
+            <label htmlFor="scrutiny-election-select" className="block text-sm font-medium text-gray-700 mb-2">
+              Selecciona la eleccion a escrutar
+            </label>
+            <select
+              id="scrutiny-election-select"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              value={selectedElection?.id || ''}
+              onChange={(event) => handleElectionChange(event.target.value)}
+            >
+              <option value="">Elegir una eleccion...</option>
+              {eligibleElections.map((election) => (
+                <option key={election.id} value={election.id}>
+                  {election.title}
+                </option>
+              ))}
+            </select>
+          </>
         )}
 
         {selectedElection && (
@@ -189,7 +195,7 @@ export default function GenerarLlavesPage() {
                 <div className="font-semibold text-sm mt-1">{getVoterSource(selectedElection)}</div>
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Mínimo llaves</div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Minimo llaves</div>
                 <div className="text-2xl font-medium mt-0.5 text-red-600 font-serif">
                   {selectedElection.min_keys.toLocaleString()}
                 </div>
@@ -217,16 +223,17 @@ export default function GenerarLlavesPage() {
             </div>
 
             <button
+              type="button"
               className="bg-red-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={generateKey}
               disabled={generating || !user?.studentId}
             >
               {generating ? (
-                <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                   <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                 </svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                   <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
                 </svg>
               )}
@@ -288,7 +295,7 @@ export default function GenerarLlavesPage() {
             </div>
 
             <p className="text-xs text-gray-500 mt-4">
-              Esta llave se canjea en el flujo de escrutinio. No se envía por correo ni se muestra en otro listado.
+              Esta llave se canjea en el flujo de escrutinio. No se envia por correo ni se muestra en otro listado.
             </p>
           </div>
         </div>
