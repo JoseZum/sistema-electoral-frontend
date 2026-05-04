@@ -6,7 +6,9 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:lighthouse": "npm run test:lighthouse:tags",
+    "test:lighthouse:tags": "node tests/lighthouse/tags/tags-page.test.mjs"
   },
   "dependencies": {
     "@azure/msal-browser": "^5.4.0",

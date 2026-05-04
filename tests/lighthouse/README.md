@@ -31,7 +31,7 @@ Rutas cubiertas por placeholder:
 - `elections/create-election-page.test.ts`: `/elecciones/crear`
 - `padron/padron-page.test.ts`: `/padron`
 - `padron/upload-padron-page.test.ts`: `/padron/cargar`
-- `tags/tags-page.test.ts`: `/tags`
+- `tags/tags-page.test.mjs`: `/tags`
 - `scrutiny/scrutiny-page.test.ts`: `/escrutinio`
 - `scrutiny/upload-scrutiny-page.test.ts`: `/escrutinio/subir`
 - `voting/voter-elections-page.test.ts`: `/votaciones`
@@ -47,4 +47,3 @@ Configuracion futura sugerida:
 - Levantar el frontend en modo produccion con `npm run build` y `npm run start`.
 - Usar datos seed o autenticacion mockeada para rutas protegidas.
 - Definir presupuestos para performance, accessibility, best practices y SEO.
-
