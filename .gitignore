@@ -21,3 +21,4 @@ yarn-error.log*
 *.swo
 *~
 tests/lighthouse/**/.reports/
+.next-lighthouse-admin/
