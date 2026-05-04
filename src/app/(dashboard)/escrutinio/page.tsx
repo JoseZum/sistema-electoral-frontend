@@ -50,7 +50,7 @@ export default function EscrutinioPage() {
         <div className="w-16 h-1 bg-red-600 mb-4"></div>
         <h2 className="text-3xl font-serif font-normal mb-2">Escrutinio</h2>
         <p className="text-gray-600 text-sm">
-          Canje de llaves para elecciones cerradas que requieren escrutinio y aún no están finalizadas.
+          Canje de llaves para elecciones cerradas que requieren escrutinio y aun no estan finalizadas.
         </p>
       </div>
 
@@ -70,12 +70,12 @@ export default function EscrutinioPage() {
           <table>
             <thead>
               <tr>
-                <th>Título</th>
-                <th>Elegibles</th>
-                <th>Participación</th>
-                <th>Llaves mínimas</th>
-                <th>Fecha</th>
-                <th></th>
+                <th scope="col">Titulo</th>
+                <th scope="col">Elegibles</th>
+                <th scope="col">Participacion</th>
+                <th scope="col">Llaves minimas</th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -85,7 +85,11 @@ export default function EscrutinioPage() {
                   : 0;
 
                 return (
-                  <tr key={election.id} className="table-row-enter" style={{ animationDelay: `${0.05 * (index + 1)}s` }}>
+                  <tr
+                    key={election.id}
+                    className="table-row-enter"
+                    style={{ animationDelay: `${0.05 * (index + 1)}s` }}
+                  >
                     <td>
                       <div style={{ fontWeight: 500, color: 'var(--ink)' }}>{election.title}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
@@ -105,7 +109,9 @@ export default function EscrutinioPage() {
                       </div>
                     </td>
                     <td>{election.min_keys.toLocaleString()}</td>
-                    <td style={{ fontSize: '0.8125rem' }}>{formatDate(election.end_time || election.start_time || election.created_at)}</td>
+                    <td style={{ fontSize: '0.8125rem' }}>
+                      {formatDate(election.end_time || election.start_time || election.created_at)}
+                    </td>
                     <td>
                       <Link
                         href={`/escrutinio/subir?id=${encodeURIComponent(election.id)}`}

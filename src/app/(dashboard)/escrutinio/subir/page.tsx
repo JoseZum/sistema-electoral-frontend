@@ -192,14 +192,14 @@ function EscrutinioSubirContent() {
       });
 
       if (!response.submitted) {
-        setActionError('No se logró canjear la llave.');
+        setActionError('No se logro canjear la llave.');
         return;
       }
 
       setValue('');
       setActionMessage(
         response.finalized
-          ? 'Llave canjeada. Se alcanzó el mínimo y el escrutinio quedó finalizado.'
+          ? 'Llave canjeada. Se alcanzo el minimo y el escrutinio quedo finalizado.'
           : 'Llave canjeada. El progreso fue actualizado.'
       );
       await fetchScrutiny({ silent: true });
@@ -242,9 +242,9 @@ function EscrutinioSubirContent() {
         <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
           <h3 className="font-semibold text-gray-900 mb-2">No se pudo cargar el escrutinio</h3>
           <p className="text-sm text-gray-600 mb-5">
-            {error || 'No se pudo cargar la información de la elección.'}
+            {error || 'No se pudo cargar la informacion de la eleccion.'}
           </p>
-          <button className="btn btn-outline" onClick={() => router.push('/escrutinio')}>
+          <button type="button" className="btn btn-outline" onClick={() => router.push('/escrutinio')}>
             Volver
           </button>
         </div>
@@ -255,7 +255,7 @@ function EscrutinioSubirContent() {
               className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
               style={{ background: 'var(--warning-light)' }}
             >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" aria-hidden="true">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
@@ -286,7 +286,7 @@ function EscrutinioSubirContent() {
                 <div className="text-3xl font-serif text-red-600 mt-1">{missingKeys}</div>
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Mínimo</div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Minimo</div>
                 <div className="text-3xl font-serif text-red-600 mt-1">{requiredKeys}</div>
               </div>
               <div>
@@ -305,7 +305,7 @@ function EscrutinioSubirContent() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-sm">
               <span style={{ color: 'var(--muted)' }}>
                 {missingKeys === 0
-                  ? 'Ya se alcanzó el mínimo de llaves para finalizar.'
+                  ? 'Ya se alcanzo el minimo de llaves para finalizar.'
                   : `Faltan ${missingKeys} ${missingKeys === 1 ? 'llave' : 'llaves'} para poder finalizar.`}
               </span>
               <button
@@ -331,7 +331,7 @@ function EscrutinioSubirContent() {
                   <div className="font-semibold mt-1">{metrics.total_elegibles.toLocaleString()}</div>
                 </div>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Participación</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Participacion</div>
                   <div className="font-semibold mt-1">{Math.round(metrics.participation_rate)}%</div>
                 </div>
               </div>
@@ -353,7 +353,7 @@ function EscrutinioSubirContent() {
                 className="text-sm font-semibold"
                 style={{ color: missingKeys === 0 ? 'var(--success)' : 'var(--warning)' }}
               >
-                {missingKeys === 0 ? 'Mínimo alcanzado' : `${missingKeys} pendientes`}
+                {missingKeys === 0 ? 'Minimo alcanzado' : `${missingKeys} pendientes`}
               </span>
             </div>
 
@@ -396,12 +396,13 @@ function EscrutinioSubirContent() {
                     </div>
 
                     {submitted ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" aria-hidden="true">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     ) : (
                       <div
                         className="w-5 h-5 rounded-full"
+                        aria-hidden="true"
                         style={{ border: '2px solid var(--border)' }}
                       />
                     )}
@@ -424,13 +425,17 @@ function EscrutinioSubirContent() {
                   ? 'Tu llave ya fue canjeada.'
                   : currentMember
                     ? 'Pega la llave de escrutinio asignada a tu usuario.'
-                    : 'Tu usuario no aparece como custodio de llave en esta elección.'}
+                    : 'Tu usuario no aparece como custodio de llave en esta eleccion.'}
               </div>
             </div>
 
             <div className="flex flex-col md:flex-row gap-2">
               <div className="relative flex-1">
+                <label className="sr-only" htmlFor="scrutiny-key-input">
+                  Llave de escrutinio
+                </label>
                 <input
+                  id="scrutiny-key-input"
                   type={visible ? 'text' : 'password'}
                   className="input w-full pr-10"
                   style={{ fontFamily: 'var(--font-mono)', fontSize: '0.875rem' }}
@@ -448,16 +453,16 @@ function EscrutinioSubirContent() {
                   className="absolute right-3 top-1/2 -translate-y-1/2"
                   style={{ color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
                   aria-label={visible ? 'Ocultar llave' : 'Mostrar llave'}
-                  tabIndex={-1}
+                  disabled={!canSubmit}
                 >
                   {visible ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                       <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
                       <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
                       <line x1="1" y1="1" x2="23" y2="23" />
                     </svg>
                   ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                       <circle cx="12" cy="12" r="3" />
                     </svg>
@@ -466,13 +471,14 @@ function EscrutinioSubirContent() {
               </div>
 
               <button
+                type="button"
                 className="btn btn-accent"
                 onClick={handleSubmit}
                 disabled={submitting || !value.trim() || !canSubmit}
                 style={{ opacity: submitting || !value.trim() || !canSubmit ? 0.6 : 1 }}
               >
                 {submitting ? (
-                  <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                   </svg>
                 ) : 'Canjear'}
@@ -484,14 +490,14 @@ function EscrutinioSubirContent() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <div className="font-semibold" style={{ color: 'var(--ink)' }}>
-                  Finalización del escrutinio
+                  Finalizacion del escrutinio
                 </div>
                 <div className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
                   {isFinalized
-                    ? 'Esta elección ya fue marcada como escrutada.'
+                    ? 'Esta eleccion ya fue marcada como escrutada.'
                     : canFinalize
-                      ? 'El mínimo de llaves fue alcanzado. Ya puedes finalizar.'
-                      : `Faltan ${missingKeys} ${missingKeys === 1 ? 'llave' : 'llaves'} para habilitar la finalización.`}
+                      ? 'El minimo de llaves fue alcanzado. Ya puedes finalizar.'
+                      : `Faltan ${missingKeys} ${missingKeys === 1 ? 'llave' : 'llaves'} para habilitar la finalizacion.`}
                 </div>
               </div>
 
@@ -521,7 +527,7 @@ function EscrutinioSubirContent() {
           )}
 
           <p className="text-center mt-6 text-xs" style={{ color: 'var(--muted)' }}>
-            Cada canje y la finalización quedan registrados en el log de auditoría.
+            Cada canje y la finalizacion quedan registrados en el log de auditoria.
           </p>
         </>
       )}
