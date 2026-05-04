@@ -31,8 +31,7 @@ Rutas cubiertas:
 - `elections/create-election-page.test.ts`: `/elecciones/crear`
 - `padron/padron-pages.test.mjs`: `/padron`, `/padron/cargar`
 - `tags/tags-page.test.mjs`: `/tags`
-- `scrutiny/scrutiny-page.test.ts`: `/escrutinio`
-- `scrutiny/upload-scrutiny-page.test.ts`: `/escrutinio/subir`
+- `scrutiny/scrutiny-pages.test.mjs`: `/escrutinio`, `/escrutinio/subir`
 - `voting/voting-pages.test.mjs`: `/votaciones`, `/votaciones/:id`
 - `monitoring/monitoring-page.test.ts`: `/monitoreo`
 - `results/results-page.test.ts`: `/resultados`
@@ -45,6 +44,7 @@ Configuracion futura sugerida:
 - `padron/padron-pages.test.mjs` ya es ejecutable con `npm run test:lighthouse:padron`.
 - `audit/audit-page.test.mjs` ya es ejecutable con `npm run test:lighthouse:audit`.
 - `admin/admin-pages.test.mjs` ya es ejecutable con `npm run test:lighthouse:admin`.
+- `scrutiny/scrutiny-pages.test.mjs` ya es ejecutable con `npm run test:lighthouse:scrutiny`.
 - Los demas archivos siguen como placeholders hasta que se implemente su runner.
 - Levantar el frontend en modo produccion con `npm run build` y `npm run start`.
 - Usar datos seed o autenticacion mockeada para rutas protegidas.
