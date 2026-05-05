@@ -96,6 +96,7 @@ export default function ImmediateStartConfig({
               <input
                 type="datetime-local"
                 className="input"
+                aria-label="Fecha y hora de apertura"
                 value={startTime}
                 onChange={(event) => onChange({ startTime: event.target.value })}
                 disabled={startsImmediately}
@@ -106,6 +107,7 @@ export default function ImmediateStartConfig({
               <input
                 type="datetime-local"
                 className="input"
+                aria-label="Fecha y hora de cierre"
                 value={endTime}
                 onChange={(event) => onChange({ endTime: event.target.value })}
                 disabled={startsImmediately}
@@ -145,6 +147,7 @@ export default function ImmediateStartConfig({
               <label>Duración</label>
               <select
                 className="input"
+                aria-label="Duracion de la votacion inmediata"
                 value={durationValue}
                 onChange={(event) => onChange({ durationValue: event.target.value })}
                 disabled={!startsImmediately}
@@ -161,6 +164,7 @@ export default function ImmediateStartConfig({
               <label>Unidad</label>
               <select
                 className="input"
+                aria-label="Unidad de duracion de la votacion inmediata"
                 value={durationUnit}
                 onChange={(event) => {
                   const nextUnit = event.target.value as ImmediateDurationUnit;

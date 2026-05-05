@@ -665,6 +665,7 @@ export default function CrearEleccionPage() {
                 <input
                   type="text"
                   className="input"
+                  aria-label="Titulo de la votacion"
                   placeholder="Ej: Elección Consejo Ejecutivo FITEC 2026"
                   value={form.title}
                   onChange={(event) => updateForm('title', event.target.value)}
@@ -676,6 +677,7 @@ export default function CrearEleccionPage() {
                 <input
                   type="text"
                   className="input"
+                  aria-label="Descripcion de la votacion"
                   placeholder="Ej: Postulaciones a la Vicepresidencia del Directorio"
                   value={form.description}
                   onChange={(event) => updateForm('description', event.target.value)}
@@ -787,6 +789,7 @@ export default function CrearEleccionPage() {
                       <input
                         type="text"
                         className="input"
+                        aria-label={`Nombre de la opcion ${index + 1}`}
                         placeholder="Ej: Candidatura A"
                         value={option.label}
                         onChange={(event) => updateOption(index, 'label', event.target.value)}
@@ -798,6 +801,7 @@ export default function CrearEleccionPage() {
                       <input
                         type="text"
                         className="input"
+                        aria-label={`Descripcion de la opcion ${index + 1}`}
                         placeholder="Descripcion corta opcional"
                         value={option.description}
                         onChange={(event) => updateOption(index, 'description', event.target.value)}
@@ -902,6 +906,7 @@ export default function CrearEleccionPage() {
                         <input
                           type="number"
                           className="input"
+                          aria-label="Cantidad de administradores requerida para el escrutinio"
                           min={1}
                           max={adminCount ?? undefined}
                           step={1}
@@ -924,6 +929,7 @@ export default function CrearEleccionPage() {
                           <input
                             type="number"
                             className="input"
+                            aria-label="Porcentaje de administradores requerido para el escrutinio"
                             min={1}
                             max={100}
                             step={1}
@@ -961,6 +967,7 @@ export default function CrearEleccionPage() {
                       <input
                         type="text"
                         className="input"
+                        aria-label="Total de administradores disponibles"
                         value={adminCountLabel}
                         readOnly
                       />
