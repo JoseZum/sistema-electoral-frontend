@@ -9,7 +9,7 @@ import type { Election, ElectionResults } from '@/types/elections';
 import type { TagSummary } from '@/types/tags';
 import Loader from '@/components/Loader';
 
-const RESULT_COLORS = ['var(--accent)', 'var(--ink-soft)', 'var(--muted)', '#7C3AED', '#0EA5E9', '#D97706'];
+const RESULT_COLORS = ['#0F766E', '#1D4ED8', '#7C2D12', '#7E22CE', '#1E3A8A', '#374151'];
 
 export default function ResultadosPage() {
   const [elections, setElections] = useState<Election[]>([]);
@@ -27,10 +27,9 @@ export default function ResultadosPage() {
     try {
       setLoading(true);
       const data = await apiClient<Election[]>('/api/elections');
-      // Elections that require scrutiny only expose results after finalization.
-      const withResults = data.filter((e) =>
-        ['SCRUTINIZED', 'ARCHIVED'].includes(e.status)
-        || (e.status === 'CLOSED' && !e.requires_keys)
+      const withResults = data.filter((election) =>
+        ['SCRUTINIZED', 'ARCHIVED'].includes(election.status) ||
+        (election.status === 'CLOSED' && !election.requires_keys)
       );
       setElections(withResults);
       setSelectedId(withResults[0]?.id ?? null);
@@ -65,11 +64,16 @@ export default function ResultadosPage() {
 
   const handleExport = useCallback(async (format: 'pdf' | 'docx') => {
     if (!results) return;
+
     setExporting(true);
     setExportMenuOpen(false);
+
     try {
-      if (format === 'pdf') await exportResultsToPDF(results);
-      else await exportResultsToDOCX(results);
+      if (format === 'pdf') {
+        await exportResultsToPDF(results);
+      } else {
+        await exportResultsToDOCX(results);
+      }
     } catch (err) {
       console.error('Export error:', err);
     } finally {
@@ -79,11 +83,13 @@ export default function ResultadosPage() {
 
   useEffect(() => {
     if (!exportMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+
+    const handler = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
         setExportMenuOpen(false);
       }
     };
+
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [exportMenuOpen]);
@@ -136,7 +142,16 @@ export default function ResultadosPage() {
   if (elections.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--muted)' }}>
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3, marginBottom: '1rem' }}>
+        <svg
+          aria-hidden="true"
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          style={{ opacity: 0.3, marginBottom: '1rem' }}
+        >
           <line x1="18" y1="20" x2="18" y2="10" />
           <line x1="12" y1="20" x2="12" y2="4" />
           <line x1="6" y1="20" x2="6" y2="14" />
@@ -149,11 +164,20 @@ export default function ResultadosPage() {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1.5rem',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}
+      >
         <div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem' }}>Resultados</h2>
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            {selectedElection?.title ?? results?.election.title ?? 'Selecciona una votación'}
+            {selectedElection?.title ?? results?.election.title ?? 'Selecciona una votacion'}
           </p>
           {selectedElection?.tag_name && (
             <div style={{ marginTop: '0.75rem' }}>
@@ -171,8 +195,12 @@ export default function ResultadosPage() {
         {results && (
           <div ref={exportMenuRef} style={{ position: 'relative' }}>
             <button
-              onClick={() => setExportMenuOpen((v) => !v)}
+              type="button"
+              onClick={() => setExportMenuOpen((value) => !value)}
               disabled={exporting}
+              aria-haspopup="menu"
+              aria-expanded={exportMenuOpen}
+              aria-controls="results-export-menu"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -189,11 +217,20 @@ export default function ResultadosPage() {
               }}
             >
               {exporting ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                <svg
+                  aria-hidden="true"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  style={{ animation: 'spin 1s linear infinite' }}
+                >
                   <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                 </svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
                   <line x1="12" y1="18" x2="12" y2="12" />
@@ -202,7 +239,7 @@ export default function ResultadosPage() {
               )}
               {exporting ? 'Exportando...' : 'Exportar reporte'}
               {!exporting && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               )}
@@ -210,6 +247,9 @@ export default function ResultadosPage() {
 
             {exportMenuOpen && (
               <div
+                id="results-export-menu"
+                role="menu"
+                aria-label="Opciones de exportacion"
                 style={{
                   position: 'absolute',
                   top: 'calc(100% + 6px)',
@@ -224,6 +264,8 @@ export default function ResultadosPage() {
                 }}
               >
                 <button
+                  type="button"
+                  role="menuitem"
                   onClick={() => handleExport('pdf')}
                   style={{
                     display: 'flex',
@@ -238,16 +280,22 @@ export default function ResultadosPage() {
                     textAlign: 'left',
                     color: 'var(--ink)',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-alt, var(--border))')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.background = 'var(--surface-alt, var(--border))';
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.background = 'none';
+                  }}
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
                   </svg>
                   Exportar PDF
                 </button>
                 <button
+                  type="button"
+                  role="menuitem"
                   onClick={() => handleExport('docx')}
                   style={{
                     display: 'flex',
@@ -263,10 +311,14 @@ export default function ResultadosPage() {
                     textAlign: 'left',
                     color: 'var(--ink)',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-alt, var(--border))')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.background = 'var(--surface-alt, var(--border))';
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.background = 'none';
+                  }}
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
                     <line x1="8" y1="13" x2="16" y2="13" />
@@ -300,7 +352,7 @@ export default function ResultadosPage() {
           </label>
 
           <label className="monitoring-select-group">
-            <span>Votación</span>
+            <span>Votacion</span>
             <select
               className="input election-filter-control"
               value={selectedId ?? ''}
@@ -308,7 +360,7 @@ export default function ResultadosPage() {
               disabled={filteredElections.length === 0}
             >
               <option value="">
-                {filteredElections.length === 0 ? 'Sin coincidencias' : 'Selecciona una votación'}
+                {filteredElections.length === 0 ? 'Sin coincidencias' : 'Selecciona una votacion'}
               </option>
               {filteredElections.map((election) => (
                 <option key={election.id} value={election.id}>
@@ -323,15 +375,14 @@ export default function ResultadosPage() {
       {filteredElections.length === 0 && (
         <div className="card election-filters-empty">
           <h3>No hay votaciones que coincidan con los filtros</h3>
-          <p>Ajusta la búsqueda o cambia la tag para volver a cargar resultados.</p>
+          <p>Ajusta la busqueda o cambia la tag para volver a cargar resultados.</p>
         </div>
       )}
 
       {filteredElections.length > 0 && loadingResults ? (
         <Loader />
-      ) : filteredElections.length > 0 && results && (
+      ) : filteredElections.length > 0 && results ? (
         <>
-          {/* Stats */}
           <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
             <div className="stat-card">
               <div className="label">Total votos</div>
@@ -340,7 +391,7 @@ export default function ResultadosPage() {
               </div>
             </div>
             <div className="stat-card">
-              <div className="label">Participación</div>
+              <div className="label">Participacion</div>
               <div className="stat-card-value" style={{ fontSize: '1.75rem', color: 'var(--success)' }}>
                 {results.participation_rate.toFixed(1)}%
               </div>
@@ -359,15 +410,21 @@ export default function ResultadosPage() {
             </div>
           </div>
 
-          {/* Results bars */}
           <div className="card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
-            <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '1rem', marginBottom: '1.5rem' }}>
+            <h3
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontWeight: 600,
+                fontSize: '1rem',
+                marginBottom: '1.5rem',
+              }}
+            >
               Desglose de resultados
             </h3>
 
             {results.options
-              .filter((o) => o.option_type !== 'BLANK' && o.option_type !== 'NULL_VOTE')
-              .map((option, i) => (
+              .filter((option) => option.option_type !== 'BLANK' && option.option_type !== 'NULL_VOTE')
+              .map((option, index) => (
                 <div key={option.id} className="results-bar">
                   <div className="results-bar-label">{option.label}</div>
                   <div className="results-bar-track">
@@ -375,7 +432,7 @@ export default function ResultadosPage() {
                       className="results-bar-fill"
                       style={{
                         width: `${option.percentage}%`,
-                        background: RESULT_COLORS[i % RESULT_COLORS.length],
+                        background: RESULT_COLORS[index % RESULT_COLORS.length],
                       }}
                     >
                       {option.percentage.toFixed(1)}%
@@ -385,14 +442,15 @@ export default function ResultadosPage() {
                 </div>
               ))}
 
-            {/* Special votes */}
-            {results.options.some((o) => o.option_type === 'BLANK' || o.option_type === 'NULL_VOTE') && (
+            {results.options.some((option) => option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE') && (
               <div style={{ borderTop: '1px dashed var(--border)', marginTop: '1rem', paddingTop: '1rem' }}>
                 {results.options
-                  .filter((o) => o.option_type === 'BLANK' || o.option_type === 'NULL_VOTE')
+                  .filter((option) => option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE')
                   .map((option) => (
                     <div key={option.id} className="results-bar">
-                      <div className="results-bar-label" style={{ color: 'var(--muted)' }}>{option.label}</div>
+                      <div className="results-bar-label" style={{ color: 'var(--muted)' }}>
+                        {option.label}
+                      </div>
                       <div className="results-bar-track">
                         <div
                           className="results-bar-fill"
@@ -414,18 +472,24 @@ export default function ResultadosPage() {
             )}
           </div>
 
-          {/* Voter list */}
           {results.election.is_anonymous ? (
-            <div className="card" style={{ padding: '1.25rem', marginTop: '1.5rem', background: 'var(--surface-alt, var(--surface))' }}>
+            <div
+              className="card"
+              style={{
+                padding: '1.25rem',
+                marginTop: '1.5rem',
+                background: 'var(--surface-alt, var(--surface))',
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Votación anónima</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Votacion anonima</div>
                   <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-                    La lista de votantes no está disponible porque esta votación es anónima.
+                    La lista de votantes no esta disponible porque esta votacion es anonima.
                   </div>
                 </div>
               </div>
@@ -433,7 +497,7 @@ export default function ResultadosPage() {
           ) : (
             <div className="card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                   <circle cx="9" cy="7" r="4" />
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -443,11 +507,13 @@ export default function ResultadosPage() {
                   Personas votantes ({(results.voters ?? []).length})
                 </h3>
               </div>
+
               {!results.voters || results.voters.length === 0 ? (
-                <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Ninguna persona votó.</p>
+                <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Ninguna persona voto.</p>
               ) : (
                 <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                    <caption className="sr-only">Lista de personas votantes</caption>
                     <thead>
                       <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
                         <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--muted)' }}>Nombre</th>
@@ -455,8 +521,8 @@ export default function ResultadosPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {results.voters.map((voter, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                      {results.voters.map((voter, index) => (
+                        <tr key={index} style={{ borderBottom: '1px solid var(--border)' }}>
                           <td style={{ padding: '0.5rem 0.75rem' }}>{voter.full_name}</td>
                           <td style={{ padding: '0.5rem 0.75rem', color: 'var(--muted)' }}>{voter.carnet}</td>
                         </tr>
@@ -468,7 +534,7 @@ export default function ResultadosPage() {
             </div>
           )}
         </>
-      )}
+      ) : null}
     </>
   );
 }
