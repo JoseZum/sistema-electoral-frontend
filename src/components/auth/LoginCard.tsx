@@ -9,23 +9,18 @@ export default function LoginCard() {
       </div>
 
       <h1 className="font-display font-normal tracking-tight text-[2.5rem] leading-[1.08] mb-2">
-        Portal de Votación
+        Portal de votacion
       </h1>
 
       <p className="text-muted text-[0.9375rem] mb-10">
-        Ingresa con tu cuenta institucional para acceder al sistema de votación.
+        Ingresa con tu cuenta institucional para acceder al sistema de votacion.
       </p>
 
       <MicrosoftLoginButton />
       <AuthError />
 
-      <div className="mt-6 pt-6 border-t border-border text-center">
-        <a
-          href="#"
-          className="text-[0.8125rem] text-muted no-underline transition-colors duration-200 hover:text-ink"
-        >
-          Acceso administrativo TEE
-        </a>
+      <div className="mt-6 pt-6 border-t border-border text-center text-[0.8125rem] text-muted">
+        Acceso institucional del TEE
       </div>
     </div>
   );

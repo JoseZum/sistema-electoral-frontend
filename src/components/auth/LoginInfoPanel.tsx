@@ -1,7 +1,7 @@
 const stats = [
   { value: '11,247', label: 'Estudiantes' },
   { value: '34', label: 'Asociaciones' },
-  { value: '100%', label: 'Anónimo' },
+  { value: '100%', label: 'Anonimo' },
 ];
 
 export default function LoginInfoPanel() {
