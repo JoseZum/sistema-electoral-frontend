@@ -9,7 +9,7 @@
     "lint": "next lint",
     "test:security": "npm run test:security:vulnerabilities",
     "test:security:vulnerabilities": "node tests/security/vulnerabilityAudit.mjs",
-    "test:lighthouse": "npm run test:lighthouse:auth && npm run test:lighthouse:tags && npm run test:lighthouse:voting && npm run test:lighthouse:padron && npm run test:lighthouse:audit && npm run test:lighthouse:admin && npm run test:lighthouse:scrutiny && npm run test:lighthouse:results",
+    "test:lighthouse": "npm run test:lighthouse:auth && npm run test:lighthouse:tags && npm run test:lighthouse:voting && npm run test:lighthouse:padron && npm run test:lighthouse:audit && npm run test:lighthouse:admin && npm run test:lighthouse:scrutiny && npm run test:lighthouse:results && npm run test:lighthouse:dashboard",
     "test:lighthouse:auth": "node tests/lighthouse/auth/login-page.test.mjs",
     "test:lighthouse:tags": "node tests/lighthouse/tags/tags-page.test.mjs",
     "test:lighthouse:voting": "node tests/lighthouse/voting/voting-pages.test.mjs",
@@ -17,7 +17,8 @@
     "test:lighthouse:audit": "node tests/lighthouse/audit/audit-page.test.mjs",
     "test:lighthouse:admin": "node tests/lighthouse/admin/admin-pages.test.mjs",
     "test:lighthouse:scrutiny": "node tests/lighthouse/scrutiny/scrutiny-pages.test.mjs",
-    "test:lighthouse:results": "node tests/lighthouse/results/results-page.test.mjs"
+    "test:lighthouse:results": "node tests/lighthouse/results/results-page.test.mjs",
+    "test:lighthouse:dashboard": "node tests/lighthouse/dashboard/dashboard-page.test.mjs"
   },
   "dependencies": {
     "@azure/msal-browser": "^5.4.0",
