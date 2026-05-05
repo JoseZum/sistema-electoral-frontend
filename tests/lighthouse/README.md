@@ -1,52 +1,58 @@
 # Lighthouse tests
 
-Auditorias Lighthouse del frontend.
+Guia corta para crear y probar auditorias Lighthouse del frontend.
 
-Division:
-- Se agrupan por modulo funcional.
-- Dentro de cada modulo, cada archivo representa una pagina/ruta auditable.
-- La razon es que Lighthouse evalua paginas completas, no componentes aislados.
+## Como agregar un modulo
 
-Estructura:
+1. Crea un runner `.mjs` en `tests/lighthouse/<modulo>/`.
+   Ejemplo: `tests/lighthouse/<modulo>/<modulo>-pages.test.mjs`
 
-```text
-tests/lighthouse/
-  admin/
-  audit/
-  auth/
-  dashboard/
-  elections/
-  monitoring/
-  padron/
-  results/
-  scrutiny/
-  tags/
-  voting/
+2. Dentro del runner:
+   - define budgets para `performance`, `accessibility`, `best-practices` y `seo`
+   - levanta el frontend en produccion con `next build --webpack` y `next start`
+   - si la ruta necesita datos, monta un mock API local
+   - si la ruta necesita sesion, prepara `localStorage` antes de correr Lighthouse
+   - corre Lighthouse contra la ruta final esperada
+   - guarda `lhr.json` y `report.html` en `.reports/`
+
+3. Si la ruta protegida falla por build o filesystem en Windows:
+   - usa variables de entorno para aislar el build o bajar workers
+   - evita tocar el backend real
+
+4. Agrega el script en `package.json`.
+   Ejemplo:
+
+```json
+"test:lighthouse:<modulo>": "node tests/lighthouse/<modulo>/<archivo>.mjs"
 ```
 
-Rutas cubiertas:
-- `auth/login-page.test.mjs`: `/`
-- `dashboard/dashboard-page.test.ts`: `/dashboard`
-- `elections/elections-list-page.test.ts`: `/elecciones`
-- `elections/create-election-page.test.ts`: `/elecciones/crear`
-- `padron/padron-pages.test.mjs`: `/padron`, `/padron/cargar`
-- `tags/tags-page.test.mjs`: `/tags`
-- `scrutiny/scrutiny-pages.test.mjs`: `/escrutinio`, `/escrutinio/subir`
-- `voting/voting-pages.test.mjs`: `/votaciones`, `/votaciones/:id`
-- `monitoring/monitoring-page.test.ts`: `/monitoreo`
-- `results/results-page.test.ts`: `/resultados`
-- `audit/audit-page.test.mjs`: `/auditoria`
-- `admin/admin-pages.test.mjs`: `/admin-manager`, `/generar-llaves`
+5. Si aplica, agrega el script al agregador:
 
-Configuracion futura sugerida:
-- `auth/login-page.test.mjs` ya es ejecutable con `npm run test:lighthouse:auth`.
-- `tags/tags-page.test.mjs` ya es ejecutable con `npm run test:lighthouse:tags`.
-- `voting/voting-pages.test.mjs` ya es ejecutable con `npm run test:lighthouse:voting`.
-- `padron/padron-pages.test.mjs` ya es ejecutable con `npm run test:lighthouse:padron`.
-- `audit/audit-page.test.mjs` ya es ejecutable con `npm run test:lighthouse:audit`.
-- `admin/admin-pages.test.mjs` ya es ejecutable con `npm run test:lighthouse:admin`.
-- `scrutiny/scrutiny-pages.test.mjs` ya es ejecutable con `npm run test:lighthouse:scrutiny`.
-- Los demas archivos siguen como placeholders hasta que se implemente su runner.
-- Levantar el frontend en modo produccion con `npm run build` y `npm run start`.
-- Usar datos seed o autenticacion mockeada para rutas protegidas.
-- Definir presupuestos para performance, accessibility, best practices y SEO.
+```json
+"test:lighthouse": "npm run test:lighthouse:<modulo>"
+```
+
+## Como probar
+
+1. Ejecuta el modulo:
+
+```bash
+npm.cmd run test:lighthouse:<modulo>
+```
+
+2. Revisa los reportes en:
+
+```text
+tests/lighthouse/<modulo>/.reports/
+```
+
+3. Si un score no da bien:
+   - corrige la UI o el flujo de carga
+   - vuelve a correr el mismo comando
+   - no bajes el budget para esconder problemas reales
+
+## Regla practica
+
+- Usa mocks locales para datos inestables.
+- Usa sesion mockeada para rutas admin.
+- Audita paginas completas, no componentes aislados.
