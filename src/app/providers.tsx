@@ -5,7 +5,6 @@ import { MsalProvider } from '@azure/msal-react';
 import type { PublicClientApplication } from '@azure/msal-browser';
 import { getMsalInstance, initializeMsal } from '@/lib/msal';
 import { AuthProvider } from '@/lib/auth-context';
-import Loader from '@/components/Loader';
 
 export function MsalProviderWrapper({ children }: { children: React.ReactNode }) {
   const [msalInstance, setMsalInstance] = useState<PublicClientApplication | null>(null);
@@ -33,7 +32,24 @@ export function MsalProviderWrapper({ children }: { children: React.ReactNode })
   }, []);
 
   if (isInitializing || !msalInstance) {
-    return <Loader fullscreen />;
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.75rem',
+          padding: '2rem',
+          textAlign: 'center',
+        }}
+      >
+        <div className="overline">Tribunal Electoral Estudiantil</div>
+        <p style={{ margin: 0, color: 'var(--muted)' }}>Cargando sistema electoral...</p>
+        <div className="loader" aria-hidden="true" />
+      </div>
+    );
   }
 
   return (
