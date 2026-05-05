@@ -25,7 +25,7 @@ tests/lighthouse/
 ```
 
 Rutas cubiertas:
-- `auth/login-page.test.ts`: `/`
+- `auth/login-page.test.mjs`: `/`
 - `dashboard/dashboard-page.test.ts`: `/dashboard`
 - `elections/elections-list-page.test.ts`: `/elecciones`
 - `elections/create-election-page.test.ts`: `/elecciones/crear`
@@ -39,6 +39,7 @@ Rutas cubiertas:
 - `admin/admin-pages.test.mjs`: `/admin-manager`, `/generar-llaves`
 
 Configuracion futura sugerida:
+- `auth/login-page.test.mjs` ya es ejecutable con `npm run test:lighthouse:auth`.
 - `tags/tags-page.test.mjs` ya es ejecutable con `npm run test:lighthouse:tags`.
 - `voting/voting-pages.test.mjs` ya es ejecutable con `npm run test:lighthouse:voting`.
 - `padron/padron-pages.test.mjs` ya es ejecutable con `npm run test:lighthouse:padron`.
