@@ -14,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>
+      <body suppressHydrationWarning>
         <MsalProviderWrapper>{children}</MsalProviderWrapper>
       </body>
     </html>
