@@ -3,6 +3,13 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { exportResultsToPDF, exportResultsToDOCX } from '@/lib/export-results';
+import {
+  getElectionStatusLabel,
+  getNoVoteLabel,
+  getParticipationLabel,
+  getSuffrageDescription,
+  getSuffrageLabel,
+} from '@/lib/suffrage';
 import { listTags } from '@/lib/tags-api';
 import TagBadge from '@/components/tags/TagBadge';
 import type { Election, ElectionResults } from '@/types/elections';
@@ -113,6 +120,8 @@ export default function ResultadosPage() {
   });
 
   const selectedElection = elections.find((election) => election.id === selectedId) || null;
+  const voterRows = results?.voters ?? [];
+  const abstentionCount = voterRows.filter((voter) => !voter.has_voted).length;
 
   useEffect(() => {
     if (filteredElections.length === 0) {
@@ -179,8 +188,8 @@ export default function ResultadosPage() {
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
             {selectedElection?.title ?? results?.election.title ?? 'Selecciona una votacion'}
           </p>
-          {selectedElection?.tag_name && (
-            <div style={{ marginTop: '0.75rem' }}>
+          <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {selectedElection?.tag_name && (
               <TagBadge
                 label={selectedElection.tag_name}
                 color={selectedElection.tag_color}
@@ -188,8 +197,40 @@ export default function ResultadosPage() {
                 className="tag-badge--table"
                 leadingIcon="tag"
               />
-            </div>
-          )}
+            )}
+            {results && (
+              <>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '0.35rem 0.7rem',
+                    borderRadius: '999px',
+                    background: results.election.is_anonymous ? 'rgba(30, 64, 175, 0.12)' : 'rgba(15, 118, 110, 0.12)',
+                    color: results.election.is_anonymous ? '#1D4ED8' : '#0F766E',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  {getSuffrageLabel(results.election.is_anonymous)}
+                </span>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '0.35rem 0.7rem',
+                    borderRadius: '999px',
+                    background: 'rgba(71, 85, 105, 0.12)',
+                    color: '#334155',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  {getElectionStatusLabel(results.election.status)}
+                </span>
+              </>
+            )}
+          </div>
         </div>
 
         {results && (
@@ -472,67 +513,119 @@ export default function ResultadosPage() {
             )}
           </div>
 
-          {results.election.is_anonymous ? (
+          <div className="card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
             <div
-              className="card"
               style={{
-                padding: '1.25rem',
-                marginTop: '1.5rem',
-                background: 'var(--surface-alt, var(--surface))',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: '1rem',
+                marginBottom: '1rem',
+                flexWrap: 'wrap',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Votacion anonima</div>
-                  <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-                    La lista de votantes no esta disponible porque esta votacion es anonima.
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                 <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                   <circle cx="9" cy="7" r="4" />
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                   <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
-                <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '1rem', margin: 0 }}>
-                  Personas votantes ({(results.voters ?? []).length})
-                </h3>
+                <div>
+                  <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '1rem', margin: 0 }}>
+                    Participacion por persona ({voterRows.length})
+                  </h3>
+                  <p style={{ marginTop: '0.35rem', fontSize: '0.8125rem', color: 'var(--muted)' }}>
+                    {getSuffrageDescription(results.election.is_anonymous)}
+                  </p>
+                </div>
               </div>
 
-              {!results.voters || results.voters.length === 0 ? (
-                <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Ninguna persona voto.</p>
-              ) : (
-                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                    <caption className="sr-only">Lista de personas votantes</caption>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
-                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--muted)' }}>Nombre</th>
-                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--muted)' }}>Carnet</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {results.voters.map((voter, index) => (
-                        <tr key={index} style={{ borderBottom: '1px solid var(--border)' }}>
-                          <td style={{ padding: '0.5rem 0.75rem' }}>{voter.full_name}</td>
-                          <td style={{ padding: '0.5rem 0.75rem', color: 'var(--muted)' }}>{voter.carnet}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {abstentionCount > 0 && (
+                <div
+                  style={{
+                    padding: '0.55rem 0.8rem',
+                    borderRadius: '0.85rem',
+                    background: 'rgba(220, 38, 38, 0.08)',
+                    color: '#B91C1C',
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  Abstencionismo detectado: {abstentionCount}
                 </div>
               )}
             </div>
-          )}
+
+            {voterRows.length === 0 ? (
+              <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>No hay personas elegibles registradas.</p>
+            ) : (
+              <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                  <caption className="sr-only">Detalle de participacion por persona</caption>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
+                      <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--muted)' }}>Nombre</th>
+                      <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--muted)' }}>Carnet</th>
+                      {results.election.is_anonymous ? (
+                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--muted)' }}>Voto emitido</th>
+                      ) : (
+                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--muted)' }}>Opcion elegida</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {voterRows.map((voter, index) => {
+                      const isAbstention = !voter.has_voted;
+
+                      return (
+                        <tr
+                          key={`${voter.carnet}-${index}`}
+                          style={{
+                            borderBottom: '1px solid var(--border)',
+                            background: isAbstention ? 'rgba(220, 38, 38, 0.04)' : 'transparent',
+                          }}
+                        >
+                          <td style={{ padding: '0.625rem 0.75rem' }}>{voter.full_name}</td>
+                          <td style={{ padding: '0.625rem 0.75rem', color: 'var(--muted)' }}>{voter.carnet}</td>
+                          <td style={{ padding: '0.625rem 0.75rem' }}>
+                            {results.election.is_anonymous ? (
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  minWidth: '3rem',
+                                  padding: '0.28rem 0.65rem',
+                                  borderRadius: '999px',
+                                  background: voter.has_voted ? 'rgba(15, 118, 110, 0.12)' : 'rgba(220, 38, 38, 0.12)',
+                                  color: voter.has_voted ? '#0F766E' : '#B91C1C',
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {getParticipationLabel(voter.has_voted)}
+                              </span>
+                            ) : (
+                              <span
+                                style={{
+                                  fontWeight: 600,
+                                  color: isAbstention ? '#B91C1C' : 'var(--ink)',
+                                }}
+                              >
+                                {voter.has_voted
+                                  ? voter.selected_option_label ?? 'Sin detalle disponible'
+                                  : getNoVoteLabel()}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </>
       ) : null}
     </>

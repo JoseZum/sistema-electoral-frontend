@@ -8,6 +8,7 @@ import ImmediateStartConfig, {
   getImmediateDurationMinutes,
   type ImmediateDurationUnit,
 } from '@/components/elections/ImmediateStartConfig';
+import { getSuffrageLabel } from '@/lib/suffrage';
 import TagMembersEditor from '@/components/tags/TagMembersEditor';
 import TagSelector from '@/components/tags/TagSelector';
 import type { TagStudent } from '@/types/tags';
@@ -43,7 +44,8 @@ const SECTION_ITEMS = [
   { id: 'informacion', label: 'Información', description: 'Detalles y horario' },
   { id: 'votantes', label: 'Votantes', description: 'Padron elegible' },
   { id: 'opciones', label: 'Opciones', description: 'Boleta electoral' },
-  { id: 'seguridad', label: 'Seguridad', description: 'Privacidad y escrutinio' },
+  { id: 'sufragio', label: 'Sufragio', description: 'Modalidad del voto' },
+  { id: 'seguridad', label: 'Seguridad', description: 'Llaves de escrutinio' },
 ] as const;
 
 type SectionId = (typeof SECTION_ITEMS)[number]['id'];
@@ -91,6 +93,26 @@ const KEY_REQUIREMENT_OPTIONS: Array<{
     title: 'Porcentaje',
     description: 'Calcula el mínimo requerido con base en el total actual de administradores.',
     badge: 'Porcentaje',
+  },
+];
+
+const SUFFRAGE_OPTIONS: Array<{
+  value: boolean;
+  title: string;
+  description: string;
+  badge: string;
+}> = [
+  {
+    value: false,
+    title: 'Sufragio público',
+    description: 'La opcion elegida queda visible por persona en resultados y reportes.',
+    badge: 'Nominal',
+  },
+  {
+    value: true,
+    title: 'Sufragio por papeleta',
+    description: 'El reporte solo muestra si la persona participo o no, sin revelar la opcion elegida.',
+    badge: 'Reservado',
   },
 ];
 
@@ -225,6 +247,7 @@ export default function CrearEleccionPage() {
     informacion: null,
     votantes: null,
     opciones: null,
+    sufragio: null,
     seguridad: null,
   });
   const [saving, setSaving] = useState(false);
@@ -574,7 +597,7 @@ export default function CrearEleccionPage() {
       : keyRequirementMode === 'PERCENTAGE'
         ? 'Porcentaje pendiente'
         : 'Cantidad pendiente';
-  const securitySummary = `${form.is_anonymous ? 'Voto anónimo' : 'Voto identificable'} - ${keyRequirementSummary}`;
+  const suffrageSummary = getSuffrageLabel(form.is_anonymous);
 
   const sectionStates: Record<SectionId, { complete: boolean; summary: string }> = {
     informacion: {
@@ -595,9 +618,13 @@ export default function CrearEleccionPage() {
       complete: candidateOptionsCount >= 2,
       summary: `${candidateOptionsCount} opci${candidateOptionsCount === 1 ? 'ón' : 'ones'} configurada${candidateOptionsCount === 1 ? '' : 's'}`,
     },
+    sufragio: {
+      complete: true,
+      summary: suffrageSummary,
+    },
     seguridad: {
       complete: !requiresKeys || (minKeysPreview !== null && !countExceedsAdmins),
-      summary: securitySummary,
+      summary: keyRequirementSummary,
     },
   };
 
@@ -842,26 +869,50 @@ export default function CrearEleccionPage() {
           </section>
 
           <section
+            id="sufragio"
+            data-section-id="sufragio"
+            ref={(node) => setSectionRef('sufragio', node)}
+            className="card create-election-section"
+          >
+            <div className="create-election-section__header">
+              <div className="create-election-section__eyebrow">4. Sufragio</div>
+              <h3 className="create-election-section__title">Define la modalidad del sufragio</h3>
+              <p className="create-election-section__description">
+                Elige si el reporte mostrara la opcion elegida por persona o solo la participacion.
+              </p>
+            </div>
+
+            <div className="create-election-choice-grid">
+              {SUFFRAGE_OPTIONS.map((option) => (
+                <SelectionCard
+                  key={String(option.value)}
+                  selected={form.is_anonymous === option.value}
+                  badge={option.badge}
+                  title={option.title}
+                  description={option.description}
+                  onClick={() => updateForm('is_anonymous', option.value)}
+                >
+                  {form.is_anonymous === option.value ? 'Seleccionado' : 'Haz clic para usar esta modalidad'}
+                </SelectionCard>
+              ))}
+            </div>
+          </section>
+
+          <section
             id="seguridad"
             data-section-id="seguridad"
             ref={(node) => setSectionRef('seguridad', node)}
             className="card create-election-section"
           >
             <div className="create-election-section__header">
-              <div className="create-election-section__eyebrow">4. Seguridad</div>
-              <h3 className="create-election-section__title">Ajusta privacidad y escrutinio</h3>
+              <div className="create-election-section__eyebrow">5. Seguridad</div>
+              <h3 className="create-election-section__title">Configura el escrutinio</h3>
               <p className="create-election-section__description">
-                Mantiene visible la configuracion sensible de la votacion antes de publicarla.
+                Define si la publicacion de resultados requiere llaves de escrutinio.
               </p>
             </div>
 
             <div className="create-election-toggle-grid">
-              <ToggleCard
-                checked={form.is_anonymous}
-                title="Voto anónimo"
-                description="Separa criptográficamente la identidad del votante del voto emitido."
-                onChange={(checked) => updateForm('is_anonymous', checked)}
-              />
               <ToggleCard
                 checked={requiresKeys}
                 title="Requiere llaves de escrutinio"
@@ -1066,8 +1117,8 @@ export default function CrearEleccionPage() {
                 </strong>
               </div>
               <div className="create-election-summary-item">
-                <span>Privacidad</span>
-                <strong>{form.is_anonymous ? 'Anónima' : 'No anónima'}</strong>
+                <span>Sufragio</span>
+                <strong>{suffrageSummary}</strong>
               </div>
               <div className="create-election-summary-item">
                 <span>Escrutinio</span>

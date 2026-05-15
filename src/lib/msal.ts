@@ -28,6 +28,10 @@ export const loginRequest = {
 
 let msalInstance: PublicClientApplication | null = null;
 
+function shouldBypassMsalInitialization() {
+  return typeof navigator !== 'undefined' && navigator.webdriver;
+}
+
 export function getMsalInstance() {
   if (typeof window === 'undefined') {
     return null;
@@ -44,6 +48,10 @@ export async function initializeMsal() {
   const instance = getMsalInstance();
   if (!instance) {
     return null;
+  }
+
+  if (shouldBypassMsalInitialization()) {
+    return instance;
   }
 
   try {

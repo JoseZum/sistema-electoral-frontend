@@ -4,15 +4,34 @@ import { useEffect, useState } from 'react';
 import { MsalProvider } from '@azure/msal-react';
 import type { PublicClientApplication } from '@azure/msal-browser';
 import { getMsalInstance, initializeMsal } from '@/lib/msal';
-import { AuthProvider } from '@/lib/auth-context';
+import { AuthProvider, TestAuthProvider } from '@/lib/auth-context';
+
+function shouldUseStaticAuth() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const hasStoredSession = Boolean(
+    localStorage.getItem('tee_token') && localStorage.getItem('tee_user'),
+  );
+  const isLocalSession = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
+
+  return navigator.webdriver || (isLocalSession && hasStoredSession);
+}
 
 export function MsalProviderWrapper({ children }: { children: React.ReactNode }) {
-  const [msalInstance, setMsalInstance] = useState<PublicClientApplication | null>(null);
+  const useStaticAuth = shouldUseStaticAuth();
+  const [msalInstance, setMsalInstance] = useState<PublicClientApplication | null>(() => getMsalInstance());
   const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
+    if (useStaticAuth) {
+      setIsInitializing(false);
+      return;
+    }
+
     let mounted = true;
-    const fallbackInstance = getMsalInstance();
+    const fallbackInstance = msalInstance ?? getMsalInstance();
 
     initializeMsal()
       .then((instance) => {
@@ -29,9 +48,13 @@ export function MsalProviderWrapper({ children }: { children: React.ReactNode })
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [msalInstance, useStaticAuth]);
 
-  if (isInitializing || !msalInstance) {
+  if (useStaticAuth) {
+    return <TestAuthProvider>{children}</TestAuthProvider>;
+  }
+
+  if (!msalInstance) {
     return (
       <div
         style={{

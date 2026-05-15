@@ -1,166 +1,497 @@
-import type { ElectionResults } from '@/types/elections';
+import type { ElectionResultVoter, ElectionResults } from '@/types/elections';
+import {
+  getElectionStatusLabel,
+  getNoVoteLabel,
+  getParticipationLabel,
+  getSuffrageDescription,
+  getSuffrageLabel,
+} from '@/lib/suffrage';
 
-/* ─── Helpers ─────────────────────────────────────────────────────────────── */
-const fmtDate = (d: string | null) =>
-  d ? new Date(d).toLocaleString('es-CR') : '—';
+const fmtDate = (value: string | null) => (value ? new Date(value).toLocaleString('es-CR') : 'No definido');
+const fmtNum = (value: number) => value.toLocaleString('es-CR');
 
-const fmtNum = (n: number) => n.toLocaleString('es-CR');
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
 
-const downloadBlob = (blob: Blob, filename: string) => {
+function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
-};
+}
 
-const safeFilename = (title: string) =>
-  title.replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, '').replace(/\s+/g, '_').toLowerCase();
+function safeFilename(title: string): string {
+  return title.replace(/[^a-zA-Z0-9_\-\u00C0-\u017F ]/g, '').replace(/\s+/g, '_').toLowerCase();
+}
 
-/* ─── Shared HTML report body ─────────────────────────────────────────────── */
-function buildReportHTML(results: ElectionResults, forWord = false): string {
-  const mainOptions = results.options.filter(
-    (o) => o.option_type !== 'BLANK' && o.option_type !== 'NULL_VOTE',
-  );
-  const specialOptions = results.options.filter(
-    (o) => o.option_type === 'BLANK' || o.option_type === 'NULL_VOTE',
-  );
+function renderParticipationCell(voter: ElectionResultVoter, isAnonymous: boolean): string {
+  if (isAnonymous) {
+    const statusClass = voter.has_voted ? 'pill pill--success' : 'pill pill--danger';
+    return `<span class="${statusClass}">${getParticipationLabel(voter.has_voted)}</span>`;
+  }
 
-  const optionRows = [...mainOptions, ...specialOptions]
+  if (!voter.has_voted) {
+    return `<span class="pill pill--danger">${getNoVoteLabel()}</span>`;
+  }
+
+  return escapeHtml(voter.selected_option_label ?? 'Sin detalle disponible');
+}
+
+function buildParticipationSection(results: ElectionResults): string {
+  const voters = results.voters ?? [];
+
+  if (voters.length === 0) {
+    return `
+      <section class="panel">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">Detalle individual</div>
+            <h2>Participación por persona</h2>
+          </div>
+        </div>
+        <p class="empty-state">No hay personas elegibles registradas para esta votación.</p>
+      </section>
+    `;
+  }
+
+  const abstentions = voters.filter((voter) => !voter.has_voted).length;
+  const headerLabel = results.election.is_anonymous ? 'Voto emitido' : 'Opción elegida';
+  const rows = voters
     .map(
-      (o) => `
-      <tr>
-        <td>${o.label}</td>
-        <td class="num">${fmtNum(o.vote_count)}</td>
-        <td class="num">${o.percentage.toFixed(2)}%</td>
-      </tr>`,
+      (voter) => `
+        <tr class="${voter.has_voted ? '' : 'row--abstention'}">
+          <td>${escapeHtml(voter.full_name)}</td>
+          <td>${escapeHtml(voter.carnet)}</td>
+          <td>${renderParticipationCell(voter, results.election.is_anonymous)}</td>
+        </tr>
+      `,
     )
     .join('');
 
-  const voterSection = results.election.is_anonymous
-    ? `<p class="muted italic">Votación anónima — la lista de votantes no está disponible.</p>`
-    : results.voters && results.voters.length > 0
-    ? `<h2>Personas votantes (${results.voters.length})</h2>
-       <table>
-         <thead><tr><th>Nombre completo</th><th>Carnet</th></tr></thead>
-         <tbody>
-           ${results.voters
-             .map((v) => `<tr><td>${v.full_name}</td><td>${v.carnet}</td></tr>`)
-             .join('')}
-         </tbody>
-       </table>`
-    : `<p class="muted">Ninguna persona votó.</p>`;
+  return `
+    <section class="panel">
+      <div class="section-header">
+        <div>
+          <div class="section-kicker">Detalle individual</div>
+          <h2>Participación por persona</h2>
+          <p>${escapeHtml(getSuffrageDescription(results.election.is_anonymous))}</p>
+        </div>
+        ${abstentions > 0 ? `<div class="alert-chip">Abstencionismo detectado: ${fmtNum(abstentions)}</div>` : ''}
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre completo</th>
+            <th>Carnet</th>
+            <th>${headerLabel}</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </section>
+  `;
+}
 
-  // Word needs explicit paragraph breaks and doesn't support CSS grid
-  const statsBlock = forWord
-    ? `<table class="stats-table">
+function buildReportHTML(results: ElectionResults, forWord = false): string {
+  const suffrageLabel = getSuffrageLabel(results.election.is_anonymous);
+  const statusLabel = getElectionStatusLabel(results.election.status);
+  const abstentions = Math.max(0, results.total_eligible - results.total_votes);
+  const mainOptions = results.options.filter(
+    (option) => option.option_type !== 'BLANK' && option.option_type !== 'NULL_VOTE',
+  );
+  const specialOptions = results.options.filter(
+    (option) => option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE',
+  );
+  const optionRows = [...mainOptions, ...specialOptions]
+    .map(
+      (option) => `
         <tr>
-          <td class="stat-cell"><span class="label">Total votos</span><br/><span class="bignum">${fmtNum(results.total_votes)}</span></td>
-          <td class="stat-cell"><span class="label">Elegibles</span><br/><span class="bignum">${fmtNum(results.total_eligible)}</span></td>
-          <td class="stat-cell"><span class="label">Abstenciones</span><br/><span class="bignum">${fmtNum(results.total_eligible - results.total_votes)}</span></td>
-          <td class="stat-cell"><span class="label">Participación</span><br/><span class="bignum">${results.participation_rate.toFixed(2)}%</span></td>
+          <td>${escapeHtml(option.label)}</td>
+          <td class="num">${fmtNum(option.vote_count)}</td>
+          <td class="num">${option.percentage.toFixed(2)}%</td>
         </tr>
-       </table>`
-    : `<div class="stats">
-        ${[
-          ['Total votos', fmtNum(results.total_votes)],
-          ['Elegibles', fmtNum(results.total_eligible)],
-          ['Abstenciones', fmtNum(results.total_eligible - results.total_votes)],
-          ['Participación', `${results.participation_rate.toFixed(2)}%`],
-        ]
-          .map(
-            ([label, value]) =>
-              `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div></div>`,
-          )
-          .join('')}
-       </div>`;
+      `,
+    )
+    .join('');
+
+  const statsBlock = forWord
+    ? `
+        <table class="stats-table">
+          <tr>
+            <td class="stat-cell">
+              <span class="metric-label">Total de votos</span><br/>
+              <span class="metric-value">${fmtNum(results.total_votes)}</span>
+            </td>
+            <td class="stat-cell">
+              <span class="metric-label">Personas elegibles</span><br/>
+              <span class="metric-value">${fmtNum(results.total_eligible)}</span>
+            </td>
+            <td class="stat-cell">
+              <span class="metric-label">Abstenciones</span><br/>
+              <span class="metric-value">${fmtNum(abstentions)}</span>
+            </td>
+            <td class="stat-cell">
+              <span class="metric-label">Participación</span><br/>
+              <span class="metric-value">${results.participation_rate.toFixed(2)}%</span>
+            </td>
+          </tr>
+        </table>
+      `
+    : `
+        <div class="stats-grid">
+          ${[
+            ['Total de votos', fmtNum(results.total_votes)],
+            ['Personas elegibles', fmtNum(results.total_eligible)],
+            ['Abstenciones', fmtNum(abstentions)],
+            ['Participación', `${results.participation_rate.toFixed(2)}%`],
+          ]
+            .map(
+              ([label, value]) => `
+                <div class="stat-card">
+                  <div class="metric-label">${label}</div>
+                  <div class="metric-value">${value}</div>
+                </div>
+              `,
+            )
+            .join('')}
+        </div>
+      `;
 
   return `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
       xmlns:w="urn:schemas-microsoft-com:office:word"
       xmlns="http://www.w3.org/TR/REC-html40" lang="es">
 <head>
-  <meta charset="UTF-8"/>
-  <title>Resultados — ${results.election.title}</title>
+  <meta charset="UTF-8" />
+  <title>Informe de resultados - ${escapeHtml(results.election.title)}</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1e293b;padding:24px 32px}
-    header{background:#1e293b;color:#fff;padding:14px 20px;border-radius:6px;margin-bottom:20px}
-    header h1{font-size:14pt;font-weight:700}
-    header p{font-size:9pt;opacity:.75;margin-top:4px}
-    h2{font-size:12pt;font-weight:700;margin:18px 0 8px;border-bottom:2px solid #e2e8f0;padding-bottom:4px;color:#1e293b}
-    table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:10pt}
-    th{background:#1e293b;color:#fff;padding:6px 10px;text-align:left;font-weight:600}
-    td{padding:5px 10px;border-bottom:1px solid #e2e8f0}
-    tr:last-child td{border-bottom:none}
-    .num{text-align:right}
-    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
-    .stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px 14px}
-    .stat .label,.label{font-size:8.5pt;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-    .stat .value{font-size:16pt;font-weight:700;margin-top:2px}
-    .stats-table{width:100%;border-collapse:collapse;margin-bottom:16px}
-    .stat-cell{border:1px solid #e2e8f0;padding:8px 12px;background:#f8fafc;text-align:center}
-    .bignum{font-size:16pt;font-weight:700}
-    .muted{color:#64748b}
-    .italic{font-style:italic}
-    footer{margin-top:24px;text-align:center;font-size:8.5pt;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px}
-    @media print{body{padding:0}@page{margin:18mm 16mm}}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #172033;
+      background: #f3f6fb;
+      padding: 28px;
+      line-height: 1.45;
+    }
+    .report-shell {
+      background: #ffffff;
+      border: 1px solid #dbe3f0;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+    .hero {
+      padding: 28px 32px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+      color: #ffffff;
+    }
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .eyebrow {
+      font-size: 9pt;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      opacity: 0.78;
+      margin-bottom: 6px;
+    }
+    .hero h1 {
+      font-size: 20pt;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .hero p {
+      font-size: 10pt;
+      opacity: 0.9;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 9pt;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+    }
+    .pill--success {
+      background: rgba(15, 118, 110, 0.14);
+      color: #0f766e;
+    }
+    .pill--danger {
+      background: rgba(220, 38, 38, 0.14);
+      color: #b91c1c;
+    }
+    .hero-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .hero-meta-card {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .hero-meta-card strong {
+      display: block;
+      font-size: 11pt;
+      margin-top: 4px;
+    }
+    .content {
+      padding: 24px 28px 28px;
+    }
+    .panel {
+      border: 1px solid #dbe3f0;
+      border-radius: 18px;
+      background: #ffffff;
+      padding: 18px 20px;
+      margin-bottom: 18px;
+    }
+    .panel h2 {
+      font-size: 13pt;
+      margin-bottom: 6px;
+      color: #172033;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .section-kicker {
+      font-size: 8.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #4f46e5;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .section-header p {
+      color: #475569;
+      font-size: 9.5pt;
+      max-width: 70ch;
+    }
+    .alert-chip {
+      background: rgba(220, 38, 38, 0.08);
+      color: #b91c1c;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 9pt;
+      font-weight: 700;
+    }
+    .meta-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5ebf5;
+      font-size: 9.8pt;
+    }
+    .meta-table tr:last-child td {
+      border-bottom: none;
+    }
+    .meta-table td:first-child {
+      width: 28%;
+      color: #64748b;
+      font-weight: 700;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .stat-card,
+    .stat-cell {
+      background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+      border: 1px solid #d7e3f4;
+      border-radius: 16px;
+      padding: 14px 16px;
+    }
+    .stats-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 10px 0;
+    }
+    .metric-label {
+      font-size: 8.5pt;
+      color: #64748b;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .metric-value {
+      display: block;
+      margin-top: 6px;
+      font-size: 17pt;
+      font-weight: 700;
+      color: #172033;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.7pt;
+    }
+    th {
+      background: #eff4fb;
+      color: #334155;
+      text-align: left;
+      font-weight: 700;
+      padding: 10px 12px;
+      border-bottom: 1px solid #d7e3f4;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5ebf5;
+      vertical-align: middle;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    .row--abstention td {
+      background: rgba(220, 38, 38, 0.035);
+    }
+    .num {
+      text-align: right;
+    }
+    .empty-state {
+      color: #64748b;
+      font-size: 10pt;
+    }
+    footer {
+      padding: 0 28px 24px;
+      color: #64748b;
+      font-size: 8.8pt;
+      text-align: center;
+    }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .report-shell { box-shadow: none; border-radius: 0; }
+      @page { margin: 16mm; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Reporte de Resultados — Sistema Electoral</h1>
-    <p>Generado el ${new Date().toLocaleString('es-CR')}</p>
-  </header>
+  <div class="report-shell">
+    <header class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">Tribunal Electoral Estudiantil</div>
+          <h1>Informe de resultados</h1>
+          <p>Generado el ${new Date().toLocaleString('es-CR')}</p>
+        </div>
+        <div class="badge-row">
+          <span class="pill">${escapeHtml(suffrageLabel)}</span>
+          <span class="pill">${escapeHtml(statusLabel)}</span>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <div class="hero-meta-card">
+          <span class="metric-label">Proceso electoral</span>
+          <strong>${escapeHtml(results.election.title)}</strong>
+        </div>
+        <div class="hero-meta-card">
+          <span class="metric-label">Participación acumulada</span>
+          <strong>${results.participation_rate.toFixed(2)}%</strong>
+        </div>
+      </div>
+    </header>
 
-  <h2 style="margin-top:0">${results.election.title}</h2>
-  ${results.election.description ? `<p style="color:#475569;margin-bottom:12px;font-size:10pt">${results.election.description}</p>` : ''}
+    <main class="content">
+      <section class="panel">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">Datos generales</div>
+            <h2>Información de la votación</h2>
+            ${results.election.description ? `<p>${escapeHtml(results.election.description)}</p>` : ''}
+          </div>
+        </div>
+        <table class="meta-table">
+          <tbody>
+            <tr><td>Estado</td><td>${escapeHtml(statusLabel)}</td></tr>
+            <tr><td>Inicio</td><td>${escapeHtml(fmtDate(results.election.start_time))}</td></tr>
+            <tr><td>Cierre</td><td>${escapeHtml(fmtDate(results.election.end_time))}</td></tr>
+            <tr><td>Sufragio</td><td>${escapeHtml(suffrageLabel)}</td></tr>
+          </tbody>
+        </table>
+      </section>
 
-  <h2>Información de la votación</h2>
-  <table>
-    <tbody>
-      <tr><td><strong>Estado</strong></td><td>${results.election.status}</td></tr>
-      <tr><td><strong>Inicio</strong></td><td>${fmtDate(results.election.start_time)}</td></tr>
-      <tr><td><strong>Cierre</strong></td><td>${fmtDate(results.election.end_time)}</td></tr>
-      <tr><td><strong>Tipo</strong></td><td>${results.election.is_anonymous ? 'Anónima' : 'No anónima'}</td></tr>
-    </tbody>
-  </table>
+      <section class="panel">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">Resumen cuantitativo</div>
+            <h2>Estadísticas generales</h2>
+          </div>
+        </div>
+        ${statsBlock}
+      </section>
 
-  <h2>Estadísticas generales</h2>
-  ${statsBlock}
+      <section class="panel">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">Resultado consolidado</div>
+            <h2>Desglose por opción</h2>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Opción</th>
+              <th class="num">Votos</th>
+              <th class="num">Porcentaje</th>
+            </tr>
+          </thead>
+          <tbody>${optionRows}</tbody>
+        </table>
+      </section>
 
-  <h2>Desglose de resultados</h2>
-  <table>
-    <thead><tr><th>Opción / Candidato</th><th style="text-align:right">Votos</th><th style="text-align:right">Porcentaje</th></tr></thead>
-    <tbody>${optionRows}</tbody>
-  </table>
+      ${buildParticipationSection(results)}
+    </main>
 
-  ${voterSection}
-
-  <footer>Sistema Electoral — Reporte generado automáticamente</footer>
+    <footer>
+      Sistema Electoral TEC · Documento generado automáticamente para consulta administrativa.
+    </footer>
+  </div>
 </body>
 </html>`;
 }
 
-/* ─── PDF (browser print dialog → Save as PDF) ────────────────────────────── */
 export function exportResultsToPDF(results: ElectionResults) {
   const html = buildReportHTML(results, false);
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const win = window.open(url, '_blank');
-  if (win) {
-    win.addEventListener('load', () => {
-      win.print();
+  const previewWindow = window.open(url, '_blank');
+
+  if (previewWindow) {
+    previewWindow.addEventListener('load', () => {
+      previewWindow.print();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     });
   }
 }
 
-/* ─── DOCX (Word-compatible HTML blob, no external libraries) ─────────────── */
 export function exportResultsToDOCX(results: ElectionResults) {
   const html = buildReportHTML(results, true);
-  const blob = new Blob(['\ufeff' + html], {
+  const blob = new Blob([`\ufeff${html}`], {
     type: 'application/vnd.ms-word;charset=utf-8',
   });
   downloadBlob(blob, `resultados_${safeFilename(results.election.title)}.doc`);

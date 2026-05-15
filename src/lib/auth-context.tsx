@@ -19,6 +19,30 @@ interface AuthResponse {
   user: User;
 }
 
+function clearStoredSession() {
+  localStorage.removeItem('tee_token');
+  localStorage.removeItem('tee_user');
+}
+
+function hydrateStoredSession(
+  setState: React.Dispatch<React.SetStateAction<AuthState>>,
+) {
+  const token = localStorage.getItem('tee_token');
+  const userStr = localStorage.getItem('tee_user');
+
+  if (token && userStr) {
+    try {
+      const user = JSON.parse(userStr) as User;
+      setState({ user, token, isAuthenticated: true, isLoading: false });
+      return;
+    } catch {
+      clearStoredSession();
+    }
+  }
+
+  setState((prev) => ({ ...prev, isLoading: false }));
+}
+
 function getAuthErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     switch (error.code) {
@@ -56,20 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [processedAccount, setProcessedAccount] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('tee_token');
-    const userStr = localStorage.getItem('tee_user');
-    if (token && userStr) {
-      try {
-        const user = JSON.parse(userStr) as User;
-        setState({ user, token, isAuthenticated: true, isLoading: false });
-      } catch {
-        localStorage.removeItem('tee_token');
-        localStorage.removeItem('tee_user');
-        setState((prev) => ({ ...prev, isLoading: false }));
-      }
-    } else {
-      setState((prev) => ({ ...prev, isLoading: false }));
-    }
+    hydrateStoredSession(setState);
   }, []);
 
   useEffect(() => {
@@ -138,8 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [instance]);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('tee_token');
-    localStorage.removeItem('tee_user');
+    clearStoredSession();
     setProcessedAccount(null);
     setState({
       user: null,
@@ -153,6 +163,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ ...state, loginWithMicrosoft, logout, error }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function TestAuthProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    token: null,
+    isAuthenticated: false,
+    isLoading: true,
+  });
+
+  useEffect(() => {
+    hydrateStoredSession(setState);
+  }, []);
+
+  const logout = useCallback(() => {
+    clearStoredSession();
+    setState({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isLoading: false,
+    });
+  }, []);
+
+  const loginWithMicrosoft = useCallback(() => {}, []);
+
+  return (
+    <AuthContext.Provider value={{ ...state, loginWithMicrosoft, logout, error: null }}>
       {children}
     </AuthContext.Provider>
   );

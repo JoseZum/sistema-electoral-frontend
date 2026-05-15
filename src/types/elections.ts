@@ -39,6 +39,13 @@ export interface ElectionDetail extends Election {
   options: ElectionOption[];
 }
 
+export interface ElectionResultVoter {
+  full_name: string;
+  carnet: string;
+  has_voted: boolean;
+  selected_option_label: string | null;
+}
+
 export interface ElectionResults {
   election: Election;
   options: Array<{
@@ -51,10 +58,7 @@ export interface ElectionResults {
   total_votes: number;
   total_eligible: number;
   participation_rate: number;
-  voters?: Array<{
-    full_name: string;
-    carnet: string;
-  }>;
+  voters?: ElectionResultVoter[];
 }
 
 // Voter-facing types

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
+import { getSuffrageLabel } from '@/lib/suffrage';
 import type { VoterElectionDetail } from '@/types/elections';
 import Loader from '@/components/Loader';
 
@@ -100,7 +101,7 @@ export default function VotingBoothPage() {
           <h2 style={{ fontFamily: 'var(--font-display)', marginBottom: '0.75rem' }}>Voto registrado</h2>
           <p style={{ color: 'var(--muted)', marginBottom: '2rem', lineHeight: 1.7 }}>
             Tu voto fue emitido exitosamente y registrado de forma segura.
-            {election?.is_anonymous && ' No es posible modificarlo ni vincularlo a tu identidad.'}
+            {election?.is_anonymous && ' La opcion elegida no puede vincularse a tu identidad.'}
           </p>
 
           <div className="receipt">
@@ -189,7 +190,7 @@ export default function VotingBoothPage() {
             </div>
             <p style={{ fontWeight: 600 }}>Registrando tu voto...</p>
             <p style={{ fontSize: '0.8125rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
-              {election.is_anonymous ? 'Registrando voto anónimo...' : 'Registrando voto...'}
+              {election.is_anonymous ? 'Registrando sufragio por papeleta...' : 'Registrando sufragio publico...'}
             </p>
           </div>
         </div>
@@ -199,7 +200,7 @@ export default function VotingBoothPage() {
         <div className="ballot">
           <div className="ballot-header">
             <div className="label" style={{ marginBottom: '0.5rem' }}>
-              {election.is_anonymous ? 'Voto secreto y anónimo' : 'Voto nominal'}
+              {getSuffrageLabel(election.is_anonymous)}
             </div>
             <h2 style={{ fontFamily: 'var(--font-display)' }}>{election.title}</h2>
             <p>Selecciona una opción para emitir tu voto</p>
