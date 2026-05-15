@@ -12,11 +12,41 @@ import {
 } from '@/lib/suffrage';
 import { listTags } from '@/lib/tags-api';
 import TagBadge from '@/components/tags/TagBadge';
-import type { Election, ElectionResults } from '@/types/elections';
+import type { Election, ElectionResultOption, ElectionResults } from '@/types/elections';
 import type { TagSummary } from '@/types/tags';
 import Loader from '@/components/Loader';
 
 const RESULT_COLORS = ['#0F766E', '#1D4ED8', '#7C2D12', '#7E22CE', '#1E3A8A', '#374151'];
+
+function isSpecialResultOption(option: ElectionResultOption) {
+  return option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE';
+}
+
+function getResultGroups(options: ElectionResultOption[]) {
+  const flatChildren = options.filter((option) => option.parent_option_id);
+  const topLevelOptions = options.filter((option) => !option.parent_option_id);
+
+  return topLevelOptions
+    .filter((option) => option.suboptions?.length || flatChildren.some((child) => child.parent_option_id === option.id))
+    .map((option) => {
+      const nestedSuboptions = option.suboptions?.length
+        ? option.suboptions
+        : flatChildren.filter((child) => child.parent_option_id === option.id);
+
+      return {
+        ...option,
+        suboptions: nestedSuboptions,
+      };
+    });
+}
+
+function getResultOptionTotal(option: ElectionResultOption) {
+  if (option.suboptions?.length) {
+    return option.suboptions.reduce((total, suboption) => total + suboption.vote_count, 0);
+  }
+
+  return option.vote_count;
+}
 
 export default function ResultadosPage() {
   const [elections, setElections] = useState<Election[]>([]);
@@ -122,6 +152,8 @@ export default function ResultadosPage() {
   const selectedElection = elections.find((election) => election.id === selectedId) || null;
   const voterRows = results?.voters ?? [];
   const abstentionCount = voterRows.filter((voter) => !voter.has_voted).length;
+  const resultGroups = results ? getResultGroups(results.options) : [];
+  const hasSuboptionResults = resultGroups.length > 0;
 
   useEffect(() => {
     if (filteredElections.length === 0) {
@@ -463,53 +495,121 @@ export default function ResultadosPage() {
               Desglose de resultados
             </h3>
 
-            {results.options
-              .filter((option) => option.option_type !== 'BLANK' && option.option_type !== 'NULL_VOTE')
-              .map((option, index) => (
-                <div key={option.id} className="results-bar">
-                  <div className="results-bar-label">{option.label}</div>
-                  <div className="results-bar-track">
-                    <div
-                      className="results-bar-fill"
-                      style={{
-                        width: `${option.percentage}%`,
-                        background: RESULT_COLORS[index % RESULT_COLORS.length],
-                      }}
-                    >
-                      {option.percentage.toFixed(1)}%
-                    </div>
-                  </div>
-                  <div className="results-bar-count">{option.vote_count.toLocaleString()}</div>
-                </div>
-              ))}
+            {hasSuboptionResults ? (
+              <div className="results-suboption-groups">
+                {resultGroups.map((parentOption, parentIndex) => {
+                  const regularSuboptions = (parentOption.suboptions ?? []).filter((option) => !isSpecialResultOption(option));
+                  const specialSuboptions = (parentOption.suboptions ?? []).filter(isSpecialResultOption);
 
-            {results.options.some((option) => option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE') && (
-              <div style={{ borderTop: '1px dashed var(--border)', marginTop: '1rem', paddingTop: '1rem' }}>
-                {results.options
-                  .filter((option) => option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE')
-                  .map((option) => (
-                    <div key={option.id} className="results-bar">
-                      <div className="results-bar-label" style={{ color: 'var(--muted)' }}>
-                        {option.label}
+                  return (
+                    <section key={parentOption.id} className="results-suboption-group">
+                      <div className="results-suboption-group__header">
+                        <div>
+                          <div className="results-suboption-group__eyebrow">Grupo {parentIndex + 1}</div>
+                          <h4>{parentOption.label}</h4>
+                        </div>
+                        <span>{getResultOptionTotal(parentOption).toLocaleString()} votos</span>
                       </div>
+
+                      {regularSuboptions.map((option, optionIndex) => (
+                        <div key={option.id} className="results-bar results-bar--nested">
+                          <div className="results-bar-label">{option.label}</div>
+                          <div className="results-bar-track">
+                            <div
+                              className="results-bar-fill"
+                              style={{
+                                width: `${option.percentage}%`,
+                                background: RESULT_COLORS[(parentIndex + optionIndex) % RESULT_COLORS.length],
+                              }}
+                            >
+                              {option.percentage.toFixed(1)}%
+                            </div>
+                          </div>
+                          <div className="results-bar-count">{option.vote_count.toLocaleString()}</div>
+                        </div>
+                      ))}
+
+                      {specialSuboptions.length > 0 && (
+                        <div className="results-suboption-specials">
+                          {specialSuboptions.map((option) => (
+                            <div key={option.id} className="results-bar results-bar--nested">
+                              <div className="results-bar-label" style={{ color: 'var(--muted)' }}>
+                                {option.label}
+                              </div>
+                              <div className="results-bar-track">
+                                <div
+                                  className="results-bar-fill"
+                                  style={{
+                                    width: `${option.percentage}%`,
+                                    background: 'var(--border-strong)',
+                                    color: 'var(--muted)',
+                                  }}
+                                >
+                                  {option.percentage.toFixed(1)}%
+                                </div>
+                              </div>
+                              <div className="results-bar-count" style={{ color: 'var(--muted)' }}>
+                                {option.vote_count.toLocaleString()}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  );
+                })}
+              </div>
+            ) : (
+              <>
+                {results.options
+                  .filter((option) => option.option_type !== 'BLANK' && option.option_type !== 'NULL_VOTE')
+                  .map((option, index) => (
+                    <div key={option.id} className="results-bar">
+                      <div className="results-bar-label">{option.label}</div>
                       <div className="results-bar-track">
                         <div
                           className="results-bar-fill"
                           style={{
                             width: `${option.percentage}%`,
-                            background: 'var(--border-strong)',
-                            color: 'var(--muted)',
+                            background: RESULT_COLORS[index % RESULT_COLORS.length],
                           }}
                         >
                           {option.percentage.toFixed(1)}%
                         </div>
                       </div>
-                      <div className="results-bar-count" style={{ color: 'var(--muted)' }}>
-                        {option.vote_count.toLocaleString()}
-                      </div>
+                      <div className="results-bar-count">{option.vote_count.toLocaleString()}</div>
                     </div>
                   ))}
-              </div>
+
+                {results.options.some((option) => option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE') && (
+                  <div style={{ borderTop: '1px dashed var(--border)', marginTop: '1rem', paddingTop: '1rem' }}>
+                    {results.options
+                      .filter((option) => option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE')
+                      .map((option) => (
+                        <div key={option.id} className="results-bar">
+                          <div className="results-bar-label" style={{ color: 'var(--muted)' }}>
+                            {option.label}
+                          </div>
+                          <div className="results-bar-track">
+                            <div
+                              className="results-bar-fill"
+                              style={{
+                                width: `${option.percentage}%`,
+                                background: 'var(--border-strong)',
+                                color: 'var(--muted)',
+                              }}
+                            >
+                              {option.percentage.toFixed(1)}%
+                            </div>
+                          </div>
+                          <div className="results-bar-count" style={{ color: 'var(--muted)' }}>
+                            {option.vote_count.toLocaleString()}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
 

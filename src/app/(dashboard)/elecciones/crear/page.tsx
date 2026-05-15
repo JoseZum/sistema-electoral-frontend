@@ -30,6 +30,15 @@ interface OptionForm {
   id: string;
   label: string;
   description: string;
+  image_url: string;
+  suboptions: SuboptionForm[];
+}
+
+interface SuboptionForm {
+  id: string;
+  label: string;
+  description: string;
+  image_url: string;
 }
 
 type Student = TagStudent;
@@ -39,6 +48,15 @@ interface AdminSummary {
 }
 
 type KeyRequirementMode = 'COUNT' | 'PERCENTAGE';
+
+interface CreateElectionPayloadOption {
+  label: string;
+  option_type: string;
+  description?: string;
+  image_url?: string;
+  display_order: number;
+  suboptions?: CreateElectionPayloadOption[];
+}
 
 const SECTION_ITEMS = [
   { id: 'informacion', label: 'Información', description: 'Detalles y horario' },
@@ -243,6 +261,7 @@ function ToggleCard({
 export default function CrearEleccionPage() {
   const router = useRouter();
   const optionCounterRef = useRef(2);
+  const suboptionCounterRef = useRef(4);
   const sectionRefs = useRef<Record<SectionId, HTMLElement | null>>({
     informacion: null,
     votantes: null,
@@ -272,10 +291,29 @@ export default function CrearEleccionPage() {
   });
 
   const [options, setOptions] = useState<OptionForm[]>([
-    { id: 'option-1', label: '', description: '' },
-    { id: 'option-2', label: '', description: '' },
+    {
+      id: 'option-1',
+      label: '',
+      description: '',
+      image_url: '',
+      suboptions: [
+        { id: 'suboption-1', label: '', description: '', image_url: '' },
+        { id: 'suboption-2', label: '', description: '', image_url: '' },
+      ],
+    },
+    {
+      id: 'option-2',
+      label: '',
+      description: '',
+      image_url: '',
+      suboptions: [
+        { id: 'suboption-3', label: '', description: '', image_url: '' },
+        { id: 'suboption-4', label: '', description: '', image_url: '' },
+      ],
+    },
   ]);
 
+  const [allowSuboptions, setAllowSuboptions] = useState(false);
   const [includeBlank, setIncludeBlank] = useState(true);
   const [includeNull, setIncludeNull] = useState(true);
   const [requiresKeys, setRequiresKeys] = useState(false);
@@ -395,9 +433,25 @@ export default function CrearEleccionPage() {
     });
   }
 
+  function createSuboption(): SuboptionForm {
+    suboptionCounterRef.current += 1;
+    return { id: `suboption-${suboptionCounterRef.current}`, label: '', description: '', image_url: '' };
+  }
+
   function addOption() {
     optionCounterRef.current += 1;
-    setOptions((prev) => [...prev, { id: `option-${optionCounterRef.current}`, label: '', description: '' }]);
+    const nextOptionId = `option-${optionCounterRef.current}`;
+    const nextSuboptions = [createSuboption(), createSuboption()];
+    setOptions((prev) => [
+      ...prev,
+      {
+        id: nextOptionId,
+        label: '',
+        description: '',
+        image_url: '',
+        suboptions: nextSuboptions,
+      },
+    ]);
   }
 
   function removeOption(index: number) {
@@ -408,6 +462,52 @@ export default function CrearEleccionPage() {
     setOptions((prev) =>
       prev.map((option, currentIndex) => (
         currentIndex === index ? { ...option, [field]: value } : option
+      ))
+    );
+  }
+
+  function addSuboption(optionIndex: number) {
+    const nextSuboption = createSuboption();
+    setOptions((prev) =>
+      prev.map((option, currentIndex) => (
+        currentIndex === optionIndex
+          ? { ...option, suboptions: [...option.suboptions, nextSuboption] }
+          : option
+      ))
+    );
+  }
+
+  function removeSuboption(optionIndex: number, suboptionIndex: number) {
+    setOptions((prev) =>
+      prev.map((option, currentIndex) => (
+        currentIndex === optionIndex
+          ? {
+              ...option,
+              suboptions: option.suboptions.filter((_, currentSuboptionIndex) => (
+                currentSuboptionIndex !== suboptionIndex
+              )),
+            }
+          : option
+      ))
+    );
+  }
+
+  function updateSuboption(
+    optionIndex: number,
+    suboptionIndex: number,
+    field: keyof SuboptionForm,
+    value: string,
+  ) {
+    setOptions((prev) =>
+      prev.map((option, currentIndex) => (
+        currentIndex === optionIndex
+          ? {
+              ...option,
+              suboptions: option.suboptions.map((suboption, currentSuboptionIndex) => (
+                currentSuboptionIndex === suboptionIndex ? { ...suboption, [field]: value } : suboption
+              )),
+            }
+          : option
       ))
     );
   }
@@ -452,14 +552,24 @@ export default function CrearEleccionPage() {
       setError(null);
 
       const trimmedTitle = form.title.trim();
-      const candidateOptions = options
+      const normalizedOptions = options
         .map((option) => ({
           label: option.label.trim(),
           description: option.description.trim(),
-        }))
-        .filter((option) => option.label);
+          image_url: option.image_url.trim(),
+          suboptions: option.suboptions
+            .map((suboption) => ({
+              label: suboption.label.trim(),
+              description: suboption.description.trim(),
+              image_url: suboption.image_url.trim(),
+            }))
+            .filter((suboption) => suboption.label),
+        }));
+      const candidateOptions = normalizedOptions.filter((option) => option.label);
+      const parentOptions = normalizedOptions.filter((option) => option.label || option.suboptions.length > 0);
 
       const uniqueCandidateLabels = new Set(candidateOptions.map((option) => option.label.toLowerCase()));
+      const uniqueParentLabels = new Set(parentOptions.map((option) => option.label.toLowerCase()));
       const immediateMinutes = form.start_immediately
         ? getImmediateDurationMinutes(form.immediate_duration_value, form.immediate_duration_unit)
         : null;
@@ -468,12 +578,39 @@ export default function CrearEleccionPage() {
         throw new Error('Escribe un título para la votación');
       }
 
-      if (candidateOptions.length < 2) {
-        throw new Error('Agrega al menos 2 opciones de voto');
-      }
+      if (allowSuboptions) {
+        if (parentOptions.length === 0) {
+          throw new Error('Agrega al menos un grupo de votación con subopciones');
+        }
 
-      if (uniqueCandidateLabels.size !== candidateOptions.length) {
-        throw new Error('Las opciones de voto no pueden repetirse');
+        if (parentOptions.some((option) => !option.label)) {
+          throw new Error('Cada grupo de subopciones debe tener un nombre');
+        }
+
+        if (uniqueParentLabels.size !== parentOptions.length) {
+          throw new Error('Los grupos de subopciones no pueden repetirse');
+        }
+
+        const parentWithoutEnoughSuboptions = parentOptions.find((option) => option.suboptions.length < 2);
+        if (parentWithoutEnoughSuboptions) {
+          throw new Error(`Agrega al menos 2 subopciones para ${parentWithoutEnoughSuboptions.label}`);
+        }
+
+        const parentWithRepeatedSuboptions = parentOptions.find((option) => {
+          const suboptionLabels = option.suboptions.map((suboption) => suboption.label.toLowerCase());
+          return new Set(suboptionLabels).size !== suboptionLabels.length;
+        });
+        if (parentWithRepeatedSuboptions) {
+          throw new Error(`Las subopciones de ${parentWithRepeatedSuboptions.label} no pueden repetirse`);
+        }
+      } else {
+        if (candidateOptions.length < 2) {
+          throw new Error('Agrega al menos 2 opciones de voto');
+        }
+
+        if (uniqueCandidateLabels.size !== candidateOptions.length) {
+          throw new Error('Las opciones de voto no pueden repetirse');
+        }
       }
 
       if (form.voter_source === 'MANUAL' && selectedStudents.length === 0) {
@@ -500,18 +637,63 @@ export default function CrearEleccionPage() {
 
       const minKeys = resolveMinKeysForSubmit();
 
-      const allOptions: Array<{ label: string; option_type: string; description?: string }> = candidateOptions.map((option) => ({
-        label: option.label,
-        description: option.description || undefined,
-        option_type: 'CANDIDATE',
-      }));
+      const allOptions: CreateElectionPayloadOption[] = allowSuboptions
+        ? parentOptions.map((option, index) => {
+            const suboptions: CreateElectionPayloadOption[] = option.suboptions.map((suboption, suboptionIndex) => ({
+              label: suboption.label,
+              option_type: 'CANDIDATE',
+              description: suboption.description || undefined,
+              image_url: suboption.image_url || undefined,
+              display_order: suboptionIndex + 1,
+            }));
 
-      if (includeBlank) {
-        allOptions.push({ label: 'Voto en blanco', option_type: 'BLANK' });
+            if (includeBlank) {
+              suboptions.push({
+                label: 'Voto en blanco',
+                option_type: 'BLANK',
+                display_order: suboptions.length + 1,
+              });
+            }
+
+            if (includeNull) {
+              suboptions.push({
+                label: 'Voto nulo',
+                option_type: 'NULL_VOTE',
+                display_order: suboptions.length + 1,
+              });
+            }
+
+            return {
+              label: option.label,
+              option_type: 'CANDIDATE',
+              description: option.description || undefined,
+              image_url: option.image_url || undefined,
+              display_order: index + 1,
+              suboptions,
+            };
+          })
+        : candidateOptions.map((option, index) => ({
+            label: option.label,
+            description: option.description || undefined,
+            image_url: option.image_url || undefined,
+            option_type: 'CANDIDATE',
+            display_order: index + 1,
+          }));
+
+      if (!allowSuboptions && includeBlank) {
+        allOptions.push({
+          label: 'Voto en blanco',
+          option_type: 'BLANK',
+          display_order: allOptions.length + 1,
+        });
       }
 
-      if (includeNull) {
-        allOptions.push({ label: 'Voto nulo', option_type: 'NULL_VOTE' });
+      if (!allowSuboptions && includeNull) {
+        allOptions.push({
+          label: 'Voto nulo',
+          option_type: 'NULL_VOTE',
+          display_order: allOptions.length + 1,
+        });
       }
 
       const electionData: Record<string, unknown> = {
@@ -524,12 +706,8 @@ export default function CrearEleccionPage() {
         immediate_minutes: immediateMinutes,
         requires_keys: requiresKeys,
         min_keys: minKeys,
-        options: allOptions.map((option, index) => ({
-          label: option.label,
-          option_type: option.option_type,
-          description: option.description,
-          display_order: index + 1,
-        })),
+        allow_suboptions: allowSuboptions,
+        options: allOptions,
         status: 'AUTO',
       };
 
@@ -563,6 +741,21 @@ export default function CrearEleccionPage() {
   }
 
   const candidateOptionsCount = options.filter((option) => option.label.trim()).length;
+  const configuredParentOptions = options.filter((option) => (
+    option.label.trim() || option.suboptions.some((suboption) => suboption.label.trim())
+  ));
+  const suboptionsCount = options.reduce(
+    (total, option) => total + option.suboptions.filter((suboption) => suboption.label.trim()).length,
+    0,
+  );
+  const suboptionsReady = configuredParentOptions.length > 0
+    && configuredParentOptions.every((option) => (
+      Boolean(option.label.trim())
+      && option.suboptions.filter((suboption) => suboption.label.trim()).length >= 2
+    ));
+  const ballotSummary = allowSuboptions
+    ? `${configuredParentOptions.length} grupo${configuredParentOptions.length === 1 ? '' : 's'} / ${suboptionsCount} subopci${suboptionsCount === 1 ? 'ón' : 'ones'}`
+    : `${candidateOptionsCount} opci${candidateOptionsCount === 1 ? 'ón' : 'ones'} configurada${candidateOptionsCount === 1 ? '' : 's'}`;
   const scheduleIsValid = !form.start_immediately && Boolean(form.start_time && form.end_time)
     ? isScheduledWindowValid(form.start_time, form.end_time)
     : false;
@@ -615,8 +808,8 @@ export default function CrearEleccionPage() {
       summary: getVoterSummary(form, selectedStudents),
     },
     opciones: {
-      complete: candidateOptionsCount >= 2,
-      summary: `${candidateOptionsCount} opci${candidateOptionsCount === 1 ? 'ón' : 'ones'} configurada${candidateOptionsCount === 1 ? '' : 's'}`,
+      complete: allowSuboptions ? suboptionsReady : candidateOptionsCount >= 2,
+      summary: ballotSummary,
     },
     sufragio: {
       complete: true,
@@ -646,11 +839,11 @@ export default function CrearEleccionPage() {
           <div className="create-election-hero__stats">
             <div className="create-election-hero__stat">
               <span>Progreso</span>
-              <strong>{completionCount}/4</strong>
+              <strong>{completionCount}/{SECTION_ITEMS.length}</strong>
             </div>
             <div className="create-election-hero__stat">
               <span>Opciones</span>
-              <strong>{candidateOptionsCount}</strong>
+              <strong>{allowSuboptions ? `${configuredParentOptions.length}/${suboptionsCount}` : candidateOptionsCount}</strong>
             </div>
             <div className="create-election-hero__stat">
               <span>Votantes</span>
@@ -791,14 +984,26 @@ export default function CrearEleccionPage() {
               </p>
             </div>
 
+            <div className="create-election-toggle-grid">
+              <ToggleCard
+                checked={allowSuboptions}
+                title="Usar subopciones"
+                description="Permite crear grupos como cargos o preguntas, cada uno con sus propias opciones."
+                onChange={(checked) => {
+                  setError(null);
+                  setAllowSuboptions(checked);
+                }}
+              />
+            </div>
+
             <div className="create-election-option-stack">
               {options.map((option, index) => (
                 <div key={option.id} className="create-election-option-card">
                   <div className="create-election-option-card__header">
                     <div className="create-election-option-card__index create-election-option-card__index--candidate">
-                      Opción {index + 1}
+                      {allowSuboptions ? 'Grupo' : 'Opción'} {index + 1}
                     </div>
-                    {options.length > 2 && (
+                    {options.length > (allowSuboptions ? 1 : 2) && (
                       <button
                         type="button"
                         className="btn btn-ghost btn-sm"
@@ -812,12 +1017,12 @@ export default function CrearEleccionPage() {
 
                   <div className="create-election-field-grid">
                     <div className="input-group">
-                      <label>Nombre</label>
+                      <label>{allowSuboptions ? 'Nombre del grupo' : 'Nombre'}</label>
                       <input
                         type="text"
                         className="input"
                         aria-label={`Nombre de la opcion ${index + 1}`}
-                        placeholder="Ej: Candidatura A"
+                        placeholder={allowSuboptions ? 'Ej: Presidencia' : 'Ej: Candidatura A'}
                         value={option.label}
                         onChange={(event) => updateOption(index, 'label', event.target.value)}
                       />
@@ -834,7 +1039,96 @@ export default function CrearEleccionPage() {
                         onChange={(event) => updateOption(index, 'description', event.target.value)}
                       />
                     </div>
+
+                    <div className="input-group">
+                      <label>Imagen</label>
+                      <input
+                        type="url"
+                        className="input"
+                        aria-label={`Imagen de la opcion ${index + 1}`}
+                        placeholder="https://.../imagen.jpg"
+                        value={option.image_url}
+                        onChange={(event) => updateOption(index, 'image_url', event.target.value)}
+                      />
+                    </div>
                   </div>
+
+                  {allowSuboptions && (
+                    <div className="create-election-suboptions">
+                      <div className="create-election-suboptions__header">
+                        <div>
+                          <div className="create-election-suboptions__title">Subopciones</div>
+                          <p className="create-election-inline-help">
+                            Cada votante elegira una subopcion dentro de este grupo.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm"
+                          onClick={() => addSuboption(index)}
+                        >
+                          Agregar subopcion
+                        </button>
+                      </div>
+
+                      <div className="create-election-suboption-list">
+                        {option.suboptions.map((suboption, suboptionIndex) => (
+                          <div key={suboption.id} className="create-election-suboption-row">
+                            <div className="create-election-suboption-row__index">
+                              {suboptionIndex + 1}
+                            </div>
+                            <div className="create-election-suboption-row__fields">
+                              <div className="input-group">
+                                <label>Nombre de subopcion</label>
+                                <input
+                                  type="text"
+                                  className="input"
+                                  aria-label={`Nombre de la subopcion ${suboptionIndex + 1} del grupo ${index + 1}`}
+                                  placeholder="Ej: Formula A"
+                                  value={suboption.label}
+                                  onChange={(event) => updateSuboption(index, suboptionIndex, 'label', event.target.value)}
+                                />
+                              </div>
+
+                              <div className="input-group">
+                                <label>Descripcion</label>
+                                <input
+                                  type="text"
+                                  className="input"
+                                  aria-label={`Descripcion de la subopcion ${suboptionIndex + 1} del grupo ${index + 1}`}
+                                  placeholder="Descripcion corta opcional"
+                                  value={suboption.description}
+                                  onChange={(event) => updateSuboption(index, suboptionIndex, 'description', event.target.value)}
+                                />
+                              </div>
+
+                              <div className="input-group">
+                                <label>Imagen</label>
+                                <input
+                                  type="url"
+                                  className="input"
+                                  aria-label={`Imagen de la subopcion ${suboptionIndex + 1} del grupo ${index + 1}`}
+                                  placeholder="https://.../imagen.jpg"
+                                  value={suboption.image_url}
+                                  onChange={(event) => updateSuboption(index, suboptionIndex, 'image_url', event.target.value)}
+                                />
+                              </div>
+                            </div>
+                            {option.suboptions.length > 2 && (
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => removeSuboption(index, suboptionIndex)}
+                                style={{ color: 'var(--muted)' }}
+                              >
+                                Quitar
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -849,20 +1143,24 @@ export default function CrearEleccionPage() {
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              Agregar opción
+              {allowSuboptions ? 'Agregar grupo' : 'Agregar opción'}
             </button>
 
             <div className="create-election-toggle-grid">
               <ToggleCard
                 checked={includeBlank}
                 title='Incluir "Voto en blanco"'
-                description="Agrega una alternativa explicita para emitir voto en blanco."
+                description={allowSuboptions
+                  ? 'Agrega voto en blanco como subopcion en cada grupo.'
+                  : 'Agrega una alternativa explicita para emitir voto en blanco.'}
                 onChange={setIncludeBlank}
               />
               <ToggleCard
                 checked={includeNull}
                 title='Incluir "Voto nulo"'
-                description="Agrega una opcion para contemplar votos anulados en la boleta."
+                description={allowSuboptions
+                  ? 'Agrega voto nulo como subopcion en cada grupo.'
+                  : 'Agrega una opcion para contemplar votos anulados en la boleta.'}
                 onChange={setIncludeNull}
               />
             </div>
@@ -1112,9 +1410,7 @@ export default function CrearEleccionPage() {
               </div>
               <div className="create-election-summary-item">
                 <span>Boleta</span>
-                <strong>
-                  {candidateOptionsCount} opci{candidateOptionsCount === 1 ? 'ón' : 'ones'}
-                </strong>
+                <strong>{ballotSummary}</strong>
               </div>
               <div className="create-election-summary-item">
                 <span>Sufragio</span>

@@ -4,13 +4,48 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { getSuffrageLabel } from '@/lib/suffrage';
-import type { VoterElectionDetail } from '@/types/elections';
+import type { ElectionOption, VoterElectionDetail } from '@/types/elections';
 import Loader from '@/components/Loader';
 
 type VoteStage = 'loading' | 'voting' | 'confirm-dialog' | 'submitting' | 'success' | 'error';
 
 interface CastVoteResponse {
   message: string;
+}
+
+function getOptionDescription(option: ElectionOption) {
+  const metadataDescription = option.metadata?.description;
+  if (typeof metadataDescription === 'string') {
+    return metadataDescription;
+  }
+
+  const legacyDescription = (option as ElectionOption & { description?: unknown }).description;
+  return typeof legacyDescription === 'string' ? legacyDescription : null;
+}
+
+function getGroupedOptions(options: ElectionOption[]) {
+  const flatChildren = options.filter((option) => option.parent_option_id);
+  const topLevelOptions = options.filter((option) => !option.parent_option_id);
+
+  return topLevelOptions
+    .filter((option) => option.suboptions?.length || flatChildren.some((child) => child.parent_option_id === option.id))
+    .map((option) => {
+      const nestedSuboptions = option.suboptions?.length
+        ? option.suboptions
+        : flatChildren.filter((child) => child.parent_option_id === option.id);
+      return {
+        ...option,
+        suboptions: nestedSuboptions,
+      };
+    });
+}
+
+function OptionImage({ option }: { option: ElectionOption }) {
+  if (!option.image_url) {
+    return null;
+  }
+
+  return <img className="vote-card-image" src={option.image_url} alt="" />;
 }
 
 export default function VotingBoothPage() {
@@ -20,6 +55,7 @@ export default function VotingBoothPage() {
 
   const [election, setElection] = useState<VoterElectionDetail | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedSuboptions, setSelectedSuboptions] = useState<Record<string, string>>({});
   const [stage, setStage] = useState<VoteStage>('loading');
   const [error, setError] = useState<string | null>(null);
 
@@ -44,15 +80,40 @@ export default function VotingBoothPage() {
   }, [fetchElection]);
 
   async function handleSubmitVote() {
-    if (!selectedOption || !election) return;
+    if (!election) return;
+
+    const groupedOptions = getGroupedOptions(election.options);
+    const hasSuboptionBallot = Boolean(election.allow_suboptions || groupedOptions.length > 0) && groupedOptions.length > 0;
+
+    if (!hasSuboptionBallot && !selectedOption) return;
+
+    if (hasSuboptionBallot && groupedOptions.some((option) => !selectedSuboptions[option.id])) {
+      setError('Selecciona una subopcion para cada grupo');
+      setStage('voting');
+      return;
+    }
+
     try {
       setStage('submitting');
       setError(null);
 
-      const castBody: Record<string, string> = {
-        electionId: electionId,
-        optionId: selectedOption,
-      };
+      let castBody: Record<string, unknown>;
+
+      if (hasSuboptionBallot) {
+        const selections = groupedOptions.map((option) => ({
+          parentOptionId: option.id,
+          optionId: selectedSuboptions[option.id],
+        }));
+
+        if (selections.some((selection) => !selection.optionId)) {
+          throw new Error('Selecciona una subopcion para cada grupo');
+        }
+
+        castBody = { electionId, selections };
+      } else {
+        if (!selectedOption) return;
+        castBody = { electionId, optionId: selectedOption };
+      }
 
       await apiClient<CastVoteResponse>('/api/voting/cast', {
         method: 'POST',
@@ -85,6 +146,20 @@ export default function VotingBoothPage() {
       </div>
     );
   }
+
+  const groupedOptions = election ? getGroupedOptions(election.options) : [];
+  const hasSuboptionBallot = Boolean(election?.allow_suboptions || groupedOptions.length > 0) && groupedOptions.length > 0;
+  const selectedSuboptionLabels = groupedOptions
+    .map((parentOption) => {
+      const selectedSuboption = parentOption.suboptions?.find((option) => (
+        option.id === selectedSuboptions[parentOption.id]
+      ));
+
+      return selectedSuboption
+        ? { parentLabel: parentOption.label, optionLabel: selectedSuboption.label }
+        : null;
+    })
+    .filter((selection): selection is { parentLabel: string; optionLabel: string } => selection !== null);
 
   // Success/Confirmation state
   if (stage === 'success') {
@@ -122,6 +197,12 @@ export default function VotingBoothPage() {
                 <span className="receipt-value">{selectedLabel}</span>
               </div>
             )}
+            {!election?.is_anonymous && hasSuboptionBallot && selectedSuboptionLabels.map((selection) => (
+              <div key={selection.parentLabel} className="receipt-row">
+                <span className="receipt-label">{selection.parentLabel}</span>
+                <span className="receipt-value">{selection.optionLabel}</span>
+              </div>
+            ))}
           </div>
 
           <button
@@ -140,13 +221,15 @@ export default function VotingBoothPage() {
 
   // Separate regular options from special (blank/null)
   const regularOptions = election.options.filter(
-    (o) => o.option_type !== 'BLANK' && o.option_type !== 'NULL_VOTE'
+    (o) => !o.parent_option_id && !o.suboptions?.length && o.option_type !== 'BLANK' && o.option_type !== 'NULL_VOTE'
   );
   const specialOptions = election.options.filter(
-    (o) => o.option_type === 'BLANK' || o.option_type === 'NULL_VOTE'
+    (o) => !o.parent_option_id && (o.option_type === 'BLANK' || o.option_type === 'NULL_VOTE')
   );
 
-  const canSubmit = selectedOption !== null && stage === 'voting';
+  const allSuboptionGroupsSelected = groupedOptions.length > 0
+    && groupedOptions.every((option) => Boolean(selectedSuboptions[option.id]));
+  const canSubmit = (hasSuboptionBallot ? allSuboptionGroupsSelected : selectedOption !== null) && stage === 'voting';
 
   return (
     <>
@@ -155,13 +238,30 @@ export default function VotingBoothPage() {
         <div className="modal-overlay active">
           <div className="modal">
             <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: '0.75rem' }}>Confirmar voto</h3>
-            <p style={{ color: 'var(--muted)', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
-              Estás a punto de emitir tu voto por{' '}
-              <strong style={{ color: 'var(--ink)' }}>
-                {election.options.find((o) => o.id === selectedOption)?.label}
-              </strong>
-              . Esta acción no se puede deshacer.
-            </p>
+            {hasSuboptionBallot ? (
+              <div style={{ color: 'var(--muted)', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
+                <p style={{ marginBottom: '0.75rem' }}>
+                  Estas a punto de emitir tus selecciones para {selectedSuboptionLabels.length} grupo
+                  {selectedSuboptionLabels.length === 1 ? '' : 's'}. Esta accion no se puede deshacer.
+                </p>
+                <div className="vote-confirm-selection-list">
+                  {selectedSuboptionLabels.map((selection) => (
+                    <div key={selection.parentLabel} className="vote-confirm-selection">
+                      <span>{selection.parentLabel}</span>
+                      <strong>{selection.optionLabel}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: 'var(--muted)', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
+                Estás a punto de emitir tu voto por{' '}
+                <strong style={{ color: 'var(--ink)' }}>
+                  {election.options.find((o) => o.id === selectedOption)?.label}
+                </strong>
+                . Esta acción no se puede deshacer.
+              </p>
+            )}
             {error && (
               <div style={{ padding: '0.75rem', background: 'var(--error-light)', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.8125rem', color: 'var(--error)' }}>
                 {error}
@@ -203,21 +303,79 @@ export default function VotingBoothPage() {
               {getSuffrageLabel(election.is_anonymous)}
             </div>
             <h2 style={{ fontFamily: 'var(--font-display)' }}>{election.title}</h2>
-            <p>Selecciona una opción para emitir tu voto</p>
+            <p>{hasSuboptionBallot ? 'Selecciona una subopcion por grupo para emitir tu voto' : 'Selecciona una opción para emitir tu voto'}</p>
           </div>
 
           <div className="ballot-body">
+            {hasSuboptionBallot ? (
+              <div className="suboption-ballot-groups">
+                {groupedOptions.map((parentOption, parentIndex) => (
+                  <section key={parentOption.id} className="suboption-ballot-group">
+                    <div className="suboption-ballot-group__header">
+                      <div>
+                        <div className="suboption-ballot-group__eyebrow">Grupo {parentIndex + 1}</div>
+                        <h3>{parentOption.label}</h3>
+                        {getOptionDescription(parentOption) && (
+                          <p>{getOptionDescription(parentOption)}</p>
+                        )}
+                      </div>
+                      <span className={selectedSuboptions[parentOption.id] ? 'suboption-status complete' : 'suboption-status'}>
+                        {selectedSuboptions[parentOption.id] ? 'Seleccionado' : 'Pendiente'}
+                      </span>
+                    </div>
 
+                    <div className="vote-cards-grid vote-cards-grid--suboptions">
+                      {(parentOption.suboptions ?? []).map((option) => {
+                        const isSpecialOption = option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE';
+                        const description = getOptionDescription(option);
+
+                        return (
+                          <div
+                            key={option.id}
+                            className={`vote-card ${isSpecialOption ? 'vote-card-special' : ''} ${selectedSuboptions[parentOption.id] === option.id ? 'selected' : ''}`}
+                            onClick={() => {
+                              setSelectedSuboptions((current) => ({ ...current, [parentOption.id]: option.id }));
+                              setError(null);
+                            }}
+                          >
+                            <div className="vote-card-header">
+                              <OptionImage option={option} />
+                              <div className="vote-card-name">
+                                {isSpecialOption && option.option_type === 'BLANK' ? 'Voto en blanco' : option.label}
+                              </div>
+                              {description && <div className="vote-card-desc">{description}</div>}
+                            </div>
+                            <div className="vote-card-checkbox">
+                              <div className="vote-card-x">
+                                <span className="vote-card-x-icon">&#10005;</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <>
             {/* Regular vote cards */}
             <div className="vote-cards-grid">
               {regularOptions.map((option) => (
                 <div
                   key={option.id}
                   className={`vote-card ${selectedOption === option.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedOption(option.id)}
+                  onClick={() => {
+                    setSelectedOption(option.id);
+                    setError(null);
+                  }}
                 >
                   <div className="vote-card-header">
+                    <OptionImage option={option} />
                     <div className="vote-card-name">{option.label}</div>
+                    {getOptionDescription(option) && (
+                      <div className="vote-card-desc">{getOptionDescription(option)}</div>
+                    )}
                   </div>
                   <div className="vote-card-checkbox">
                     <div className="vote-card-x">
@@ -235,7 +393,10 @@ export default function VotingBoothPage() {
                   <div
                     key={option.id}
                     className={`vote-card vote-card-special ${selectedOption === option.id ? 'selected' : ''}`}
-                    onClick={() => setSelectedOption(option.id)}
+                    onClick={() => {
+                      setSelectedOption(option.id);
+                      setError(null);
+                    }}
                   >
                     <div className="vote-card-header">
                       <div className="vote-card-name">
@@ -255,6 +416,8 @@ export default function VotingBoothPage() {
                   </div>
                 ))}
               </div>
+            )}
+              </>
             )}
           </div>
 

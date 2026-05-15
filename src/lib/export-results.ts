@@ -1,4 +1,4 @@
-import type { ElectionResultVoter, ElectionResults } from '@/types/elections';
+import type { ElectionResultOption, ElectionResultVoter, ElectionResults } from '@/types/elections';
 import {
   getElectionStatusLabel,
   getNoVoteLabel,
@@ -30,6 +30,36 @@ function downloadBlob(blob: Blob, filename: string) {
 
 function safeFilename(title: string): string {
   return title.replace(/[^a-zA-Z0-9_\-\u00C0-\u017F ]/g, '').replace(/\s+/g, '_').toLowerCase();
+}
+
+function isSpecialResultOption(option: ElectionResultOption) {
+  return option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE';
+}
+
+function getResultGroups(options: ElectionResultOption[]) {
+  const flatChildren = options.filter((option) => option.parent_option_id);
+  const topLevelOptions = options.filter((option) => !option.parent_option_id);
+
+  return topLevelOptions
+    .filter((option) => option.suboptions?.length || flatChildren.some((child) => child.parent_option_id === option.id))
+    .map((option) => {
+      const nestedSuboptions = option.suboptions?.length
+        ? option.suboptions
+        : flatChildren.filter((child) => child.parent_option_id === option.id);
+
+      return {
+        ...option,
+        suboptions: nestedSuboptions,
+      };
+    });
+}
+
+function getResultOptionTotal(option: ElectionResultOption) {
+  if (option.suboptions?.length) {
+    return option.suboptions.reduce((total, suboption) => total + suboption.vote_count, 0);
+  }
+
+  return option.vote_count;
 }
 
 function renderParticipationCell(voter: ElectionResultVoter, isAnonymous: boolean): string {
@@ -104,23 +134,50 @@ function buildReportHTML(results: ElectionResults, forWord = false): string {
   const suffrageLabel = getSuffrageLabel(results.election.is_anonymous);
   const statusLabel = getElectionStatusLabel(results.election.status);
   const abstentions = Math.max(0, results.total_eligible - results.total_votes);
-  const mainOptions = results.options.filter(
-    (option) => option.option_type !== 'BLANK' && option.option_type !== 'NULL_VOTE',
-  );
-  const specialOptions = results.options.filter(
-    (option) => option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE',
-  );
-  const optionRows = [...mainOptions, ...specialOptions]
-    .map(
-      (option) => `
-        <tr>
-          <td>${escapeHtml(option.label)}</td>
-          <td class="num">${fmtNum(option.vote_count)}</td>
-          <td class="num">${option.percentage.toFixed(2)}%</td>
-        </tr>
-      `,
-    )
-    .join('');
+  const resultGroups = getResultGroups(results.options);
+  const hasSuboptionResults = resultGroups.length > 0;
+  const mainOptions = hasSuboptionResults
+    ? []
+    : results.options.filter((option) => !isSpecialResultOption(option));
+  const specialOptions = hasSuboptionResults
+    ? []
+    : results.options.filter(isSpecialResultOption);
+  const optionRows = hasSuboptionResults
+    ? resultGroups
+        .map((parentOption) => {
+          const suboptionRows = (parentOption.suboptions ?? [])
+            .map(
+              (option) => `
+                <tr class="${isSpecialResultOption(option) ? 'suboption-row suboption-row--special' : 'suboption-row'}">
+                  <td><span class="suboption-label">${escapeHtml(option.label)}</span></td>
+                  <td class="num">${fmtNum(option.vote_count)}</td>
+                  <td class="num">${option.percentage.toFixed(2)}%</td>
+                </tr>
+              `,
+            )
+            .join('');
+
+          return `
+            <tr class="group-row">
+              <td>${escapeHtml(parentOption.label)}</td>
+              <td class="num">${fmtNum(getResultOptionTotal(parentOption))}</td>
+              <td class="num">-</td>
+            </tr>
+            ${suboptionRows}
+          `;
+        })
+        .join('')
+    : [...mainOptions, ...specialOptions]
+        .map(
+          (option) => `
+            <tr>
+              <td>${escapeHtml(option.label)}</td>
+              <td class="num">${fmtNum(option.vote_count)}</td>
+              <td class="num">${option.percentage.toFixed(2)}%</td>
+            </tr>
+          `,
+        )
+        .join('');
 
   const statsBlock = forWord
     ? `
@@ -369,6 +426,21 @@ function buildReportHTML(results: ElectionResults, forWord = false): string {
     }
     .row--abstention td {
       background: rgba(220, 38, 38, 0.035);
+    }
+    .group-row td {
+      background: #f8fbff;
+      color: #172033;
+      font-weight: 800;
+      border-top: 1px solid #d7e3f4;
+    }
+    .suboption-label {
+      display: inline-block;
+      padding-left: 18px;
+      color: #334155;
+    }
+    .suboption-row--special .suboption-label,
+    .suboption-row--special td {
+      color: #64748b;
     }
     .num {
       text-align: right;

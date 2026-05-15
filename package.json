@@ -6,7 +6,7 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test:security": "npm run test:security:vulnerabilities",
     "test:security:vulnerabilities": "node tests/security/vulnerabilityAudit.mjs",
     "test:lighthouse": "npm run test:lighthouse:auth && npm run test:lighthouse:tags && npm run test:lighthouse:voting && npm run test:lighthouse:padron && npm run test:lighthouse:audit && npm run test:lighthouse:admin && npm run test:lighthouse:scrutiny && npm run test:lighthouse:results && npm run test:lighthouse:dashboard && npm run test:lighthouse:elections && npm run test:lighthouse:monitoring",
@@ -29,11 +29,14 @@
     "file-saver": "^2.0.5",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
-    "next": "^16.2.4",
+    "next": "^16.2.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-is": "^19.2.5",
     "recharts": "^3.8.1"
+  },
+  "overrides": {
+    "postcss": "8.5.14"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
@@ -43,8 +46,10 @@
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.20",
     "chrome-launcher": "1.2.1",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.6",
     "lighthouse": "13.2.0",
-    "postcss": "^8.4.49",
+    "postcss": "8.5.14",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2"
   }

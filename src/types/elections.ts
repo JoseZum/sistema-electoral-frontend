@@ -24,15 +24,19 @@ export interface Election {
   total_voters: number;
   votes_cast: number;
   options_count: number;
+  allow_suboptions?: boolean;
 }
 
 export interface ElectionOption {
   id: string;
-  election_id: string;
+  election_id?: string;
   label: string;
   option_type: string;
   display_order: number;
-  metadata: Record<string, unknown> | null;
+  parent_option_id?: string | null;
+  image_url?: string | null;
+  metadata?: Record<string, unknown> | null;
+  suboptions?: ElectionOption[];
 }
 
 export interface ElectionDetail extends Election {
@@ -48,17 +52,23 @@ export interface ElectionResultVoter {
 
 export interface ElectionResults {
   election: Election;
-  options: Array<{
-    id: string;
-    label: string;
-    option_type: string;
-    vote_count: number;
-    percentage: number;
-  }>;
+  options: ElectionResultOption[];
   total_votes: number;
   total_eligible: number;
   participation_rate: number;
   voters?: ElectionResultVoter[];
+}
+
+export interface ElectionResultOption {
+    id: string;
+    label: string;
+    option_type: string;
+    parent_option_id?: string | null;
+    image_url?: string | null;
+    metadata?: Record<string, unknown> | null;
+    vote_count: number;
+    percentage: number;
+    suboptions?: ElectionResultOption[];
 }
 
 // Voter-facing types
@@ -73,6 +83,7 @@ export interface VoterElection {
   start_time: string | null;
   end_time: string | null;
   has_voted: boolean;
+  allow_suboptions?: boolean;
   total_options: number;
 }
 
@@ -87,10 +98,6 @@ export interface VoterElectionDetail {
   start_time: string | null;
   end_time: string | null;
   has_voted: boolean;
-  options: Array<{
-    id: string;
-    label: string;
-    option_type: string;
-    display_order: number;
-  }>;
+  allow_suboptions?: boolean;
+  options: ElectionOption[];
 }
