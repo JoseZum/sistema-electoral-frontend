@@ -7,6 +7,9 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
+    "test:unit": "vitest",
+    "test:unit:ui": "vitest --ui",
+    "test:unit:coverage": "vitest --coverage",
     "test:security": "npm run test:security:vulnerabilities",
     "test:security:vulnerabilities": "node tests/security/vulnerabilityAudit.mjs",
     "test:lighthouse": "npm run test:lighthouse:auth && npm run test:lighthouse:tags && npm run test:lighthouse:voting && npm run test:lighthouse:padron && npm run test:lighthouse:audit && npm run test:lighthouse:admin && npm run test:lighthouse:scrutiny && npm run test:lighthouse:results && npm run test:lighthouse:dashboard && npm run test:lighthouse:elections && npm run test:lighthouse:monitoring",
@@ -40,17 +43,25 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.5.1",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/ui": "^1.0.4",
     "autoprefixer": "^10.4.20",
     "chrome-launcher": "1.2.1",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.6",
+    "jsdom": "^23.0.1",
     "lighthouse": "13.2.0",
     "postcss": "8.5.14",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^1.0.4"
   }
 }
