@@ -20,13 +20,22 @@ function shouldUseStaticAuth() {
 }
 
 export function MsalProviderWrapper({ children }: { children: React.ReactNode }) {
-  const useStaticAuth = shouldUseStaticAuth();
+  const [useStaticAuth, setUseStaticAuth] = useState<boolean | null>(null);
   const [msalInstance, setMsalInstance] = useState<PublicClientApplication | null>(() => getMsalInstance());
   const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    if (useStaticAuth) {
+    const shouldUseStatic = shouldUseStaticAuth();
+    setUseStaticAuth(shouldUseStatic);
+
+    if (shouldUseStatic) {
       setIsInitializing(false);
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (useStaticAuth !== false) {
       return;
     }
 
@@ -49,6 +58,27 @@ export function MsalProviderWrapper({ children }: { children: React.ReactNode })
       mounted = false;
     };
   }, [msalInstance, useStaticAuth]);
+
+  if (useStaticAuth === null || isInitializing) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.75rem',
+          padding: '2rem',
+          textAlign: 'center',
+        }}
+      >
+        <div className="overline">Tribunal Electoral Estudiantil</div>
+        <p style={{ margin: 0, color: 'var(--muted)' }}>Cargando sistema electoral...</p>
+        <div className="loader" aria-hidden="true" />
+      </div>
+    );
+  }
 
   if (useStaticAuth) {
     return <TestAuthProvider>{children}</TestAuthProvider>;
