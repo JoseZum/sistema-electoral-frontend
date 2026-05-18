@@ -135,7 +135,7 @@ export default function EleccionesPage() {
     }
 
     const confirmed = window.confirm(
-      `Se archivará la votación "${election.title}". ¿Deseas continuar?`
+      `Se archivará la votación "${election.title}".\n\nAdvertencia: al archivar se eliminarán permanentemente de la base de datos las fotos de las boletas.\n\nSi todavía necesitas ver esas boletas con sus imágenes, exporta primero el reporte de resultados en PDF.\n\n¿Deseas continuar?`
     );
 
     if (!confirmed) {

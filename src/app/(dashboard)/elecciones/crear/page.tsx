@@ -46,6 +46,8 @@ interface OptionForm extends BallotImageFormState {
   suboptions: SuboptionForm[];
 }
 
+type EditableBallotField = 'label' | 'description' | 'image_url' | 'image_input' | 'image_name';
+
 type Student = TagStudent;
 
 interface AdminSummary {
@@ -251,6 +253,8 @@ function BallotImageField({
       <div className="create-election-image-field__stack">
         {hasImage ? (
           <div className="create-election-image-preview">
+            {/* Previewing arbitrary user-provided data URLs/remote URLs is not a fit for next/image. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={imageUrl} alt="" className="create-election-image-preview__media" />
             <div className="create-election-image-preview__meta">
               <strong>Vista previa lista</strong>
@@ -262,7 +266,18 @@ function BallotImageField({
         )}
 
         <div className="create-election-image-actions">
-          <label className={`create-election-upload-button ${uploading ? 'is-busy' : ''}`}>
+          <label
+            className={`create-election-upload-button ${uploading ? 'is-busy' : ''}`}
+            tabIndex={uploading ? -1 : 0}
+            role="button"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                const fileInput = event.currentTarget.querySelector('input') as HTMLInputElement | null;
+                fileInput?.click();
+              }
+            }}
+          >
             <input
               type="file"
               accept="image/*"
@@ -577,7 +592,7 @@ export default function CrearEleccionPage() {
     setOptions((prev) => prev.filter((_, currentIndex) => currentIndex !== index));
   }
 
-  function updateOption(index: number, field: keyof OptionForm, value: string) {
+  function updateOption(index: number, field: EditableBallotField, value: string) {
     setOptions((prev) =>
       prev.map((option, currentIndex) => (
         currentIndex === index ? { ...option, [field]: value } : option
@@ -589,7 +604,7 @@ export default function CrearEleccionPage() {
     setOptions((prev) =>
       prev.map((option, currentIndex) => (
         currentIndex === index
-          ? { ...option, image_input: value, image_url: value, image_name: '' }
+          ? { ...option, image_input: value, image_url: value.trim(), image_name: '' }
           : option
       ))
     );
@@ -666,7 +681,7 @@ export default function CrearEleccionPage() {
   function updateSuboption(
     optionIndex: number,
     suboptionIndex: number,
-    field: keyof SuboptionForm,
+    field: EditableBallotField,
     value: string,
   ) {
     setOptions((prev) =>
@@ -691,7 +706,7 @@ export default function CrearEleccionPage() {
               ...option,
               suboptions: option.suboptions.map((suboption, currentSuboptionIndex) => (
                 currentSuboptionIndex === suboptionIndex
-                  ? { ...suboption, image_input: value, image_url: value, image_name: '' }
+                  ? { ...suboption, image_input: value, image_url: value.trim(), image_name: '' }
                   : suboption
               )),
             }
@@ -796,6 +811,10 @@ export default function CrearEleccionPage() {
     try {
       setSaving(true);
       setError(null);
+
+      if (uploadingImageIds.length > 0) {
+        throw new Error('Espera a que termine el procesamiento de las imágenes antes de crear la votación');
+      }
 
       const trimmedTitle = form.title.trim();
       const normalizedOptions = options
@@ -1589,8 +1608,8 @@ export default function CrearEleccionPage() {
                 Revisa el resumen lateral. Si algo falta, salta al bloque correspondiente y ajustalo.
               </div>
             </div>
-            <button type="button" className="btn btn-accent" onClick={handleSubmit} disabled={saving}>
-              {saving ? 'Creando...' : 'Crear votación'}
+            <button type="button" className="btn btn-accent" onClick={handleSubmit} disabled={saving || uploadingImageIds.length > 0}>
+              {saving ? 'Creando...' : uploadingImageIds.length > 0 ? 'Procesando imágenes...' : 'Crear votación'}
             </button>
           </div>
         </div>
