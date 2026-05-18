@@ -2750,6 +2750,100 @@ body {
   flex: 1;
 }
 
+.create-election-image-field {
+  grid-column: 1 / -1;
+}
+
+.create-election-image-field__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.create-election-image-preview,
+.create-election-image-placeholder {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.create-election-image-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem;
+}
+
+.create-election-image-preview__media {
+  width: 88px;
+  height: 88px;
+  border-radius: 0.9rem;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  flex-shrink: 0;
+}
+
+.create-election-image-preview__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.create-election-image-preview__meta strong {
+  color: var(--ink);
+  font-size: 0.875rem;
+}
+
+.create-election-image-preview__meta span,
+.create-election-image-placeholder {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.create-election-image-preview__meta span {
+  word-break: break-word;
+}
+
+.create-election-image-placeholder {
+  padding: 0.9rem 1rem;
+}
+
+.create-election-image-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.create-election-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent);
+  background: rgba(190, 30, 45, 0.08);
+  color: var(--accent);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease-smooth), box-shadow 0.2s var(--ease-smooth), background 0.2s var(--ease-smooth);
+}
+
+.create-election-upload-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.create-election-upload-button.is-busy {
+  opacity: 0.75;
+  cursor: progress;
+}
+
 .create-election-submit-card {
   padding: 1.1rem 1.2rem;
   display: flex;
@@ -2813,6 +2907,10 @@ body {
   .create-election-nav-list {
     width: 100%;
     grid-template-columns: 1fr;
+  }
+
+  .create-election-image-preview {
+    align-items: flex-start;
   }
 
   .create-election-nav-list {

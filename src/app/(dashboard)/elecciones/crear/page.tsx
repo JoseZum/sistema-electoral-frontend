@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
+import { prepareBallotImage } from '@/lib/ballot-image-upload';
 import ImmediateStartConfig, {
   formatImmediateDuration,
   getImmediateDurationMinutes,
@@ -26,20 +27,26 @@ interface ElectionForm {
   end_time: string;
 }
 
-interface OptionForm {
+interface BallotImageFormState {
+  image_url: string;
+  image_input: string;
+  image_name: string;
+}
+
+interface SuboptionForm extends BallotImageFormState {
   id: string;
   label: string;
   description: string;
-  image_url: string;
+}
+
+interface OptionForm extends BallotImageFormState {
+  id: string;
+  label: string;
+  description: string;
   suboptions: SuboptionForm[];
 }
 
-interface SuboptionForm {
-  id: string;
-  label: string;
-  description: string;
-  image_url: string;
-}
+type EditableBallotField = 'label' | 'description' | 'image_url' | 'image_input' | 'image_name';
 
 type Student = TagStudent;
 
@@ -147,6 +154,11 @@ const DEFAULT_IMMEDIATE_DURATION_VALUE = '15';
 const DEFAULT_IMMEDIATE_DURATION_UNIT: ImmediateDurationUnit = 'minutes';
 const DEFAULT_KEY_COUNT = '1';
 const DEFAULT_KEY_PERCENTAGE = '50';
+const EMPTY_BALLOT_IMAGE = {
+  image_url: '',
+  image_input: '',
+  image_name: '',
+} as const;
 
 function isScheduledWindowValid(startTime: string, endTime: string) {
   const start = new Date(startTime);
@@ -196,6 +208,112 @@ function getPercentageMinKeys(totalAdmins: number, percentage: number) {
 
 function formatKeysLabel(count: number) {
   return `${count} llave${count === 1 ? '' : 's'}`;
+}
+
+function BallotImageField({
+  imageUrl,
+  imageInput,
+  imageName,
+  uploading,
+  urlAriaLabel,
+  uploadAriaLabel,
+  onUrlChange,
+  onFileChange,
+  onClear,
+}: {
+  imageUrl: string;
+  imageInput: string;
+  imageName: string;
+  uploading: boolean;
+  urlAriaLabel: string;
+  uploadAriaLabel: string;
+  onUrlChange: (value: string) => void;
+  onFileChange: (file: File | null) => Promise<void> | void;
+  onClear: () => void;
+}) {
+  const hasImage = Boolean(imageUrl);
+  const sourceLabel = imageName
+    ? `Archivo cargado: ${imageName}`
+    : imageInput.trim()
+      ? 'URL configurada'
+      : 'Sin imagen seleccionada';
+
+  async function handleFileInputChange(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0] ?? null;
+
+    await onFileChange(file);
+    input.value = '';
+  }
+
+  return (
+    <div className="input-group create-election-image-field">
+      <label>Imagen</label>
+
+      <div className="create-election-image-field__stack">
+        {hasImage ? (
+          <div className="create-election-image-preview">
+            {/* Previewing arbitrary user-provided data URLs/remote URLs is not a fit for next/image. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={imageUrl} alt="" className="create-election-image-preview__media" />
+            <div className="create-election-image-preview__meta">
+              <strong>Vista previa lista</strong>
+              <span>{sourceLabel}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="create-election-image-placeholder">Todavía no has cargado una foto para esta boleta.</div>
+        )}
+
+        <div className="create-election-image-actions">
+          <label
+            className={`create-election-upload-button ${uploading ? 'is-busy' : ''}`}
+            tabIndex={uploading ? -1 : 0}
+            role="button"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                const fileInput = event.currentTarget.querySelector('input') as HTMLInputElement | null;
+                fileInput?.click();
+              }
+            }}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              aria-label={uploadAriaLabel}
+              onChange={handleFileInputChange}
+              style={{ display: 'none' }}
+              disabled={uploading}
+            />
+            {uploading ? 'Procesando...' : hasImage ? 'Reemplazar foto' : 'Subir foto'}
+          </label>
+
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={onClear}
+            disabled={!hasImage || uploading}
+          >
+            Quitar
+          </button>
+        </div>
+
+        <input
+          type="url"
+          className="input"
+          aria-label={urlAriaLabel}
+          placeholder="https://.../imagen.jpg"
+          value={imageInput}
+          onChange={(event) => onUrlChange(event.target.value)}
+        />
+        <p className="create-election-inline-help">
+          Sube la imagen desde tu dispositivo o, si ya existe, pega una URL. La vista previa usará la versión que
+          quede guardada en la boleta.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function SelectionCard({
@@ -295,20 +413,20 @@ export default function CrearEleccionPage() {
       id: 'option-1',
       label: '',
       description: '',
-      image_url: '',
+      ...EMPTY_BALLOT_IMAGE,
       suboptions: [
-        { id: 'suboption-1', label: '', description: '', image_url: '' },
-        { id: 'suboption-2', label: '', description: '', image_url: '' },
+        { id: 'suboption-1', label: '', description: '', ...EMPTY_BALLOT_IMAGE },
+        { id: 'suboption-2', label: '', description: '', ...EMPTY_BALLOT_IMAGE },
       ],
     },
     {
       id: 'option-2',
       label: '',
       description: '',
-      image_url: '',
+      ...EMPTY_BALLOT_IMAGE,
       suboptions: [
-        { id: 'suboption-3', label: '', description: '', image_url: '' },
-        { id: 'suboption-4', label: '', description: '', image_url: '' },
+        { id: 'suboption-3', label: '', description: '', ...EMPTY_BALLOT_IMAGE },
+        { id: 'suboption-4', label: '', description: '', ...EMPTY_BALLOT_IMAGE },
       ],
     },
   ]);
@@ -320,6 +438,7 @@ export default function CrearEleccionPage() {
   const [keyRequirementMode, setKeyRequirementMode] = useState<KeyRequirementMode>('COUNT');
   const [keyCount, setKeyCount] = useState(DEFAULT_KEY_COUNT);
   const [keyPercentage, setKeyPercentage] = useState(DEFAULT_KEY_PERCENTAGE);
+  const [uploadingImageIds, setUploadingImageIds] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -435,7 +554,22 @@ export default function CrearEleccionPage() {
 
   function createSuboption(): SuboptionForm {
     suboptionCounterRef.current += 1;
-    return { id: `suboption-${suboptionCounterRef.current}`, label: '', description: '', image_url: '' };
+    return {
+      id: `suboption-${suboptionCounterRef.current}`,
+      label: '',
+      description: '',
+      ...EMPTY_BALLOT_IMAGE,
+    };
+  }
+
+  function setImageUploading(targetId: string, uploading: boolean) {
+    setUploadingImageIds((prev) => {
+      if (uploading) {
+        return prev.includes(targetId) ? prev : [...prev, targetId];
+      }
+
+      return prev.filter((currentId) => currentId !== targetId);
+    });
   }
 
   function addOption() {
@@ -448,7 +582,7 @@ export default function CrearEleccionPage() {
         id: nextOptionId,
         label: '',
         description: '',
-        image_url: '',
+        ...EMPTY_BALLOT_IMAGE,
         suboptions: nextSuboptions,
       },
     ]);
@@ -458,12 +592,64 @@ export default function CrearEleccionPage() {
     setOptions((prev) => prev.filter((_, currentIndex) => currentIndex !== index));
   }
 
-  function updateOption(index: number, field: keyof OptionForm, value: string) {
+  function updateOption(index: number, field: EditableBallotField, value: string) {
     setOptions((prev) =>
       prev.map((option, currentIndex) => (
         currentIndex === index ? { ...option, [field]: value } : option
       ))
     );
+  }
+
+  function updateOptionImageInput(index: number, value: string) {
+    setOptions((prev) =>
+      prev.map((option, currentIndex) => (
+        currentIndex === index
+          ? { ...option, image_input: value, image_url: value.trim(), image_name: '' }
+          : option
+      ))
+    );
+  }
+
+  function clearOptionImage(index: number) {
+    setOptions((prev) =>
+      prev.map((option, currentIndex) => (
+        currentIndex === index ? { ...option, ...EMPTY_BALLOT_IMAGE } : option
+      ))
+    );
+  }
+
+  async function uploadOptionImage(index: number, file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    const optionId = options[index]?.id;
+    if (!optionId) {
+      return;
+    }
+
+    try {
+      setError(null);
+      setImageUploading(optionId, true);
+      const storedImage = await prepareBallotImage(file);
+
+      setOptions((prev) =>
+        prev.map((option, currentIndex) => (
+          currentIndex === index
+            ? {
+                ...option,
+                image_url: storedImage,
+                image_input: '',
+                image_name: file.name,
+              }
+            : option
+        ))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo procesar la imagen seleccionada');
+    } finally {
+      setImageUploading(optionId, false);
+    }
   }
 
   function addSuboption(optionIndex: number) {
@@ -495,7 +681,7 @@ export default function CrearEleccionPage() {
   function updateSuboption(
     optionIndex: number,
     suboptionIndex: number,
-    field: keyof SuboptionForm,
+    field: EditableBallotField,
     value: string,
   ) {
     setOptions((prev) =>
@@ -510,6 +696,81 @@ export default function CrearEleccionPage() {
           : option
       ))
     );
+  }
+
+  function updateSuboptionImageInput(optionIndex: number, suboptionIndex: number, value: string) {
+    setOptions((prev) =>
+      prev.map((option, currentIndex) => (
+        currentIndex === optionIndex
+          ? {
+              ...option,
+              suboptions: option.suboptions.map((suboption, currentSuboptionIndex) => (
+                currentSuboptionIndex === suboptionIndex
+                  ? { ...suboption, image_input: value, image_url: value.trim(), image_name: '' }
+                  : suboption
+              )),
+            }
+          : option
+      ))
+    );
+  }
+
+  function clearSuboptionImage(optionIndex: number, suboptionIndex: number) {
+    setOptions((prev) =>
+      prev.map((option, currentIndex) => (
+        currentIndex === optionIndex
+          ? {
+              ...option,
+              suboptions: option.suboptions.map((suboption, currentSuboptionIndex) => (
+                currentSuboptionIndex === suboptionIndex
+                  ? { ...suboption, ...EMPTY_BALLOT_IMAGE }
+                  : suboption
+              )),
+            }
+          : option
+      ))
+    );
+  }
+
+  async function uploadSuboptionImage(optionIndex: number, suboptionIndex: number, file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    const suboptionId = options[optionIndex]?.suboptions[suboptionIndex]?.id;
+    if (!suboptionId) {
+      return;
+    }
+
+    try {
+      setError(null);
+      setImageUploading(suboptionId, true);
+      const storedImage = await prepareBallotImage(file);
+
+      setOptions((prev) =>
+        prev.map((option, currentIndex) => (
+          currentIndex === optionIndex
+            ? {
+                ...option,
+                suboptions: option.suboptions.map((suboption, currentSuboptionIndex) => (
+                  currentSuboptionIndex === suboptionIndex
+                    ? {
+                        ...suboption,
+                        image_url: storedImage,
+                        image_input: '',
+                        image_name: file.name,
+                      }
+                    : suboption
+                )),
+              }
+            : option
+        ))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo procesar la imagen seleccionada');
+    } finally {
+      setImageUploading(suboptionId, false);
+    }
   }
 
   function resolveMinKeysForSubmit() {
@@ -550,6 +811,10 @@ export default function CrearEleccionPage() {
     try {
       setSaving(true);
       setError(null);
+
+      if (uploadingImageIds.length > 0) {
+        throw new Error('Espera a que termine el procesamiento de las imágenes antes de crear la votación');
+      }
 
       const trimmedTitle = form.title.trim();
       const normalizedOptions = options
@@ -1040,17 +1305,17 @@ export default function CrearEleccionPage() {
                       />
                     </div>
 
-                    <div className="input-group">
-                      <label>Imagen</label>
-                      <input
-                        type="url"
-                        className="input"
-                        aria-label={`Imagen de la opcion ${index + 1}`}
-                        placeholder="https://.../imagen.jpg"
-                        value={option.image_url}
-                        onChange={(event) => updateOption(index, 'image_url', event.target.value)}
-                      />
-                    </div>
+                    <BallotImageField
+                      imageUrl={option.image_url}
+                      imageInput={option.image_input}
+                      imageName={option.image_name}
+                      uploading={uploadingImageIds.includes(option.id)}
+                      urlAriaLabel={`URL de imagen de la opcion ${index + 1}`}
+                      uploadAriaLabel={`Subir imagen de la opcion ${index + 1}`}
+                      onUrlChange={(value) => updateOptionImageInput(index, value)}
+                      onFileChange={(file) => uploadOptionImage(index, file)}
+                      onClear={() => clearOptionImage(index)}
+                    />
                   </div>
 
                   {allowSuboptions && (
@@ -1102,17 +1367,17 @@ export default function CrearEleccionPage() {
                                 />
                               </div>
 
-                              <div className="input-group">
-                                <label>Imagen</label>
-                                <input
-                                  type="url"
-                                  className="input"
-                                  aria-label={`Imagen de la subopcion ${suboptionIndex + 1} del grupo ${index + 1}`}
-                                  placeholder="https://.../imagen.jpg"
-                                  value={suboption.image_url}
-                                  onChange={(event) => updateSuboption(index, suboptionIndex, 'image_url', event.target.value)}
-                                />
-                              </div>
+                              <BallotImageField
+                                imageUrl={suboption.image_url}
+                                imageInput={suboption.image_input}
+                                imageName={suboption.image_name}
+                                uploading={uploadingImageIds.includes(suboption.id)}
+                                urlAriaLabel={`URL de imagen de la subopcion ${suboptionIndex + 1} del grupo ${index + 1}`}
+                                uploadAriaLabel={`Subir imagen de la subopcion ${suboptionIndex + 1} del grupo ${index + 1}`}
+                                onUrlChange={(value) => updateSuboptionImageInput(index, suboptionIndex, value)}
+                                onFileChange={(file) => uploadSuboptionImage(index, suboptionIndex, file)}
+                                onClear={() => clearSuboptionImage(index, suboptionIndex)}
+                              />
                             </div>
                             {option.suboptions.length > 2 && (
                               <button
@@ -1343,8 +1608,8 @@ export default function CrearEleccionPage() {
                 Revisa el resumen lateral. Si algo falta, salta al bloque correspondiente y ajustalo.
               </div>
             </div>
-            <button type="button" className="btn btn-accent" onClick={handleSubmit} disabled={saving}>
-              {saving ? 'Creando...' : 'Crear votación'}
+            <button type="button" className="btn btn-accent" onClick={handleSubmit} disabled={saving || uploadingImageIds.length > 0}>
+              {saving ? 'Creando...' : uploadingImageIds.length > 0 ? 'Procesando imágenes...' : 'Crear votación'}
             </button>
           </div>
         </div>

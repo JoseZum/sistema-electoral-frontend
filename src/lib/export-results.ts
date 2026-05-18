@@ -36,6 +36,23 @@ function isSpecialResultOption(option: ElectionResultOption) {
   return option.option_type === 'BLANK' || option.option_type === 'NULL_VOTE';
 }
 
+function getOptionDescription(option: Pick<ElectionResultOption, 'metadata'>) {
+  const metadataDescription = option.metadata?.description;
+  return typeof metadataDescription === 'string' ? metadataDescription : null;
+}
+
+function getBallotOptionLabel(option: ElectionResultOption) {
+  if (option.option_type === 'BLANK') {
+    return 'Voto en blanco';
+  }
+
+  if (option.option_type === 'NULL_VOTE') {
+    return 'Voto nulo';
+  }
+
+  return option.label;
+}
+
 function getResultGroups(options: ElectionResultOption[]) {
   const flatChildren = options.filter((option) => option.parent_option_id);
   const topLevelOptions = options.filter((option) => !option.parent_option_id);
@@ -73,6 +90,108 @@ function renderParticipationCell(voter: ElectionResultVoter, isAnonymous: boolea
   }
 
   return escapeHtml(voter.selected_option_label ?? 'Sin detalle disponible');
+}
+
+function renderBallotCard(option: ElectionResultOption): string {
+  const description = getOptionDescription(option);
+  const hasImage = Boolean(option.image_url);
+
+  return `
+    <article class="ballot-report-card ${isSpecialResultOption(option) ? 'ballot-report-card--special' : ''}">
+      ${hasImage
+        ? `<img class="ballot-report-card__image" src="${escapeHtml(option.image_url ?? '')}" alt="" />`
+        : '<div class="ballot-report-card__image ballot-report-card__image--placeholder">Sin foto</div>'}
+      <div class="ballot-report-card__content">
+        <div class="ballot-report-card__title">${escapeHtml(getBallotOptionLabel(option))}</div>
+        ${description ? `<div class="ballot-report-card__description">${escapeHtml(description)}</div>` : ''}
+        <div class="ballot-report-card__metrics">
+          <span>${fmtNum(option.vote_count)} voto${option.vote_count === 1 ? '' : 's'}</span>
+          <strong>${option.percentage.toFixed(2)}%</strong>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function buildBallotsSection(results: ElectionResults): string {
+  const resultGroups = getResultGroups(results.options);
+  const hasSuboptionResults = resultGroups.length > 0;
+
+  if (results.options.length === 0) {
+    return `
+      <section class="panel">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">Boletas</div>
+            <h2>Replica visual de la boleta</h2>
+          </div>
+        </div>
+        <p class="empty-state">No hay opciones configuradas para reconstruir la boleta.</p>
+      </section>
+    `;
+  }
+
+  if (hasSuboptionResults) {
+    const groupsMarkup = resultGroups
+      .map((parentOption, index) => {
+        const description = getOptionDescription(parentOption);
+
+        return `
+          <div class="ballot-report-group">
+            <div class="ballot-report-group__header">
+              <div>
+                <div class="ballot-report-group__eyebrow">Grupo ${index + 1}</div>
+                <h3>${escapeHtml(parentOption.label)}</h3>
+                ${description ? `<p>${escapeHtml(description)}</p>` : ''}
+              </div>
+              <div class="ballot-report-group__total">${fmtNum(getResultOptionTotal(parentOption))} boleta${getResultOptionTotal(parentOption) === 1 ? '' : 's'}</div>
+            </div>
+            <div class="ballot-report-grid ballot-report-grid--suboptions">
+              ${(parentOption.suboptions ?? []).map((option) => renderBallotCard(option)).join('')}
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+
+    return `
+      <section class="panel">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">Boletas</div>
+            <h2>Replica visual de la boleta</h2>
+            <p>Esta sección conserva la estructura publicada de la boleta con sus imágenes, descripciones y conteos.</p>
+          </div>
+        </div>
+        ${groupsMarkup}
+      </section>
+    `;
+  }
+
+  const mainOptions = results.options.filter((option) => !isSpecialResultOption(option));
+  const specialOptions = results.options.filter(isSpecialResultOption);
+
+  return `
+    <section class="panel">
+      <div class="section-header">
+        <div>
+          <div class="section-kicker">Boletas</div>
+          <h2>Replica visual de la boleta</h2>
+          <p>Esta sección conserva la boleta publicada con sus fotos, textos y el resultado consolidado por opción.</p>
+        </div>
+      </div>
+      <div class="ballot-report-grid">
+        ${mainOptions.map((option) => renderBallotCard(option)).join('')}
+      </div>
+      ${specialOptions.length > 0
+        ? `
+          <div class="ballot-report-grid ballot-report-grid--special">
+            ${specialOptions.map((option) => renderBallotCard(option)).join('')}
+          </div>
+        `
+        : ''}
+    </section>
+  `;
 }
 
 function buildParticipationSection(results: ElectionResults): string {
@@ -449,6 +568,118 @@ function buildReportHTML(results: ElectionResults, forWord = false): string {
       color: #64748b;
       font-size: 10pt;
     }
+    .ballot-report-group {
+      border: 1px dashed #c9d7ec;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #fbfdff 0%, #f3f7ff 100%);
+      padding: 16px;
+      margin-top: 14px;
+      page-break-inside: avoid;
+    }
+    .ballot-report-group__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .ballot-report-group__header h3 {
+      font-size: 11pt;
+      color: #172033;
+      margin-bottom: 4px;
+    }
+    .ballot-report-group__header p {
+      color: #475569;
+      font-size: 9pt;
+    }
+    .ballot-report-group__eyebrow {
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #1d4ed8;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .ballot-report-group__total {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(29, 78, 216, 0.1);
+      color: #1d4ed8;
+      font-size: 8.8pt;
+      font-weight: 700;
+    }
+    .ballot-report-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .ballot-report-grid--special {
+      margin-top: 12px;
+    }
+    .ballot-report-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid #dbe3f0;
+      background: #ffffff;
+      page-break-inside: avoid;
+      min-height: 118px;
+    }
+    .ballot-report-card--special {
+      background: linear-gradient(180deg, #fbfbfc 0%, #f4f5f7 100%);
+    }
+    .ballot-report-card__image {
+      width: 88px;
+      height: 88px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 1px solid #dbe3f0;
+      background: #f8fafc;
+      flex-shrink: 0;
+    }
+    .ballot-report-card__image--placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 8pt;
+    }
+    .ballot-report-card__content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+    .ballot-report-card__title {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #172033;
+    }
+    .ballot-report-card__description {
+      color: #475569;
+      font-size: 9pt;
+      line-height: 1.45;
+    }
+    .ballot-report-card__metrics {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      color: #334155;
+      font-size: 8.8pt;
+      font-weight: 600;
+    }
+    .ballot-report-card__metrics strong {
+      color: #0f172a;
+      font-size: 10pt;
+    }
     footer {
       padding: 0 28px 24px;
       color: #64748b;
@@ -535,6 +766,8 @@ function buildReportHTML(results: ElectionResults, forWord = false): string {
           <tbody>${optionRows}</tbody>
         </table>
       </section>
+
+      ${buildBallotsSection(results)}
 
       ${buildParticipationSection(results)}
     </main>
