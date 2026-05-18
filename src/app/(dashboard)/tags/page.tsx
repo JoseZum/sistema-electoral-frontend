@@ -324,8 +324,9 @@ export default function TagsPage() {
             </div>
 
             <div className="input-group">
-              <label>Nombre</label>
+              <label htmlFor="tag-name">Nombre</label>
               <input
+                id="tag-name"
                 className="input"
                 placeholder="Ej: AGE-21-04-25"
                 value={form.name}
@@ -344,8 +345,9 @@ export default function TagsPage() {
             </div>
 
             <div className="input-group">
-              <label>Descripción (opcional)</label>
+              <label htmlFor="tag-description">Descripción (opcional)</label>
               <textarea
+                id="tag-description"
                 className="input"
                 rows={3}
                 placeholder="Describe para qué se usa este grupo"
