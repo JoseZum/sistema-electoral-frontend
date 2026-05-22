@@ -548,7 +548,9 @@ export default function CrearEleccionPage() {
       try {
         setSuboptionPresetError(null);
         setSuboptionPresetsLoading(true);
-        const presets = await apiClient<SuboptionPreset[]>('/api/elections/suboption-presets');
+        const presets = await apiClient<SuboptionPreset[]>('/api/elections/suboption-presets', {
+          suppressErrorDetailLog: true,
+        });
 
         if (!cancelled) {
           setSuboptionPresetPersistenceAvailable(true);
@@ -853,6 +855,7 @@ export default function CrearEleccionPage() {
 
       const savedPreset = await apiClient<SuboptionPreset>('/api/elections/suboption-presets', {
         method: 'POST',
+        suppressErrorDetailLog: true,
         headers: {
           'Content-Type': 'application/json',
         },
