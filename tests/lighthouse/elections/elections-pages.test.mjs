@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import lighthouse, { desktopConfig, generateReport } from 'lighthouse';
-import { launch } from 'chrome-launcher';
+import { launchChrome } from '../shared/chrome.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
@@ -396,21 +396,6 @@ async function waitForHttp(url, timeoutMs) {
   }
 
   throw new Error(`Timed out waiting for ${url}${lastError ? `: ${lastError.message}` : ''}`);
-}
-
-async function launchChrome() {
-  return launch({
-    chromePath: resolveChromePath(),
-    chromeFlags: ['--headless=new', '--disable-gpu', '--disable-dev-shm-usage', '--no-sandbox'],
-  });
-}
-
-function resolveChromePath() {
-  return (
-    process.env.LIGHTHOUSE_CHROME_PATH ||
-    process.env.CHROME_PATH ||
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-  );
 }
 
 async function seedAdminSession(chromePort, frontendUrl) {

@@ -257,6 +257,15 @@ function mergeSuboptionPresets(
   return sortSuboptionPresets(Array.from(mergedById.values()));
 }
 
+function isSuboptionPresetRouteUnavailable(error: unknown) {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const code = 'code' in error ? (error as { code?: unknown }).code : undefined;
+  return code === 'DB_INVALID_INPUT';
+}
+
 function BallotImageField({
   imageUrl,
   imageName,
@@ -497,6 +506,7 @@ export default function CrearEleccionPage() {
   const [suboptionPresetsLoaded, setSuboptionPresetsLoaded] = useState(false);
   const [suboptionPresetsLoading, setSuboptionPresetsLoading] = useState(false);
   const [savingPresetOptionId, setSavingPresetOptionId] = useState<string | null>(null);
+  const [suboptionPresetPersistenceAvailable, setSuboptionPresetPersistenceAvailable] = useState(true);
   const [suboptionPresetError, setSuboptionPresetError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -541,12 +551,20 @@ export default function CrearEleccionPage() {
         const presets = await apiClient<SuboptionPreset[]>('/api/elections/suboption-presets');
 
         if (!cancelled) {
+          setSuboptionPresetPersistenceAvailable(true);
           setCustomSuboptionPresets((prev) => mergeSuboptionPresets(prev, presets));
           setSuboptionPresetsLoaded(true);
         }
       } catch (err) {
-        console.error('Error fetching suboption presets:', err);
         if (!cancelled) {
+          if (isSuboptionPresetRouteUnavailable(err)) {
+            setSuboptionPresetPersistenceAvailable(false);
+            setCustomSuboptionPresets([]);
+            setSuboptionPresetsLoaded(true);
+            return;
+          }
+
+          console.error('Error fetching suboption presets:', err);
           setSuboptionPresetError('No se pudieron cargar los presets guardados');
         }
       } finally {
@@ -804,6 +822,11 @@ export default function CrearEleccionPage() {
       return;
     }
 
+    if (!suboptionPresetPersistenceAvailable) {
+      setSuboptionPresetError('Reinicia el backend para habilitar los presets guardados');
+      return;
+    }
+
     const draftName = normalizePresetItems([suboptionPresetDraftNames[optionId] ?? ''])[0] ?? '';
     const items = getPresetCandidateItems(optionIndex);
 
@@ -850,6 +873,12 @@ export default function CrearEleccionPage() {
         [optionId]: savedPreset.id,
       }));
     } catch (err) {
+      if (isSuboptionPresetRouteUnavailable(err)) {
+        setSuboptionPresetPersistenceAvailable(false);
+        setSuboptionPresetError('Reinicia el backend para habilitar los presets guardados');
+        return;
+      }
+
       setSuboptionPresetError(err instanceof Error ? err.message : 'No se pudo guardar el preset');
     } finally {
       setSavingPresetOptionId(null);
@@ -1493,100 +1522,130 @@ export default function CrearEleccionPage() {
                   {allowSuboptions && (
                     <div className="create-election-suboptions">
                       <div className="create-election-suboptions__header">
-                        <div>
+                        <div className="create-election-suboptions__intro">
                           <div className="create-election-suboptions__title">Subopciones</div>
                           <p className="create-election-inline-help">
-                            Cada votante elegira una subopcion dentro de este grupo. Puedes usar un preset rapido o
-                            guardar uno propio para reutilizarlo en otros grupos.
+                            Cada votante elegira una subopcion dentro de este grupo. Primero define las respuestas del
+                            grupo y luego decide si quieres reutilizarlas como preset.
                           </p>
                         </div>
-                        <div className="create-election-suboptions__actions">
-                          <select
-                            className="input create-election-suboptions__preset-select"
-                            aria-label={`Preset de subopciones del grupo ${index + 1}`}
-                            value={selectedSuboptionPresets[option.id] ?? ''}
-                            onChange={(event) => {
-                              setSuboptionPresetError(null);
-                              setSelectedSuboptionPresets((prev) => ({
-                                ...prev,
-                                [option.id]: event.target.value,
-                              }));
-                            }}
-                          >
-                            <option value="">Selecciona un preset</option>
-                            <optgroup label="Rapidos">
-                              {BUILT_IN_SUBOPTION_PRESETS.map((preset) => (
-                                <option key={preset.id} value={preset.id}>
-                                  {preset.name}
-                                </option>
-                              ))}
-                            </optgroup>
-                            {customSuboptionPresets.length > 0 && (
-                              <optgroup label="Guardados">
-                                {customSuboptionPresets.map((preset) => (
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm create-election-suboptions__add"
+                          onClick={() => addSuboption(index)}
+                        >
+                          Agregar subopcion
+                        </button>
+                      </div>
+
+                      <div className="create-election-suboptions__toolbar">
+                        <div className="create-election-suboptions__panel">
+                          <div className="create-election-suboptions__panel-head">
+                            <div className="create-election-suboptions__panel-title">Aplicar preset</div>
+                            <p className="create-election-inline-help">
+                              Rellena este grupo al instante con respuestas ya definidas.
+                            </p>
+                          </div>
+                          <div className="create-election-suboptions__panel-actions">
+                            <select
+                              className="input create-election-suboptions__preset-select"
+                              aria-label={`Preset de subopciones del grupo ${index + 1}`}
+                              value={selectedSuboptionPresets[option.id] ?? ''}
+                              onChange={(event) => {
+                                setSuboptionPresetError(null);
+                                setSelectedSuboptionPresets((prev) => ({
+                                  ...prev,
+                                  [option.id]: event.target.value,
+                                }));
+                              }}
+                            >
+                              <option value="">Selecciona un preset</option>
+                              <optgroup label="Rapidos">
+                                {BUILT_IN_SUBOPTION_PRESETS.map((preset) => (
                                   <option key={preset.id} value={preset.id}>
                                     {preset.name}
                                   </option>
                                 ))}
                               </optgroup>
-                            )}
-                          </select>
-                          <input
-                            type="text"
-                            className="input create-election-suboptions__preset-name"
-                            aria-label={`Nombre del preset del grupo ${index + 1}`}
-                            placeholder="Guardar como..."
-                            value={suboptionPresetDraftNames[option.id] ?? ''}
-                            onChange={(event) => {
-                              setSuboptionPresetError(null);
-                              setSuboptionPresetDraftNames((prev) => ({
-                                ...prev,
-                                [option.id]: event.target.value,
-                              }));
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-outline btn-sm"
-                            aria-label={`Guardar preset del grupo ${index + 1}`}
-                            onClick={() => saveSuboptionPreset(index)}
-                            disabled={
-                              savingPresetOptionId === option.id
-                              || uploadingImageIds.length > 0
-                              || !suboptionPresetDraftNames[option.id]?.trim()
-                              || !canSaveCurrentGroupAsPreset(index)
-                            }
-                          >
-                            {savingPresetOptionId === option.id ? 'Guardando...' : 'Guardar preset'}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-outline btn-sm"
-                            aria-label={`Usar preset en el grupo ${index + 1}`}
-                            onClick={() => {
-                              const presetId = selectedSuboptionPresets[option.id];
-                              if (!presetId) {
-                                return;
-                              }
+                              {customSuboptionPresets.length > 0 && (
+                                <optgroup label="Guardados">
+                                  {customSuboptionPresets.map((preset) => (
+                                    <option key={preset.id} value={preset.id}>
+                                      {preset.name}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                            </select>
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm"
+                              aria-label={`Usar preset en el grupo ${index + 1}`}
+                              onClick={() => {
+                                const presetId = selectedSuboptionPresets[option.id];
+                                if (!presetId) {
+                                  return;
+                                }
 
-                              applySuboptionPreset(index, presetId);
-                            }}
-                            disabled={!selectedSuboptionPresets[option.id] || uploadingImageIds.length > 0}
-                          >
-                            Usar preset
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-outline btn-sm"
-                            onClick={() => addSuboption(index)}
-                          >
-                            Agregar subopcion
-                          </button>
+                                applySuboptionPreset(index, presetId);
+                              }}
+                              disabled={!selectedSuboptionPresets[option.id] || uploadingImageIds.length > 0}
+                            >
+                              Usar preset
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="create-election-suboptions__panel">
+                          <div className="create-election-suboptions__panel-head">
+                            <div className="create-election-suboptions__panel-title">Guardar preset actual</div>
+                            <p className="create-election-inline-help">
+                              Guarda las subopciones escritas en este grupo para reutilizarlas despues.
+                            </p>
+                          </div>
+                          <div className="create-election-suboptions__panel-actions">
+                            <input
+                              type="text"
+                              className="input create-election-suboptions__preset-name"
+                              aria-label={`Nombre del preset del grupo ${index + 1}`}
+                              placeholder="Nombre del preset"
+                              value={suboptionPresetDraftNames[option.id] ?? ''}
+                              disabled={!suboptionPresetPersistenceAvailable}
+                              onChange={(event) => {
+                                setSuboptionPresetError(null);
+                                setSuboptionPresetDraftNames((prev) => ({
+                                  ...prev,
+                                  [option.id]: event.target.value,
+                                }));
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm"
+                              aria-label={`Guardar preset del grupo ${index + 1}`}
+                              onClick={() => saveSuboptionPreset(index)}
+                              disabled={
+                                !suboptionPresetPersistenceAvailable
+                                || savingPresetOptionId === option.id
+                                || uploadingImageIds.length > 0
+                                || !suboptionPresetDraftNames[option.id]?.trim()
+                                || !canSaveCurrentGroupAsPreset(index)
+                              }
+                            >
+                              {savingPresetOptionId === option.id ? 'Guardando...' : 'Guardar preset'}
+                            </button>
+                          </div>
                         </div>
                       </div>
+
                       <div className="create-election-suboptions__meta">
                         {suboptionPresetsLoading && (
                           <p className="create-election-inline-help">Cargando presets guardados...</p>
+                        )}
+                        {!suboptionPresetPersistenceAvailable && (
+                          <p className="create-election-inline-help">
+                            Los presets guardados apareceran cuando reinicies el backend con la ruta nueva.
+                          </p>
                         )}
                         {suboptionPresetError && (
                           <p className="create-election-suboptions__message create-election-suboptions__message--error">

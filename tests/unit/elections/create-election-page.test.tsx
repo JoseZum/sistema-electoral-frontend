@@ -420,6 +420,31 @@ describe('CrearEleccionPage', () => {
         ).toHaveValue('En contra');
     });
 
+    it('falls back gracefully when the backend still resolves presets as an election id', async () => {
+        const user = userEvent.setup();
+
+        installApiClientMock((endpoint, init) => {
+            if (endpoint === '/api/elections/suboption-presets' && !init?.method) {
+                throw Object.assign(new Error('invalid input syntax for type uuid'), {
+                    code: 'DB_INVALID_INPUT',
+                });
+            }
+
+            return resolveDefaultApiClient(endpoint, init);
+        });
+
+        render(<CrearEleccionPage />);
+
+        await user.click(screen.getByLabelText(/Usar subopciones/i));
+
+        expect(
+            await screen.findAllByText(/Los presets guardados apareceran cuando reinicies el backend/i)
+        ).toHaveLength(2);
+        expect(
+            screen.queryByText(/No se pudieron cargar los presets guardados/i)
+        ).not.toBeInTheDocument();
+    });
+
     it('validates scheduled date window', async () => {
         const user = userEvent.setup();
 
