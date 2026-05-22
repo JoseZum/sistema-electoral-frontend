@@ -29,7 +29,6 @@ interface ElectionForm {
 
 interface BallotImageFormState {
   image_url: string;
-  image_input: string;
   image_name: string;
 }
 
@@ -46,7 +45,7 @@ interface OptionForm extends BallotImageFormState {
   suboptions: SuboptionForm[];
 }
 
-type EditableBallotField = 'label' | 'description' | 'image_url' | 'image_input' | 'image_name';
+type EditableBallotField = 'label' | 'description' | 'image_url' | 'image_name';
 
 type Student = TagStudent;
 
@@ -156,7 +155,6 @@ const DEFAULT_KEY_COUNT = '1';
 const DEFAULT_KEY_PERCENTAGE = '50';
 const EMPTY_BALLOT_IMAGE = {
   image_url: '',
-  image_input: '',
   image_name: '',
 } as const;
 
@@ -212,31 +210,21 @@ function formatKeysLabel(count: number) {
 
 function BallotImageField({
   imageUrl,
-  imageInput,
   imageName,
   uploading,
-  urlAriaLabel,
   uploadAriaLabel,
-  onUrlChange,
   onFileChange,
   onClear,
 }: {
   imageUrl: string;
-  imageInput: string;
   imageName: string;
   uploading: boolean;
-  urlAriaLabel: string;
   uploadAriaLabel: string;
-  onUrlChange: (value: string) => void;
   onFileChange: (file: File | null) => Promise<void> | void;
   onClear: () => void;
 }) {
   const hasImage = Boolean(imageUrl);
-  const sourceLabel = imageName
-    ? `Archivo cargado: ${imageName}`
-    : imageInput.trim()
-      ? 'URL configurada'
-      : 'Sin imagen seleccionada';
+  const sourceLabel = imageName ? `Archivo cargado: ${imageName}` : 'Imagen lista para la boleta';
 
   async function handleFileInputChange(event: ChangeEvent<HTMLInputElement>) {
     const input = event.currentTarget;
@@ -262,7 +250,9 @@ function BallotImageField({
             </div>
           </div>
         ) : (
-          <div className="create-election-image-placeholder">Todavía no has cargado una foto para esta boleta.</div>
+          <div className="create-election-image-placeholder">
+            Todavía no has subido una foto para esta boleta. Usa el botón de abajo para elegirla desde tu dispositivo.
+          </div>
         )}
 
         <div className="create-election-image-actions">
@@ -286,7 +276,29 @@ function BallotImageField({
               style={{ display: 'none' }}
               disabled={uploading}
             />
-            {uploading ? 'Procesando...' : hasImage ? 'Reemplazar foto' : 'Subir foto'}
+            <span className="create-election-upload-button__headline">
+              <span className="create-election-upload-button__icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none" focusable="false">
+                  <path
+                    d="M10 12.5V4.5M10 4.5L6.75 7.75M10 4.5L13.25 7.75M4.75 12.75V14.25C4.75 14.9404 5.30964 15.5 6 15.5H14C14.6904 15.5 15.25 14.9404 15.25 14.25V12.75"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="create-election-upload-button__title">
+                {uploading
+                  ? 'Procesando foto...'
+                  : hasImage
+                    ? 'Elegir otra foto desde tu dispositivo'
+                    : 'Elegir foto desde tu dispositivo'}
+              </span>
+            </span>
+            <span className="create-election-upload-button__hint">
+              {uploading ? 'Estamos preparando la imagen para la boleta.' : 'Haz clic aquí para abrir tus archivos.'}
+            </span>
           </label>
 
           <button
@@ -299,17 +311,8 @@ function BallotImageField({
           </button>
         </div>
 
-        <input
-          type="url"
-          className="input"
-          aria-label={urlAriaLabel}
-          placeholder="https://.../imagen.jpg"
-          value={imageInput}
-          onChange={(event) => onUrlChange(event.target.value)}
-        />
         <p className="create-election-inline-help">
-          Sube la imagen desde tu dispositivo o, si ya existe, pega una URL. La vista previa usará la versión que
-          quede guardada en la boleta.
+          La imagen de la boleta se selecciona desde tu dispositivo y la vista previa mostrará la versión cargada.
         </p>
       </div>
     </div>
@@ -600,16 +603,6 @@ export default function CrearEleccionPage() {
     );
   }
 
-  function updateOptionImageInput(index: number, value: string) {
-    setOptions((prev) =>
-      prev.map((option, currentIndex) => (
-        currentIndex === index
-          ? { ...option, image_input: value, image_url: value.trim(), image_name: '' }
-          : option
-      ))
-    );
-  }
-
   function clearOptionImage(index: number) {
     setOptions((prev) =>
       prev.map((option, currentIndex) => (
@@ -639,7 +632,6 @@ export default function CrearEleccionPage() {
             ? {
                 ...option,
                 image_url: storedImage,
-                image_input: '',
                 image_name: file.name,
               }
             : option
@@ -698,23 +690,6 @@ export default function CrearEleccionPage() {
     );
   }
 
-  function updateSuboptionImageInput(optionIndex: number, suboptionIndex: number, value: string) {
-    setOptions((prev) =>
-      prev.map((option, currentIndex) => (
-        currentIndex === optionIndex
-          ? {
-              ...option,
-              suboptions: option.suboptions.map((suboption, currentSuboptionIndex) => (
-                currentSuboptionIndex === suboptionIndex
-                  ? { ...suboption, image_input: value, image_url: value.trim(), image_name: '' }
-                  : suboption
-              )),
-            }
-          : option
-      ))
-    );
-  }
-
   function clearSuboptionImage(optionIndex: number, suboptionIndex: number) {
     setOptions((prev) =>
       prev.map((option, currentIndex) => (
@@ -757,7 +732,6 @@ export default function CrearEleccionPage() {
                     ? {
                         ...suboption,
                         image_url: storedImage,
-                        image_input: '',
                         image_name: file.name,
                       }
                     : suboption
@@ -1307,12 +1281,9 @@ export default function CrearEleccionPage() {
 
                     <BallotImageField
                       imageUrl={option.image_url}
-                      imageInput={option.image_input}
                       imageName={option.image_name}
                       uploading={uploadingImageIds.includes(option.id)}
-                      urlAriaLabel={`URL de imagen de la opcion ${index + 1}`}
                       uploadAriaLabel={`Subir imagen de la opcion ${index + 1}`}
-                      onUrlChange={(value) => updateOptionImageInput(index, value)}
                       onFileChange={(file) => uploadOptionImage(index, file)}
                       onClear={() => clearOptionImage(index)}
                     />
@@ -1369,12 +1340,9 @@ export default function CrearEleccionPage() {
 
                               <BallotImageField
                                 imageUrl={suboption.image_url}
-                                imageInput={suboption.image_input}
                                 imageName={suboption.image_name}
                                 uploading={uploadingImageIds.includes(suboption.id)}
-                                urlAriaLabel={`URL de imagen de la subopcion ${suboptionIndex + 1} del grupo ${index + 1}`}
                                 uploadAriaLabel={`Subir imagen de la subopcion ${suboptionIndex + 1} del grupo ${index + 1}`}
-                                onUrlChange={(value) => updateSuboptionImageInput(index, suboptionIndex, value)}
                                 onFileChange={(file) => uploadSuboptionImage(index, suboptionIndex, file)}
                                 onClear={() => clearSuboptionImage(index, suboptionIndex)}
                               />
