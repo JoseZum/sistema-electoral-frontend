@@ -1303,7 +1303,7 @@ export default function CrearEleccionPage() {
             <div className="overline create-election-hero__overline">Nueva votación</div>
             <h2 className="create-election-hero__title">Crear proceso electoral</h2>
             <p className="create-election-hero__description">
-              Configura toda la votacion en una sola vista. Usa la navegacion lateral para saltar entre
+              Configura toda la votación en una sola vista. Usa la navegación lateral para saltar entre
               bloques sin perder contexto.
             </p>
           </div>
@@ -1358,7 +1358,7 @@ export default function CrearEleccionPage() {
                   type="text"
                   className="input"
                   aria-label="Titulo de la votacion"
-                  placeholder="Ej: Elección Consejo Ejecutivo FITEC 2026"
+                  placeholder="Ej: Elección Consejo Ejecutivo FEITEC 2026"
                   value={form.title}
                   onChange={(event) => updateForm('title', event.target.value)}
                 />

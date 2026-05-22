@@ -45,8 +45,8 @@ test.describe('create election suboptions flow', () => {
       observedRequests.push({
         endpoint: '/api/users/admins',
         method: request.method(),
-        authorization: request.headerValue('authorization'),
-        contentType: request.headerValue('content-type'),
+        authorization: await request.headerValue('authorization'),
+        contentType: await request.headerValue('content-type'),
       });
 
       await route.fulfill({
@@ -61,8 +61,8 @@ test.describe('create election suboptions flow', () => {
       observedRequests.push({
         endpoint: '/api/elections/suboption-presets',
         method: request.method(),
-        authorization: request.headerValue('authorization'),
-        contentType: request.headerValue('content-type'),
+        authorization: await request.headerValue('authorization'),
+        contentType: await request.headerValue('content-type'),
       });
 
       await route.fulfill({
