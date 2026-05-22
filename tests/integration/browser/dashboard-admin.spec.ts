@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { expectNoCriticalA11yViolations } from './support/accessibility';
+
 test.describe('dashboard admin page', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
@@ -7,10 +9,12 @@ test.describe('dashboard admin page', () => {
       localStorage.setItem(
         'tee_user',
         JSON.stringify({
-          id: 'admin-e2e',
+          studentId: 'admin-e2e',
+          carnet: '2023000002',
           role: 'admin',
-          full_name: 'Administrador E2E',
-          email: 'admin.e2e@tec.ac.cr',
+          fullName: 'Administrador E2E',
+          sede: 'Cartago',
+          career: 'Ingenieria en Computacion',
         })
       );
     });
@@ -64,7 +68,7 @@ test.describe('dashboard admin page', () => {
     });
   });
 
-  test('renders dashboard metrics and cards for an admin user', async ({ page }) => {
+  test('@smoke renders dashboard metrics and cards for an admin user', async ({ page }) => {
     await page.goto('/dashboard');
 
     await expect(page).toHaveURL(/\/dashboard$/);
@@ -76,5 +80,6 @@ test.describe('dashboard admin page', () => {
     await expect(page.getByText('Votos emitidos')).toBeVisible();
     await expect(page.getByText('Estudiantes activos')).toBeVisible();
     await expect(page.getByText('Elecciones en curso')).toBeVisible();
+    await expectNoCriticalA11yViolations(page);
   });
 });

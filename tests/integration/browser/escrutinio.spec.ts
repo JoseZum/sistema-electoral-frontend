@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { expectNoCriticalA11yViolations } from './support/accessibility';
+
 const adminToken = 'playwright-scrutiny-token';
 const adminUser = {
   studentId: '9138b2e6-ac51-47d1-b254-a84ea45bfd29',
@@ -113,6 +115,8 @@ await page.route(`**/api/scrutiny/${electionId}/submit-key`, async (route) => {
 
   test('muestra solo elecciones pendientes de escrutinio', async ({ page }) => {
     await page.goto('/escrutinio');
+    await expect(page.getByRole('heading', { name: 'Escrutinio' })).toBeVisible();
+    await expectNoCriticalA11yViolations(page);
 
     await expect(page.getByRole('heading', { name: 'Escrutinio' })).toBeVisible();
     await expect(page.getByText('Elección de Escrutinio')).toBeVisible();
@@ -139,8 +143,10 @@ await page.route(`**/api/scrutiny/${electionId}/submit-key`, async (route) => {
     await expect(page.getByText('Custodios de llaves')).toBeVisible();
   });
 
-  test('flujo completo desde el enlace de canje hasta guardar la llave', async ({ page }) => {
+  test('@smoke flujo completo desde el enlace de canje hasta guardar la llave', async ({ page }) => {
     await page.goto('/escrutinio');
+    await expect(page.getByRole('heading', { name: 'Escrutinio' })).toBeVisible();
+    await expectNoCriticalA11yViolations(page);
 
     const scrutinyRow = page.getByRole('row', { name: /Elección de Escrutinio/ });
     await scrutinyRow.getByRole('link', { name: 'Canjear llave' }).click();

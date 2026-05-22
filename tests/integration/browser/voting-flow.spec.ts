@@ -1,11 +1,15 @@
 import { expect, test } from '@playwright/test';
 
+import { expectNoCriticalA11yViolations } from './support/accessibility';
+
 const voterToken = 'playwright-voter-token';
 const voterUser = {
-  id: 'voter-e2e',
+  studentId: 'voter-e2e',
+  carnet: '2023000003',
   role: 'voter',
-  full_name: 'Votante E2E',
-  email: 'votante.e2e@tec.ac.cr',
+  fullName: 'Votante E2E',
+  sede: 'Cartago',
+  career: 'Ingenieria en Computacion',
 };
 
 const electionId = 'election-vote-1';
@@ -55,11 +59,12 @@ test.describe('voting flow', () => {
     });
   });
 
-  test('lets the voter pick an option, confirm and finish the vote', async ({ page }) => {
+  test('@smoke lets the voter pick an option, confirm and finish the vote', async ({ page }) => {
     await page.goto(`/votaciones/${electionId}`);
 
     await expect(page.getByRole('heading', { name: 'Elección FEITEC' })).toBeVisible();
-    await expect(page.getByText('Selecciona una opcion para emitir tu voto')).toBeVisible();
+    await expect(page.getByText(/Selecciona una opci[oó]n para emitir tu voto/i)).toBeVisible();
+    await expectNoCriticalA11yViolations(page);
 
     await page.getByText('Plan A').click();
     await expect(page.getByText('Plan A').locator('..')).toBeVisible();

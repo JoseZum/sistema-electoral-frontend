@@ -1,10 +1,14 @@
 import { expect, test } from '@playwright/test';
 
+import { expectNoCriticalA11yViolations } from './support/accessibility';
+
 const adminUser = {
-  id: 'admin-results-e2e',
+  studentId: 'admin-results-e2e',
+  carnet: '2023000005',
   role: 'admin',
-  full_name: 'Admin Resultados',
-  email: 'admin.resultados@tec.ac.cr',
+  fullName: 'Admin Resultados',
+  sede: 'Cartago',
+  career: 'Ingenieria en Computacion',
 };
 
 test.describe('results and suffrage flows', () => {
@@ -23,7 +27,7 @@ test.describe('results and suffrage flows', () => {
     });
   });
 
-  test('renders public results with the selected option column and abstentions', async ({ page }) => {
+  test('@smoke renders public results with the selected option column and abstentions', async ({ page }) => {
     await page.route('**/api/elections', async (route) => {
       await route.fulfill({
         status: 200,
@@ -83,12 +87,13 @@ test.describe('results and suffrage flows', () => {
     });
 
     await page.goto('/resultados');
-    await expect(page.getByRole('heading', { name: 'Resultados' })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('heading', { name: 'Resultados', exact: true })).toBeVisible({ timeout: 20000 });
+    await expectNoCriticalA11yViolations(page);
 
     await expect(page.getByText('Sufragio público')).toBeVisible();
     await expect(page.getByText('Participacion por persona (2)')).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Opcion elegida' })).toBeVisible();
-    await expect(page.getByText('Plan A')).toBeVisible();
+    await expect(page.getByRole('cell', { name: 'Plan A' })).toBeVisible();
     await expect(page.getByText('No votó')).toBeVisible();
     await expect(page.getByText('Abstencionismo detectado: 1')).toBeVisible();
   });
@@ -153,12 +158,12 @@ test.describe('results and suffrage flows', () => {
     });
 
     await page.goto('/resultados');
-    await expect(page.getByRole('heading', { name: 'Resultados' })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('heading', { name: 'Resultados', exact: true })).toBeVisible({ timeout: 20000 });
 
     await expect(page.getByText('Sufragio por papeleta')).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Voto emitido' })).toBeVisible();
-    await expect(page.getByText('Sí')).toBeVisible();
-    await expect(page.getByText('No')).toBeVisible();
+    await expect(page.getByRole('row', { name: /Ana Garcia 2021001234 Sí/ })).toBeVisible();
+    await expect(page.getByRole('row', { name: /Bruno Mora 2021005678 No/ })).toBeVisible();
 
     await page.route('**/api/users/admins', async (route) => {
       await route.fulfill({
@@ -173,8 +178,8 @@ test.describe('results and suffrage flows', () => {
 
     await expect(page.getByText('4. Sufragio')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Define la modalidad del sufragio' })).toBeVisible();
-    await expect(page.getByText('Sufragio público')).toBeVisible();
-    await expect(page.getByText('Sufragio por papeleta')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Nominal[\s\S]*Sufragio p[uú]blico/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Reservado[\s\S]*Sufragio por papeleta/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Configura el escrutinio' })).toBeVisible();
   });
 });

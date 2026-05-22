@@ -1,0 +1,274 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  NODE_ENV: test
+  NEXT_PUBLIC_API_URL: http://127.0.0.1:3001
+  NEXT_PUBLIC_AZURE_CLIENT_ID: ci-frontend-client-id
+  NEXT_PUBLIC_AZURE_TENANT_ID: common
+  NEXT_PUBLIC_REDIRECT_URI: http://127.0.0.1:3000
+  SECURITY_AUDIT_FAIL_LEVEL: high
+  LIGHTHOUSE_FORCE_SINGLE_WORKER: "1"
+
+jobs:
+  branch-policy:
+    name: 0) Branch Policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Allow only dev pull requests into main
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "pull_request" ] \
+            && [ "${{ github.base_ref }}" = "main" ] \
+            && [ "${{ github.head_ref }}" != "dev" ]; then
+            echo "::error::main only accepts pull requests coming from dev."
+            exit 1
+          fi
+
+  install:
+    name: 1) Install
+    runs-on: ubuntu-latest
+    needs: branch-policy
+    timeout-minutes: 10
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+  static-checks:
+    name: 2) Static Checks
+    runs-on: ubuntu-latest
+    needs: install
+    timeout-minutes: 15
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint, typecheck and build
+        run: |
+          npm run lint:ci
+          npm run typecheck:ci
+          npm run build
+
+  unit-tests:
+    name: 3) Unit Tests
+    runs-on: ubuntu-latest
+    needs: install
+    timeout-minutes: 10
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit:ci
+
+  integration-tests:
+    name: 4) Integration Tests
+    runs-on: ubuntu-latest
+    needs: install
+    timeout-minutes: 20
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run UI integration regression tests
+        run: npm run test:integration:regression
+
+      - name: Upload Playwright integration artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-integration-artifacts
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+
+  e2e-smoke:
+    name: 5) E2E Smoke
+    runs-on: ubuntu-latest
+    needs: install
+    timeout-minutes: 20
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke flows
+        run: npm run test:e2e:smoke
+
+      - name: Upload Playwright smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-artifacts
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+
+  security-audit:
+    name: 6) Security Audit
+    runs-on: ubuntu-latest
+    needs: install
+    timeout-minutes: 10
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run vulnerability audit
+        run: npm run test:security
+
+  lighthouse-smoke:
+    name: 7) Lighthouse Smoke
+    runs-on: ubuntu-latest
+    needs: install
+    timeout-minutes: 30
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Build frontend once for Lighthouse
+        run: npm run build
+
+      - name: Run Lighthouse smoke audits
+        env:
+          LIGHTHOUSE_SKIP_BUILD: "1"
+        run: npm run test:lighthouse:smoke
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-smoke-reports
+          path: tests/lighthouse/**/.reports/**
+          if-no-files-found: warn
+
+  quality-gate:
+    name: 8) Quality Gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - branch-policy
+      - install
+      - static-checks
+      - unit-tests
+      - integration-tests
+      - e2e-smoke
+      - security-audit
+      - lighthouse-smoke
+    steps:
+      - name: Fail when any required check failed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for result in \
+            "${{ needs.branch-policy.result }}" \
+            "${{ needs.install.result }}" \
+            "${{ needs.static-checks.result }}" \
+            "${{ needs.unit-tests.result }}" \
+            "${{ needs.integration-tests.result }}" \
+            "${{ needs.e2e-smoke.result }}" \
+            "${{ needs.security-audit.result }}" \
+            "${{ needs.lighthouse-smoke.result }}"; do
+            if [ "$result" != "success" ]; then
+              echo "::error::A required job finished with result: $result"
+              exit 1
+            fi
+          done
+
+          echo "Frontend quality gate passed."

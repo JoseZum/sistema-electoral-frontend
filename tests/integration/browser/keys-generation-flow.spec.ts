@@ -111,8 +111,8 @@ test.describe('generación de llaves - flujo de integración', () => {
 
     // Verificar información del admin
     const adminSection = page.locator('[class*="bg-white"]').filter({ hasText: 'Administrador autenticado' });
-    await expect(adminSection).toContainText('Admin Integración');
-    await expect(adminSection).toContainText('ADM001');
+    await expect(adminSection).toContainText('Aaron Ortiz Jimenez');
+    await expect(adminSection).toContainText('2022437529');
   });
 
   test('manejo de errores en la generación', async ({ page }) => {
@@ -152,7 +152,7 @@ test.describe('generación de llaves - flujo de integración', () => {
     let generateBtn = page.getByRole('button', { name: 'Generar mi llave' });
     await generateBtn.click();
 
-    const successMsg = page.getByText(/Llave generada/);
+    const successMsg = page.getByText('Llave generada', { exact: true });
     await expect(successMsg).toBeVisible();
 
     const keyCode = page.locator('code');
@@ -208,6 +208,7 @@ test.describe('generación de llaves - flujo de integración', () => {
     await page.goto('/generar-llaves');
 
     const select = page.locator('select');
+    await expect(select.locator('option')).toHaveCount(4);
 
     // Verificar que todas las elecciones aparecen
     const optionElements = await select.locator('option').all();
@@ -222,17 +223,17 @@ test.describe('generación de llaves - flujo de integración', () => {
     // Cambiar entre elecciones y verificar que se actualiza la información
     await select.selectOption('election-1');
     await expect(page.getByText('Tag: Junta')).toBeVisible();
-    await expect(page.getByText('100')).toBeVisible();
+    await expect(page.getByText('Elegibles').locator('..').getByText('100', { exact: true })).toBeVisible();
 
     await select.selectOption('election-2');
     await expect(page.getByText('Filtro personalizado')).toBeVisible();
-    await expect(page.getByText('200')).toBeVisible();
-    await expect(page.getByText('2')).toBeVisible();
+    await expect(page.getByText('Elegibles').locator('..').getByText('200', { exact: true })).toBeVisible();
+    await expect(page.getByText('Minimo llaves').locator('..').getByText('2', { exact: true })).toBeVisible();
 
     await select.selectOption('election-3');
     await expect(page.getByText('Padron completo')).toBeVisible();
-    await expect(page.getByText('300')).toBeVisible();
-    await expect(page.getByText('3')).toBeVisible();
+    await expect(page.getByText('Elegibles').locator('..').getByText('300', { exact: true })).toBeVisible();
+    await expect(page.getByText('Minimo llaves').locator('..').getByText('3', { exact: true })).toBeVisible();
   });
 
   test('limpiar mensajes al cambiar de elección', async ({ page }) => {
@@ -313,11 +314,12 @@ test.describe('generación de llaves - flujo de integración', () => {
       {
         token: 'voter-token',
         user: {
-          id: 'voter-1',
+          studentId: 'voter-1',
+          carnet: '2023000006',
           role: 'voter',
-          full_name: 'Votante Test',
-          carnet: 'VOT001',
-          email: 'voter@tec.ac.cr',
+          fullName: 'Votante Test',
+          sede: 'Cartago',
+          career: 'Ingenieria en Computacion',
         },
       }
     );
@@ -365,7 +367,6 @@ test.describe('generación de llaves - flujo de integración', () => {
   test('copiar llave: validar que realmente se copia', async ({ page }) => {
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 
-    let capturedKey = '';
     await page.route(`**/api/scrutiny/${electionId}/assign-members`, async (route) => {
       await route.fulfill({
         status: 201,
@@ -376,8 +377,6 @@ test.describe('generación de llaves - flujo de integración', () => {
         }),
       });
     });
-
-    capturedKey = 'ABC123DEF456';
 
     await page.goto('/generar-llaves');
 

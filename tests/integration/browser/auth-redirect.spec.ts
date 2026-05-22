@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { expectNoCriticalA11yViolations } from './support/accessibility';
+
 test.describe('auth redirect flow', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
@@ -7,10 +9,12 @@ test.describe('auth redirect flow', () => {
       localStorage.setItem(
         'tee_user',
         JSON.stringify({
-          id: 'user-e2e',
+          studentId: 'user-e2e',
+          carnet: '2023000001',
           role: 'voter',
-          full_name: 'Votante E2E',
-          email: 'votante.e2e@tec.ac.cr',
+          fullName: 'Votante E2E',
+          sede: 'Cartago',
+          career: 'Ingenieria en Computacion',
         })
       );
     });
@@ -24,10 +28,11 @@ test.describe('auth redirect flow', () => {
     });
   });
 
-  test('redirects a sessioned user to the voting area', async ({ page }) => {
+  test('@smoke redirects a sessioned user to the voting area', async ({ page }) => {
     await page.goto('/');
 
     await expect(page).toHaveURL(/\/votaciones$/);
     await expect(page.getByRole('heading', { name: 'Tus votaciones' })).toBeVisible();
+    await expectNoCriticalA11yViolations(page);
   });
 });

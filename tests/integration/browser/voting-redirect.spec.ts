@@ -2,10 +2,12 @@ import { expect, test } from '@playwright/test';
 
 const voterToken = 'playwright-voter-token';
 const voterUser = {
-  id: 'voter-e2e',
+  studentId: 'voter-e2e',
+  carnet: '2023000004',
   role: 'voter',
-  full_name: 'Votante E2E',
-  email: 'votante.e2e@tec.ac.cr',
+  fullName: 'Votante E2E',
+  sede: 'Cartago',
+  career: 'Ingenieria en Computacion',
 };
 
 const electionId = 'election-vote-1';
@@ -68,10 +70,10 @@ test.describe('voting redirect flow', () => {
 
     await expect(page).toHaveURL(new RegExp(`/votaciones/${electionId}$`));
     await expect(page.getByRole('heading', { name: 'Elección FEITEC' })).toBeVisible();
-    await expect(page.getByText('Selecciona una opcion para emitir tu voto')).toBeVisible();
+    await expect(page.getByText(/Selecciona una opci[oó]n para emitir tu voto/i)).toBeVisible();
     
     await expect(page.getByRole('heading', { name: 'Elección FEITEC' })).toBeVisible();
-    await expect(page.getByText('Selecciona una opcion para emitir tu voto')).toBeVisible();
+    await expect(page.getByText(/Selecciona una opci[oó]n para emitir tu voto/i)).toBeVisible();
 
     await page.getByText('Plan A').click();
     await expect(page.getByText('Plan A').locator('..')).toBeVisible();

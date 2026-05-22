@@ -8,7 +8,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
-    include: ['tests/**/*.test.{ts,tsx}'],
+    include: ['tests/unit/**/*.test.{ts,tsx}', 'tests/unit/**/*.spec.{ts,tsx}'],
+    exclude: ['tests/integration/**', 'tests/e2e/**', 'tests/manual/**'],
+    testTimeout: 15000,
+    hookTimeout: 15000,
   },
   resolve: {
     alias: {
