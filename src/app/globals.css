@@ -2741,6 +2741,38 @@ body {
   gap: 1rem;
 }
 
+.create-election-suboptions__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.create-election-suboptions__preset-select {
+  min-width: min(220px, 100%);
+  flex: 1 1 220px;
+}
+
+.create-election-suboptions__preset-name {
+  min-width: min(200px, 100%);
+  flex: 1 1 200px;
+}
+
+.create-election-suboptions__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.create-election-suboptions__message {
+  font-size: 0.75rem;
+}
+
+.create-election-suboptions__message--error {
+  color: var(--error);
+}
+
 .create-election-suboptions__title {
   font-size: 0.875rem;
   font-weight: 700;
