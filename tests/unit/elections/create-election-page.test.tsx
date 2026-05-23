@@ -204,17 +204,17 @@ describe('CrearEleccionPage', () => {
         );
 
         await user.type(
-            screen.getByLabelText(/Descripcion de la votacion/i),
+            screen.getByLabelText(/Descripci[oó]n de la votaci[oó]n/i),
             'Descripción de prueba'
         );
 
         await user.type(
-            screen.getByLabelText(/Nombre de la opcion 1/i),
+            screen.getByLabelText(/Nombre de la opci[oó]n 1/i),
             'Candidato A'
         );
 
         await user.type(
-            screen.getByLabelText(/Nombre de la opcion 2/i),
+            screen.getByLabelText(/Nombre de la opci[oó]n 2/i),
             'Candidato B'
         );
 
@@ -291,8 +291,8 @@ describe('CrearEleccionPage', () => {
 
         await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Elección');
 
-        await user.type(screen.getByLabelText(/Nombre de la opcion 1/i), 'Lista A');
-        await user.type(screen.getByLabelText(/Nombre de la opcion 2/i), 'Lista A');
+        await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'Lista A');
+        await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'Lista A');
 
         await user.type(
             screen.getByLabelText(/Fecha de apertura/i),
@@ -319,7 +319,7 @@ describe('CrearEleccionPage', () => {
         await user.click(screen.getByRole('button', { name: /Agregar opción/i }));
 
         expect(
-            screen.getByLabelText(/Nombre de la opcion 3/i)
+            screen.getByLabelText(/Nombre de la opci[oó]n 3/i)
         ).toBeInTheDocument();
     });
 
@@ -336,14 +336,14 @@ describe('CrearEleccionPage', () => {
         await user.click(screen.getByRole('button', { name: /Usar preset en el grupo 1/i }));
 
         expect(
-            screen.getByLabelText(/Nombre de la subopcion 1 del grupo 1/i)
+            screen.getByLabelText(/Nombre de la subopci[oó]n 1 del grupo 1/i)
         ).toHaveValue('A favor');
         expect(
-            screen.getByLabelText(/Nombre de la subopcion 2 del grupo 1/i)
+            screen.getByLabelText(/Nombre de la subopci[oó]n 2 del grupo 1/i)
         ).toHaveValue('En contra');
         expect(
-            screen.getByLabelText(/Nombre de la subopcion 3 del grupo 1/i)
-        ).toHaveValue('Abstencion');
+            screen.getByLabelText(/Nombre de la subopci[oó]n 3 del grupo 1/i)
+        ).toHaveValue('Abstención');
     });
 
     it('saves a custom suboption preset and reuses it in another group', async () => {
@@ -382,11 +382,11 @@ describe('CrearEleccionPage', () => {
         });
 
         await user.type(
-            screen.getByLabelText(/Nombre de la subopcion 1 del grupo 1/i),
+            screen.getByLabelText(/Nombre de la subopci[oó]n 1 del grupo 1/i),
             'A favor'
         );
         await user.type(
-            screen.getByLabelText(/Nombre de la subopcion 2 del grupo 1/i),
+            screen.getByLabelText(/Nombre de la subopci[oó]n 2 del grupo 1/i),
             'En contra'
         );
         await user.type(
@@ -416,10 +416,10 @@ describe('CrearEleccionPage', () => {
         await user.click(screen.getByRole('button', { name: /Usar preset en el grupo 2/i }));
 
         expect(
-            screen.getByLabelText(/Nombre de la subopcion 1 del grupo 2/i)
+            screen.getByLabelText(/Nombre de la subopci[oó]n 1 del grupo 2/i)
         ).toHaveValue('A favor');
         expect(
-            screen.getByLabelText(/Nombre de la subopcion 2 del grupo 2/i)
+            screen.getByLabelText(/Nombre de la subopci[oó]n 2 del grupo 2/i)
         ).toHaveValue('En contra');
     });
 
@@ -441,7 +441,7 @@ describe('CrearEleccionPage', () => {
         await user.click(screen.getByLabelText(/Usar subopciones/i));
 
         expect(
-            await screen.findAllByText(/Los presets guardados apareceran cuando reinicies el backend/i)
+            await screen.findAllByText(/Los presets guardados aparecer[áa]n cuando reinicies el backend/i)
         ).toHaveLength(2);
         expect(
             screen.queryByText(/No se pudieron cargar los presets guardados/i)
@@ -455,8 +455,8 @@ describe('CrearEleccionPage', () => {
 
         await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Elección');
 
-        await user.type(screen.getByLabelText(/Nombre de la opcion 1/i), 'A');
-        await user.type(screen.getByLabelText(/Nombre de la opcion 2/i), 'B');
+        await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'A');
+        await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'B');
 
         await user.type(
             screen.getByLabelText(/Fecha de apertura/i),
@@ -549,8 +549,8 @@ describe('CrearEleccionPage', () => {
         render(<CrearEleccionPage />);
 
         await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Elección inmediata');
-        await user.type(screen.getByLabelText(/Nombre de la opcion 1/i), 'Sí');
-        await user.type(screen.getByLabelText(/Nombre de la opcion 2/i), 'No');
+        await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'Sí');
+        await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'No');
 
         await user.click(screen.getByLabelText(/Inicio inmediato/i));
 
@@ -590,7 +590,7 @@ describe('CrearEleccionPage', () => {
 
         await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Consulta estudiantil');
         await user.click(screen.getByLabelText(/Usar subopciones/i));
-        await user.type(screen.getByLabelText(/Nombre de la opcion 1/i), 'Pregunta 1');
+        await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'Pregunta 1');
         await user.selectOptions(
             screen.getByRole('combobox', { name: /Preset de subopciones del grupo 1/i }),
             'builtin:FOR_AGAINST_ABSTENTION'
@@ -631,7 +631,7 @@ describe('CrearEleccionPage', () => {
         ).toEqual([
             'A favor',
             'En contra',
-            'Abstencion',
+            'Abstención',
             'Voto en blanco',
             'Voto nulo',
         ]);
@@ -643,8 +643,8 @@ describe('CrearEleccionPage', () => {
         render(<CrearEleccionPage />);
 
         await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Manual');
-        await user.type(screen.getByLabelText(/Nombre de la opcion 1/i), 'A');
-        await user.type(screen.getByLabelText(/Nombre de la opcion 2/i), 'B');
+        await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'A');
+        await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'B');
         await user.type(screen.getByLabelText(/Fecha de apertura/i), '2026-06-01T08:00');
         await user.type(screen.getByLabelText(/Fecha de cierre/i), '2026-06-01T18:00');
 

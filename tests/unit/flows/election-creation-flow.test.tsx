@@ -89,17 +89,17 @@ describe('Flujo de integración: creación de elecciones', () => {
         );
 
         await user.type(
-            screen.getByLabelText('Descripcion de la votacion'),
+            screen.getByLabelText(/Descripci[oó]n de la votaci[oó]n/i),
             'Prueba de integración desde el dashboard'
         );
 
         await user.type(
-            screen.getByLabelText('Nombre de la opcion 1'),
+            screen.getByLabelText(/Nombre de la opci[oó]n 1/i),
             'Candidato A'
         );
 
         await user.type(
-            screen.getByLabelText('Nombre de la opcion 2'),
+            screen.getByLabelText(/Nombre de la opci[oó]n 2/i),
             'Candidato B'
         );
     }
