@@ -117,8 +117,8 @@ test.describe('create election suboptions flow', () => {
     await presetSelect.selectOption('builtin:YES_NO');
     await page.getByRole('button', { name: 'Usar preset en el grupo 1' }).click();
 
-    await expect(page.getByLabel('Nombre de la subopcion 1 del grupo 1')).toHaveValue('Si');
-    await expect(page.getByLabel('Nombre de la subopcion 2 del grupo 1')).toHaveValue('No');
+    await expect(page.getByLabel(/Nombre de la subopci[oó]n 1 del grupo 1/i)).toHaveValue('Si');
+    await expect(page.getByLabel(/Nombre de la subopci[oó]n 2 del grupo 1/i)).toHaveValue('No');
     expect(frontendErrors, frontendErrors.join('\n')).toEqual([]);
   });
 });
