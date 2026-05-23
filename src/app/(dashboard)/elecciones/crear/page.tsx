@@ -72,7 +72,7 @@ interface CreateElectionPayloadOption {
 
 const SECTION_ITEMS = [
   { id: 'informacion', label: 'Información', description: 'Detalles y horario' },
-  { id: 'votantes', label: 'Votantes', description: 'Padron elegible' },
+  { id: 'votantes', label: 'Votantes', description: 'Padrón elegible' },
   { id: 'opciones', label: 'Opciones', description: 'Boleta electoral' },
   { id: 'sufragio', label: 'Sufragio', description: 'Modalidad del voto' },
   { id: 'seguridad', label: 'Seguridad', description: 'Llaves de escrutinio' },
@@ -135,13 +135,13 @@ const SUFFRAGE_OPTIONS: Array<{
   {
     value: false,
     title: 'Sufragio público',
-    description: 'La opcion elegida queda visible por persona en resultados y reportes.',
+    description: 'La opción elegida queda visible por persona en resultados y reportes.',
     badge: 'Nominal',
   },
   {
     value: true,
     title: 'Sufragio por papeleta',
-    description: 'El reporte solo muestra si la persona participo o no, sin revelar la opcion elegida.',
+    description: 'El reporte solo muestra si la persona participó o no, sin revelar la opción elegida.',
     badge: 'Reservado',
   },
 ];
@@ -1505,8 +1505,8 @@ export default function CrearEleccionPage() {
                       <input
                         type="text"
                         className="input"
-                        aria-label={`Descripcion de la opcion ${index + 1}`}
-                        placeholder="Descripcion corta opcional"
+                        aria-label={`Descripción de la opcion ${index + 1}`}
+                        placeholder="Descripción corta opcional"
                         value={option.description}
                         onChange={(event) => updateOption(index, 'description', event.target.value)}
                       />
@@ -1735,7 +1735,7 @@ export default function CrearEleccionPage() {
                 title='Incluir "Voto en blanco"'
                 description={allowSuboptions
                   ? 'Agrega voto en blanco como subopcion en cada grupo.'
-                  : 'Agrega una alternativa explicita para emitir voto en blanco.'}
+                  : 'Agrega una alternativa explícita para emitir voto en blanco.'}
                 onChange={setIncludeBlank}
               />
               <ToggleCard
@@ -1743,7 +1743,7 @@ export default function CrearEleccionPage() {
                 title='Incluir "Voto nulo"'
                 description={allowSuboptions
                   ? 'Agrega voto nulo como subopcion en cada grupo.'
-                  : 'Agrega una opcion para contemplar votos anulados en la boleta.'}
+                  : 'Agrega una opción para contemplar votos anulados en la boleta.'}
                 onChange={setIncludeNull}
               />
             </div>
@@ -1759,7 +1759,7 @@ export default function CrearEleccionPage() {
               <div className="create-election-section__eyebrow">4. Sufragio</div>
               <h3 className="create-election-section__title">Define la modalidad del sufragio</h3>
               <p className="create-election-section__description">
-                Elige si el reporte mostrara la opcion elegida por persona o solo la participacion.
+                Elige si el reporte mostrará la opción elegida por persona o solo la participación.
               </p>
             </div>
 
@@ -1789,7 +1789,7 @@ export default function CrearEleccionPage() {
               <div className="create-election-section__eyebrow">5. Seguridad</div>
               <h3 className="create-election-section__title">Configura el escrutinio</h3>
               <p className="create-election-section__description">
-                Define si la publicacion de resultados requiere llaves de escrutinio.
+                Define si la publicación de resultados requiere llaves de escrutinio.
               </p>
             </div>
 
@@ -1923,7 +1923,7 @@ export default function CrearEleccionPage() {
             <div>
               <div className="create-election-submit-card__title">Listo para crear la votación</div>
               <div className="create-election-submit-card__description">
-                Revisa el resumen lateral. Si algo falta, salta al bloque correspondiente y ajustalo.
+                Revisa el resumen lateral. Si algo falta, salta al bloque correspondiente y ajústalo.
               </div>
             </div>
             <button type="button" className="btn btn-accent" onClick={handleSubmit} disabled={saving || uploadingImageIds.length > 0}>
