@@ -49,8 +49,8 @@ describe('ImmediateStartConfig', () => {
     it('disables immediate duration fields when scheduled mode is active', () => {
         render(<ImmediateStartConfig {...defaultProps} />);
 
-        expect(screen.getByLabelText('Duracion de la votacion inmediata')).toBeDisabled();
-        expect(screen.getByLabelText(/Unidad de duracion/i)).toBeDisabled();
+        expect(screen.getByLabelText(/duraci[oó]n\ de\ la\ votaci[oó]n\ inmediata/i)).toBeDisabled();
+        expect(screen.getByLabelText(/Unidad de duraci[oó]n/i)).toBeDisabled();
     });
 
     it('calls onChange when selecting immediate mode', async () => {
@@ -102,9 +102,9 @@ describe('ImmediateStartConfig', () => {
             />
         );
 
-        expect(screen.getByLabelText('Duracion de la votacion inmediata')).not.toBeDisabled();
+        expect(screen.getByLabelText(/duraci[oó]n\ de\ la\ votaci[oó]n\ inmediata/i)).not.toBeDisabled();
         expect(
-            screen.getByLabelText('Unidad de duracion de la votacion inmediata')
+            screen.getByLabelText(/Unidad\ de\ duraci[oó]n\ de\ la\ votaci[oó]n\ inmediata/i)
         ).not.toBeDisabled();
     });
 

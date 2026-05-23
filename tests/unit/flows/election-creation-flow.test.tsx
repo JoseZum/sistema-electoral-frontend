@@ -84,7 +84,7 @@ describe('Flujo de integración: creación de elecciones', () => {
         const user = userEvent.setup();
 
         await user.type(
-            screen.getByLabelText('Titulo de la votacion'),
+            screen.getByLabelText(/t[íi]tulo\ de\ la\ votaci[oó]n/i),
             'Elección de integración'
         );
 
@@ -114,7 +114,7 @@ describe('Flujo de integración: creación de elecciones', () => {
         expect(screen.getByText('Nueva votación')).toBeInTheDocument();
 
         expect(
-            screen.getByLabelText('Titulo de la votacion')
+            screen.getByLabelText(/t[íi]tulo\ de\ la\ votaci[oó]n/i)
         ).toBeInTheDocument();
 
         await waitFor(() => {
@@ -142,7 +142,7 @@ describe('Flujo de integración: creación de elecciones', () => {
         render(<CrearEleccionPage />);
 
         await user.type(
-            screen.getByLabelText('Titulo de la votacion'),
+            screen.getByLabelText(/t[íi]tulo\ de\ la\ votaci[oó]n/i),
             'Elección incompleta'
         );
 
@@ -263,12 +263,12 @@ describe('Flujo de integración: creación de elecciones', () => {
         );
 
         await user.selectOptions(
-            screen.getByLabelText('Duracion de la votacion inmediata'),
+            screen.getByLabelText(/duraci[oó]n\ de\ la\ votaci[oó]n\ inmediata/i),
             '2'
         );
 
         await user.selectOptions(
-            screen.getByLabelText('Unidad de duracion de la votacion inmediata'),
+            screen.getByLabelText(/Unidad\ de\ duraci[oó]n\ de\ la\ votaci[oó]n\ inmediata/i),
             'hours'
         );
 

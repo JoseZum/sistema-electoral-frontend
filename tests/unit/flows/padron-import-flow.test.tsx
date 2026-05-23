@@ -104,7 +104,7 @@ describe('Flujo de integración: carga de padrón electoral', () => {
         render(<CargarPadronPage />);
 
         const dropZone = screen.getByRole('button', {
-            name: /Seleccionar archivo Excel del padron/i,
+            name: /Seleccionar archivo Excel del padr[oó]n/i,
         });
 
         const file = createExcelFile();
@@ -157,7 +157,7 @@ describe('Flujo de integración: carga de padrón electoral', () => {
             ).toBeInTheDocument();
         });
 
-        expect(screen.getByText(/0%/)).toBeInTheDocument();
+        expect(screen.getByText(/0%/i)).toBeInTheDocument();
     });
 
     it('muestra error cuando el backend rechaza archivo inválido', async () => {

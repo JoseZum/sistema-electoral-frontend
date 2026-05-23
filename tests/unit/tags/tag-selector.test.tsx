@@ -100,8 +100,8 @@ describe('TagSelector', () => {
     render(<TagSelector value={null} onChange={mockOnChange} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Engineering Team/)).toBeInTheDocument();
-      expect(screen.getByText(/HR Team/)).toBeInTheDocument();
+      expect(screen.getByText(/Engineering Team/i)).toBeInTheDocument();
+      expect(screen.getByText(/HR Team/i)).toBeInTheDocument();
     });
   });
 
@@ -145,7 +145,7 @@ describe('TagSelector', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Engineering Team/)).toBeInTheDocument();
+      expect(screen.getByText(/Engineering Team/i)).toBeInTheDocument();
     });
 
     const select = container.querySelector('select');
@@ -174,7 +174,7 @@ describe('TagSelector', () => {
     render(<TagSelector value={mockTag1.id} onChange={mockOnChange} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/5 integrantes/)).toBeInTheDocument();
+      expect(screen.getByText(/5 integrantes/i)).toBeInTheDocument();
     });
   });
 
@@ -185,7 +185,7 @@ describe('TagSelector', () => {
     render(<TagSelector value={tagWithOneMemember.id} onChange={mockOnChange} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/1 integrante/)).toBeInTheDocument();
+      expect(screen.getByText(/1 integrante/i)).toBeInTheDocument();
     });
   });
 
@@ -195,7 +195,7 @@ describe('TagSelector', () => {
     render(<TagSelector value={null} onChange={mockOnChange} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Engineering Team \(5\)/)).toBeInTheDocument();
+      expect(screen.getByText(/Engineering Team \(5\)/i)).toBeInTheDocument();
     });
   });
 

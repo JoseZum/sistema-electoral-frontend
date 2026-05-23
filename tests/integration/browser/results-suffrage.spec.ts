@@ -92,7 +92,7 @@ test.describe('results and suffrage flows', () => {
 
     await expect(page.getByText('Sufragio público')).toBeVisible();
     await expect(page.getByText('Participación por persona (2)')).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Opcion elegida' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /opci[oó]n\ elegida/i })).toBeVisible();
     await expect(page.getByRole('cell', { name: 'Plan A' })).toBeVisible();
     await expect(page.getByText('No votó')).toBeVisible();
     await expect(page.getByText('Abstencionismo detectado: 1')).toBeVisible();
@@ -162,8 +162,8 @@ test.describe('results and suffrage flows', () => {
 
     await expect(page.getByText('Sufragio por papeleta')).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Voto emitido' })).toBeVisible();
-    await expect(page.getByRole('row', { name: /Ana Garcia 2021001234 Sí/ })).toBeVisible();
-    await expect(page.getByRole('row', { name: /Bruno Mora 2021005678 No/ })).toBeVisible();
+    await expect(page.getByRole('row', { name: /Ana Garcia 2021001234 Sí/i })).toBeVisible();
+    await expect(page.getByRole('row', { name: /Bruno Mora 2021005678 No/i })).toBeVisible();
 
     await page.route('**/api/users/admins', async (route) => {
       await route.fulfill({

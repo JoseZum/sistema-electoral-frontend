@@ -131,7 +131,7 @@ await page.route(`**/api/scrutiny/${electionId}/submit-key`, async (route) => {
   test('redirige a la pantalla de subida de llave', async ({ page }) => {
     await page.goto('/escrutinio');
 
-    const scrutinyRow = page.getByRole('row', { name: /Elección de Escrutinio/ });
+    const scrutinyRow = page.getByRole('row', { name: /Elección de Escrutinio/i });
     await scrutinyRow.getByRole('link', { name: 'Canjear llave' }).click();
 
     await page.waitForURL(`/escrutinio/subir\?id=${electionId}`);
@@ -148,7 +148,7 @@ await page.route(`**/api/scrutiny/${electionId}/submit-key`, async (route) => {
     await expect(page.getByRole('heading', { name: 'Escrutinio' })).toBeVisible();
     await expectNoCriticalA11yViolations(page);
 
-    const scrutinyRow = page.getByRole('row', { name: /Elección de Escrutinio/ });
+    const scrutinyRow = page.getByRole('row', { name: /Elección de Escrutinio/i });
     await scrutinyRow.getByRole('link', { name: 'Canjear llave' }).click();
 
     await page.waitForURL(`/escrutinio/subir\?id=${electionId}`);

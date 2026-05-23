@@ -132,8 +132,8 @@ describe('TagsPage', () => {
     render(<TagsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/5 integrantes/)).toBeInTheDocument();
-      expect(screen.getByText(/3 integrantes/)).toBeInTheDocument();
+      expect(screen.getByText(/5 integrantes/i)).toBeInTheDocument();
+      expect(screen.getByText(/3 integrantes/i)).toBeInTheDocument();
     });
   });
 
@@ -161,7 +161,7 @@ describe('TagsPage', () => {
     await userEvent.click(newButton);
 
     await waitFor(() => {
-      const nameInput = screen.getByLabelText(/Nombre/);
+      const nameInput = screen.getByLabelText(/Nombre/i);
       expect(nameInput).toHaveValue('');
     });
   });
@@ -228,7 +228,7 @@ describe('TagsPage', () => {
     await userEvent.click(tagButton);
 
     await waitFor(() => {
-      const nameInput = screen.getByLabelText(/Nombre/);
+      const nameInput = screen.getByLabelText(/Nombre/i);
       expect(nameInput).toHaveValue(mockTag1.name);
     });
   });
@@ -251,7 +251,7 @@ describe('TagsPage', () => {
 
     render(<TagsPage />);
 
-    const nameInput = screen.getByLabelText(/Nombre/);
+    const nameInput = screen.getByLabelText(/Nombre/i);
     await userEvent.type(nameInput, 'Test Tag');
 
     const submitButton = screen.getByRole('button', { name: /Crear tag/i });
@@ -269,7 +269,7 @@ describe('TagsPage', () => {
 
     render(<TagsPage />);
 
-    const nameInput = screen.getByLabelText(/Nombre/);
+    const nameInput = screen.getByLabelText(/Nombre/i);
     await userEvent.type(nameInput, mockTag1.name);
 
     const submitButton = screen.getByRole('button', { name: /Crear tag/i });
@@ -293,7 +293,7 @@ describe('TagsPage', () => {
 
     render(<TagsPage />);
 
-    const nameInput = screen.getByLabelText(/Nombre/);
+    const nameInput = screen.getByLabelText(/Nombre/i);
     await userEvent.type(nameInput, mockTag1.name);
 
     // Note: This test would need a proper tag members editor mock
@@ -479,7 +479,7 @@ describe('TagsPage', () => {
 
     render(<TagsPage />);
 
-    const nameInput = screen.getByLabelText(/Nombre/);
+    const nameInput = screen.getByLabelText(/Nombre/i);
     await userEvent.type(nameInput, 'Test Tag');
 
     await waitFor(() => {

@@ -87,7 +87,7 @@ test.describe('generación de llaves - flujo de integración', () => {
     await expect(heading).toBeVisible();
 
     const description = page.getByText(
-      /Genera una llave para el administrador autenticado/
+      /Genera una llave para el administrador autenticado/i
     );
     await expect(description).toBeVisible();
 

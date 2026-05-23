@@ -199,7 +199,7 @@ describe('CrearEleccionPage', () => {
         const user = userEvent.setup();
 
         await user.type(
-            screen.getByLabelText(/Titulo de la votacion/i),
+            screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i),
             'Elección estudiantil'
         );
 
@@ -263,7 +263,7 @@ describe('CrearEleccionPage', () => {
         render(<CrearEleccionPage />);
 
         await user.type(
-            screen.getByLabelText(/Titulo de la votacion/i),
+            screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i),
             'Elección sin opciones'
         );
 
@@ -289,7 +289,7 @@ describe('CrearEleccionPage', () => {
 
         render(<CrearEleccionPage />);
 
-        await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Elección');
+        await user.type(screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i), 'Elección');
 
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'Lista A');
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'Lista A');
@@ -453,7 +453,7 @@ describe('CrearEleccionPage', () => {
 
         render(<CrearEleccionPage />);
 
-        await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Elección');
+        await user.type(screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i), 'Elección');
 
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'A');
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'B');
@@ -548,7 +548,7 @@ describe('CrearEleccionPage', () => {
 
         render(<CrearEleccionPage />);
 
-        await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Elección inmediata');
+        await user.type(screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i), 'Elección inmediata');
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'Sí');
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'No');
 
@@ -588,7 +588,7 @@ describe('CrearEleccionPage', () => {
 
         render(<CrearEleccionPage />);
 
-        await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Consulta estudiantil');
+        await user.type(screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i), 'Consulta estudiantil');
         await user.click(screen.getByLabelText(/Usar subopciones/i));
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'Pregunta 1');
         await user.selectOptions(
@@ -642,7 +642,7 @@ describe('CrearEleccionPage', () => {
 
         render(<CrearEleccionPage />);
 
-        await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Manual');
+        await user.type(screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i), 'Manual');
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'A');
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'B');
         await user.type(screen.getByLabelText(/Fecha de apertura/i), '2026-06-01T08:00');

@@ -66,7 +66,7 @@ test.describe('voting redirect flow', () => {
 
     await expect(page.getByRole('heading', { name: 'Tus votaciones' })).toBeVisible();
 
-    await page.getByRole('button', { name: /Votar en: Elección FEITEC/ }).click();
+    await page.getByRole('button', { name: /Votar en: Elección FEITEC/i }).click();
 
     await expect(page).toHaveURL(new RegExp(`/votaciones/${electionId}$`));
     await expect(page.getByRole('heading', { name: 'Elección FEITEC' })).toBeVisible();

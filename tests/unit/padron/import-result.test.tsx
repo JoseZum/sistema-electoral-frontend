@@ -132,8 +132,8 @@ describe('ImportResult', () => {
             <ImportResult summary={largeSummary} onReset={mockOnReset} />
         );
 
-        expect(screen.getByText(/1[,\s]*500/)).toBeInTheDocument();
-        expect(screen.getByText(/1[,\s]*000/)).toBeInTheDocument();
+        expect(screen.getByText(/1[,\s]*500/i)).toBeInTheDocument();
+        expect(screen.getByText(/1[,\s]*000/i)).toBeInTheDocument();
     });
 
     it('renders all breakdown labels', () => {

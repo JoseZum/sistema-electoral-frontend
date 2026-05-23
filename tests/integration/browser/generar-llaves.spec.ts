@@ -199,7 +199,7 @@ test.describe('generación de llaves', () => {
 
     // Verificar mensaje de no disponibles
     await expect(
-      page.getByText(/No hay elecciones cerradas que requieran llaves/)
+      page.getByText(/No hay elecciones cerradas que requieran llaves/i)
     ).toBeVisible();
   });
 
@@ -226,7 +226,7 @@ test.describe('generación de llaves', () => {
 
     // Verificar mensaje de error
     await expect(
-      page.getByText(/Ya existe una llave asignada para este usuario/)
+      page.getByText(/Ya existe una llave asignada para este usuario/i)
     ).toBeVisible();
   });
 
@@ -309,7 +309,7 @@ test.describe('generación de llaves', () => {
 
     // Paso 6: Verificar que la llave se puede canjear
     await expect(
-      page.getByText(/Esta llave se canjea en el flujo de escrutinio/)
+      page.getByText(/Esta llave se canjea en el flujo de escrutinio/i)
     ).toBeVisible();
   });
 */

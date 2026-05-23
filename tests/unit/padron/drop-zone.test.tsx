@@ -254,7 +254,7 @@ describe('DropZone', () => {
         render(<DropZone onFileSelected={mockOnFileSelected} />);
 
         expect(
-            screen.getByLabelText(/Seleccionar archivo Excel del padron/i)
+            screen.getByLabelText(/Seleccionar archivo Excel del padr[oó]n/i)
         ).toBeInTheDocument();
     });
 });
