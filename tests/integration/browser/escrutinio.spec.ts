@@ -174,7 +174,7 @@ await page.route(`**/api/scrutiny/${electionId}/submit-key`, async (route) => {
     await page.getByPlaceholder('Pegar llave...').fill('123456');
     await page.getByRole('button', { name: 'Canjear' }).click();
 
-    await expect(page.getByText(/Llave canjeada/i)).toBeVisible();
+    await expect(page.getByText(/Llave canjeada/i).first()).toBeVisible();
     await expect(page.getByText(/El progreso fue actualizado/i)).toBeVisible();
   });
 
