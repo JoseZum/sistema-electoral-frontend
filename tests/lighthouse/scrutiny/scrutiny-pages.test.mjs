@@ -187,7 +187,9 @@ function createNextEnv(apiUrl) {
   return {
     ...process.env,
     NEXT_TELEMETRY_DISABLED: '1',
-    NEXT_DIST_DIR: process.env.NEXT_DIST_DIR || '.next-lighthouse-scrutiny',
+    ...(process.env.LIGHTHOUSE_SKIP_BUILD !== '1'
+      ? { NEXT_DIST_DIR: process.env.NEXT_DIST_DIR || '.next-lighthouse-scrutiny' }
+      : {}),
     LIGHTHOUSE_SKIP_BUILD_CHECKS: '1',
     LIGHTHOUSE_FORCE_SINGLE_WORKER: '1',
     NEXT_PUBLIC_API_URL: apiUrl,

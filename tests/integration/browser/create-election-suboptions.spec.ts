@@ -78,8 +78,13 @@ test.describe('create election suboptions flow', () => {
       });
     });
 
+    const adminResponse = page.waitForResponse(
+      (response) => response.url().includes('/api/users/admins') && response.status() === 200
+    );
+
     await page.goto('/elecciones/crear');
     await expect(page.getByRole('heading', { name: 'Crear proceso electoral' })).toBeVisible({ timeout: 20000 });
+    await adminResponse;
 
     expect(frontendErrors, frontendErrors.join('\n')).toEqual([]);
 
@@ -109,7 +114,7 @@ test.describe('create election suboptions flow', () => {
     expect(frontendErrors, frontendErrors.join('\n')).toEqual([]);
 
     const presetSelect = page.getByRole('combobox', { name: 'Preset de subopciones del grupo 1' });
-    await presetSelect.selectOption('preset-binary');
+    await presetSelect.selectOption('builtin:YES_NO');
     await page.getByRole('button', { name: 'Usar preset en el grupo 1' }).click();
 
     await expect(page.getByLabel('Nombre de la subopcion 1 del grupo 1')).toHaveValue('Si');
