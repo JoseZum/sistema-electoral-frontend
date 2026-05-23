@@ -159,8 +159,8 @@ const BUILT_IN_SUBOPTION_PRESETS: SuboptionPreset[] = [
   },
   {
     id: 'builtin:FOR_AGAINST_ABSTENTION',
-    name: 'A favor / En contra / Abstencion',
-    items: ['A favor', 'En contra', 'Abstencion'],
+    name: 'A favor / En contra / Abstención',
+    items: ['A favor', 'En contra', 'Abstención'],
   },
 ];
 
@@ -1369,7 +1369,7 @@ export default function CrearEleccionPage() {
                 <input
                   type="text"
                   className="input"
-                  aria-label="Descripcion de la votacion"
+                  aria-label="Descripción de la votación"
                   placeholder="Ej: Postulaciones a la Vicepresidencia del Directorio"
                   value={form.description}
                   onChange={(event) => updateForm('description', event.target.value)}
@@ -1493,7 +1493,7 @@ export default function CrearEleccionPage() {
                       <input
                         type="text"
                         className="input"
-                        aria-label={`Nombre de la opcion ${index + 1}`}
+                        aria-label={`Nombre de la opción ${index + 1}`}
                         placeholder={allowSuboptions ? 'Ej: Presidencia' : 'Ej: Candidatura A'}
                         value={option.label}
                         onChange={(event) => updateOption(index, 'label', event.target.value)}
@@ -1505,7 +1505,7 @@ export default function CrearEleccionPage() {
                       <input
                         type="text"
                         className="input"
-                        aria-label={`Descripción de la opcion ${index + 1}`}
+                        aria-label={`Descripción de la opción ${index + 1}`}
                         placeholder="Descripción corta opcional"
                         value={option.description}
                         onChange={(event) => updateOption(index, 'description', event.target.value)}
@@ -1516,7 +1516,7 @@ export default function CrearEleccionPage() {
                       imageUrl={option.image_url}
                       imageName={option.image_name}
                       uploading={uploadingImageIds.includes(option.id)}
-                      uploadAriaLabel={`Subir imagen de la opcion ${index + 1}`}
+                      uploadAriaLabel={`Subir imagen de la opción ${index + 1}`}
                       onFileChange={(file) => uploadOptionImage(index, file)}
                       onClear={() => clearOptionImage(index)}
                     />
@@ -1528,7 +1528,7 @@ export default function CrearEleccionPage() {
                         <div className="create-election-suboptions__intro">
                           <div className="create-election-suboptions__title">Subopciones</div>
                           <p className="create-election-inline-help">
-                            Cada votante elegira una subopcion dentro de este grupo. Primero define las respuestas del
+                            Cada votante elegirá una subopción dentro de este grupo. Primero define las respuestas del
                             grupo y luego decide si quieres reutilizarlas como preset.
                           </p>
                         </div>
@@ -1537,7 +1537,7 @@ export default function CrearEleccionPage() {
                           className="btn btn-outline btn-sm create-election-suboptions__add"
                           onClick={() => addSuboption(index)}
                         >
-                          Agregar subopcion
+                          Agregar subopción
                         </button>
                       </div>
 
@@ -1603,7 +1603,7 @@ export default function CrearEleccionPage() {
                           <div className="create-election-suboptions__panel-head">
                             <div className="create-election-suboptions__panel-title">Guardar preset actual</div>
                             <p className="create-election-inline-help">
-                              Guarda las subopciones escritas en este grupo para reutilizarlas despues.
+                              Guarda las subopciones escritas en este grupo para reutilizarlas después.
                             </p>
                           </div>
                           <div className="create-election-suboptions__panel-actions">
@@ -1647,7 +1647,7 @@ export default function CrearEleccionPage() {
                         )}
                         {!suboptionPresetPersistenceAvailable && (
                           <p className="create-election-inline-help">
-                            Los presets guardados apareceran cuando reinicies el backend con la ruta nueva.
+                            Los presets guardados aparecerán cuando reinicies el backend con la ruta nueva.
                           </p>
                         )}
                         {suboptionPresetError && (
@@ -1665,11 +1665,11 @@ export default function CrearEleccionPage() {
                             </div>
                             <div className="create-election-suboption-row__fields">
                               <div className="input-group">
-                                <label>Nombre de subopcion</label>
+                                <label>Nombre de subopción</label>
                                 <input
                                   type="text"
                                   className="input"
-                                  aria-label={`Nombre de la subopcion ${suboptionIndex + 1} del grupo ${index + 1}`}
+                                  aria-label={`Nombre de la subopción ${suboptionIndex + 1} del grupo ${index + 1}`}
                                   placeholder="Ej: Formula A"
                                   value={suboption.label}
                                   onChange={(event) => updateSuboption(index, suboptionIndex, 'label', event.target.value)}
@@ -1677,12 +1677,12 @@ export default function CrearEleccionPage() {
                               </div>
 
                               <div className="input-group">
-                                <label>Descripcion</label>
+                                <label>Descripción</label>
                                 <input
                                   type="text"
                                   className="input"
-                                  aria-label={`Descripcion de la subopcion ${suboptionIndex + 1} del grupo ${index + 1}`}
-                                  placeholder="Descripcion corta opcional"
+                                  aria-label={`Descripción de la subopción ${suboptionIndex + 1} del grupo ${index + 1}`}
+                                  placeholder="Descripción corta opcional"
                                   value={suboption.description}
                                   onChange={(event) => updateSuboption(index, suboptionIndex, 'description', event.target.value)}
                                 />
@@ -1692,7 +1692,7 @@ export default function CrearEleccionPage() {
                                 imageUrl={suboption.image_url}
                                 imageName={suboption.image_name}
                                 uploading={uploadingImageIds.includes(suboption.id)}
-                                uploadAriaLabel={`Subir imagen de la subopcion ${suboptionIndex + 1} del grupo ${index + 1}`}
+                                uploadAriaLabel={`Subir imagen de la subopción ${suboptionIndex + 1} del grupo ${index + 1}`}
                                 onFileChange={(file) => uploadSuboptionImage(index, suboptionIndex, file)}
                                 onClear={() => clearSuboptionImage(index, suboptionIndex)}
                               />
@@ -1734,7 +1734,7 @@ export default function CrearEleccionPage() {
                 checked={includeBlank}
                 title='Incluir "Voto en blanco"'
                 description={allowSuboptions
-                  ? 'Agrega voto en blanco como subopcion en cada grupo.'
+                  ? 'Agrega voto en blanco como subopción en cada grupo.'
                   : 'Agrega una alternativa explícita para emitir voto en blanco.'}
                 onChange={setIncludeBlank}
               />
@@ -1742,7 +1742,7 @@ export default function CrearEleccionPage() {
                 checked={includeNull}
                 title='Incluir "Voto nulo"'
                 description={allowSuboptions
-                  ? 'Agrega voto nulo como subopcion en cada grupo.'
+                  ? 'Agrega voto nulo como subopción en cada grupo.'
                   : 'Agrega una opción para contemplar votos anulados en la boleta.'}
                 onChange={setIncludeNull}
               />
@@ -1851,7 +1851,7 @@ export default function CrearEleccionPage() {
                         <p className="create-election-inline-help">
                           {countExceedsAdmins
                             ? 'No puede superar el total actual de administradores.'
-                            : 'Cantidad minima de llaves para revelar resultados.'}
+                            : 'Cantidad mínima de llaves para revelar resultados.'}
                         </p>
                       </div>
                     ) : (
@@ -1975,7 +1975,7 @@ export default function CrearEleccionPage() {
           <div className="card create-election-sidebar-card">
             <div className="create-election-sidebar-card__header">
               <div className="overline">Resumen</div>
-              <p>Estado actual de la configuracion.</p>
+              <p>Estado actual de la configuración.</p>
             </div>
 
             <div className="create-election-summary-list">
