@@ -44,30 +44,11 @@ jobs:
             exit 1
           fi
 
-  install:
-    name: 1) Install
-    runs-on: ubuntu-latest
-    needs: branch-policy
-    timeout-minutes: 10
-    steps:
-      - name: Checkout frontend
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
   static-checks:
-    name: 2) Static Checks
+    name: 1) Static Checks
     runs-on: ubuntu-latest
-    needs: install
     timeout-minutes: 15
+    needs: branch-policy
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v4
@@ -89,10 +70,10 @@ jobs:
           npm run build
 
   unit-tests:
-    name: 3) Unit Tests
+    name: 2) Unit Tests
     runs-on: ubuntu-latest
-    needs: install
     timeout-minutes: 10
+    needs: static-checks
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v4
@@ -111,10 +92,10 @@ jobs:
         run: npm run test:unit:ci
 
   integration-tests:
-    name: 4) Integration Tests
+    name: 3) Integration Tests
     runs-on: ubuntu-latest
-    needs: install
-    timeout-minutes: 20
+    timeout-minutes: 35
+    needs: unit-tests
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v4
@@ -132,8 +113,8 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
-      - name: Run UI integration regression tests
-        run: npm run test:integration:regression
+      - name: Run full browser integration suite
+        run: npm run test:e2e:full
 
       - name: Upload Playwright integration artifacts
         if: always()
@@ -145,46 +126,11 @@ jobs:
             test-results/
           if-no-files-found: warn
 
-  e2e-smoke:
-    name: 5) E2E Smoke
-    runs-on: ubuntu-latest
-    needs: install
-    timeout-minutes: 20
-    steps:
-      - name: Checkout frontend
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
-
-      - name: Run smoke flows
-        run: npm run test:e2e:smoke
-
-      - name: Upload Playwright smoke artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-smoke-artifacts
-          path: |
-            playwright-report/
-            test-results/
-          if-no-files-found: warn
-
   security-audit:
-    name: 6) Security Audit
+    name: 4) Security Audit
     runs-on: ubuntu-latest
-    needs: install
     timeout-minutes: 10
+    needs: integration-tests
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v4
@@ -202,11 +148,11 @@ jobs:
       - name: Run vulnerability audit
         run: npm run test:security
 
-  lighthouse-smoke:
-    name: 7) Lighthouse Smoke
+  lighthouse-audits:
+    name: 5) Lighthouse Audits
     runs-on: ubuntu-latest
-    needs: install
-    timeout-minutes: 30
+    timeout-minutes: 45
+    needs: security-audit
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v4
@@ -227,60 +173,24 @@ jobs:
       - name: Build frontend once for Lighthouse
         run: npm run build
 
-      - name: Run Lighthouse smoke audits
+      - name: Run full Lighthouse audits
         env:
           LIGHTHOUSE_SKIP_BUILD: "1"
-        run: npm run test:lighthouse:smoke
+        run: npm run test:lighthouse:full
 
       - name: Upload Lighthouse reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lighthouse-smoke-reports
+          name: lighthouse-reports
           path: tests/lighthouse/**/.reports/**
           if-no-files-found: warn
 
-  quality-gate:
-    name: 8) Quality Gate
-    runs-on: ubuntu-latest
-    if: always()
-    needs:
-      - branch-policy
-      - install
-      - static-checks
-      - unit-tests
-      - integration-tests
-      - e2e-smoke
-      - security-audit
-      - lighthouse-smoke
-    steps:
-      - name: Fail when any required check failed
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          for result in \
-            "${{ needs.branch-policy.result }}" \
-            "${{ needs.install.result }}" \
-            "${{ needs.static-checks.result }}" \
-            "${{ needs.unit-tests.result }}" \
-            "${{ needs.integration-tests.result }}" \
-            "${{ needs.e2e-smoke.result }}" \
-            "${{ needs.security-audit.result }}" \
-            "${{ needs.lighthouse-smoke.result }}"; do
-            if [ "$result" != "success" ]; then
-              echo "::error::A required job finished with result: $result"
-              exit 1
-            fi
-          done
-
-          echo "Frontend quality gate passed."
-
   promote-dev-to-main:
-    name: 9) Promote Dev To Main
+    name: 6) Promote Dev To Main
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: quality-gate
+    needs: lighthouse-audits
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     permissions:
       contents: write
