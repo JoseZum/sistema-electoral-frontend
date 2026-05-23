@@ -218,7 +218,7 @@ export default function ResultadosPage() {
         <div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem' }}>Resultados</h2>
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            {selectedElection?.title ?? results?.election.title ?? 'Selecciona una votacion'}
+            {selectedElection?.title ?? results?.election.title ?? 'Selecciona una votación'}
           </p>
           <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             {selectedElection?.tag_name && (
@@ -425,7 +425,7 @@ export default function ResultadosPage() {
           </label>
 
           <label className="monitoring-select-group">
-            <span>Votacion</span>
+            <span>Votación</span>
             <select
               className="input election-filter-control"
               value={selectedId ?? ''}
@@ -433,7 +433,7 @@ export default function ResultadosPage() {
               disabled={filteredElections.length === 0}
             >
               <option value="">
-                {filteredElections.length === 0 ? 'Sin coincidencias' : 'Selecciona una votacion'}
+                {filteredElections.length === 0 ? 'Sin coincidencias' : 'Selecciona una votación'}
               </option>
               {filteredElections.map((election) => (
                 <option key={election.id} value={election.id}>
@@ -464,7 +464,7 @@ export default function ResultadosPage() {
               </div>
             </div>
             <div className="stat-card">
-              <div className="label">Participacion</div>
+              <div className="label">Participación</div>
               <div className="stat-card-value" style={{ fontSize: '1.75rem', color: 'var(--success)' }}>
                 {results.participation_rate.toFixed(1)}%
               </div>
@@ -633,7 +633,7 @@ export default function ResultadosPage() {
                 </svg>
                 <div>
                   <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '1rem', margin: 0 }}>
-                    Participacion por persona ({voterRows.length})
+                    Participación por persona ({voterRows.length})
                   </h3>
                   <p style={{ marginTop: '0.35rem', fontSize: '0.8125rem', color: 'var(--muted)' }}>
                     {getSuffrageDescription(results.election.is_anonymous)}
@@ -662,7 +662,7 @@ export default function ResultadosPage() {
             ) : (
               <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                  <caption className="sr-only">Detalle de participacion por persona</caption>
+                  <caption className="sr-only">Detalle de participación por persona</caption>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
                       <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--muted)' }}>Nombre</th>

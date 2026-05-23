@@ -639,7 +639,7 @@ function buildNarrative(log: AuditLog): Narrative {
         undefined;
 
       return {
-        lead: 'agregÃ³ a la tag',
+        lead: 'agregó a la tag',
         subject: `Â«${tagName}Â»`,
         trailer: formatPersonLabel(studentName, studentCarnet, 'persona agregada'),
         opBadge,
@@ -662,8 +662,8 @@ function buildNarrative(log: AuditLog): Narrative {
         undefined;
 
       return {
-        lead: 'quitÃ³ de la tag',
-        subject: `Â«${tagName}Â»`,
+        lead: 'quitó de la tag',
+        subject: `"${tagName}"`,
         trailer: formatPersonLabel(studentName, studentCarnet, 'persona removida'),
         opBadge,
       };
