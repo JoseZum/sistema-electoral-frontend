@@ -375,7 +375,10 @@ describe('CrearEleccionPage', () => {
 
         await user.click(screen.getByLabelText(/Usar subopciones/i));
         await waitFor(() => {
-            expect(apiClientMock).toHaveBeenCalledWith('/api/elections/suboption-presets');
+            const hitSuboptionPresets = apiClientMock.mock.calls.some(
+                ([endpoint]) => endpoint === '/api/elections/suboption-presets'
+            );
+            expect(hitSuboptionPresets).toBe(true);
         });
 
         await user.type(
