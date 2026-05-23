@@ -2729,16 +2729,87 @@ body {
 .create-election-suboptions {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  padding-top: 0.9rem;
+  gap: 1rem;
+  padding-top: 1rem;
   border-top: 1px dashed var(--border);
 }
 
 .create-election-suboptions__header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
+  align-items: flex-end;
+  gap: 1.25rem;
+}
+
+.create-election-suboptions__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 40rem;
+}
+
+.create-election-suboptions__add {
+  flex-shrink: 0;
+}
+
+.create-election-suboptions__toolbar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.create-election-suboptions__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+.create-election-suboptions__panel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.create-election-suboptions__panel-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.create-election-suboptions__panel-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.create-election-suboptions__preset-select {
+  min-width: min(250px, 100%);
+  flex: 1 1 250px;
+}
+
+.create-election-suboptions__preset-name {
+  min-width: min(250px, 100%);
+  flex: 1 1 250px;
+}
+
+.create-election-suboptions__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  padding-inline: 0.1rem;
+}
+
+.create-election-suboptions__message {
+  font-size: 0.75rem;
+}
+
+.create-election-suboptions__message--error {
+  color: var(--error);
 }
 
 .create-election-suboptions__title {
@@ -2750,22 +2821,23 @@ body {
 .create-election-suboption-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.9rem;
 }
 
 .create-election-suboption-row {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.9rem;
   align-items: flex-start;
-  padding: 0.85rem;
+  padding: 1rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: calc(var(--radius-md) + 2px);
   background: var(--surface);
+  box-shadow: 0 12px 28px -26px rgba(15, 23, 42, 0.45);
 }
 
 .create-election-suboption-row__index {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
   background: var(--surface-raised);
   border: 1px solid var(--border);
@@ -2848,21 +2920,24 @@ body {
 
 .create-election-image-actions {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0.65rem;
   flex-wrap: wrap;
 }
 
 .create-election-upload-button {
   display: inline-flex;
-  align-items: center;
+  flex: 1 1 19rem;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: center;
-  min-height: 36px;
-  padding: 0.5rem 0.9rem;
+  gap: 0.2rem;
+  min-height: 56px;
+  padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
-  border: 1px solid var(--accent);
-  background: rgba(190, 30, 45, 0.08);
-  color: var(--accent);
+  border: 1px solid rgba(27, 54, 93, 0.18);
+  background: linear-gradient(135deg, rgba(27, 54, 93, 0.05), rgba(43, 78, 122, 0.1));
+  color: var(--ink);
   font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
@@ -2872,11 +2947,49 @@ body {
 .create-election-upload-button:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
+  background: linear-gradient(135deg, rgba(27, 54, 93, 0.08), rgba(43, 78, 122, 0.14));
 }
 
 .create-election-upload-button.is-busy {
   opacity: 0.75;
   cursor: progress;
+}
+
+.create-election-upload-button__headline {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.create-election-upload-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: rgba(27, 54, 93, 0.1);
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+
+.create-election-upload-button__icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.create-election-upload-button__title {
+  display: block;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.create-election-upload-button__hint {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: rgba(43, 78, 122, 0.82);
 }
 
 .create-election-submit-card {
@@ -3203,6 +3316,8 @@ body {
   .results-suboption-group__header {
     flex-direction: column;
   }
+  .create-election-suboptions__toolbar { grid-template-columns: 1fr; }
+  .create-election-suboptions__panel-actions { flex-direction: column; align-items: stretch; }
   .create-election-suboption-row__fields { grid-template-columns: 1fr; width: 100%; }
   .stats-grid { grid-template-columns: 1fr; }
   .results-bar { flex-direction: column; align-items: stretch; }

@@ -14,6 +14,10 @@ interface ApiErrorOptions {
   details?: unknown;
 }
 
+interface ApiClientOptions extends RequestInit {
+  suppressErrorDetailLog?: boolean;
+}
+
 export class ApiError extends Error {
   readonly endpoint: string;
   readonly status: number;
@@ -42,7 +46,31 @@ async function readErrorPayload(response: Response): Promise<ErrorPayload> {
   return text ? { error: text } : {};
 }
 
-async function handleResponse<T>(response: Response, endpoint: string): Promise<T> {
+function hasMeaningfulErrorDetails(details: unknown): boolean {
+  if (details == null) {
+    return false;
+  }
+
+  if (typeof details === 'string') {
+    return details.trim().length > 0;
+  }
+
+  if (Array.isArray(details)) {
+    return details.length > 0;
+  }
+
+  if (typeof details === 'object') {
+    return Object.keys(details as Record<string, unknown>).length > 0;
+  }
+
+  return true;
+}
+
+async function handleResponse<T>(
+  response: Response,
+  endpoint: string,
+  options: ApiClientOptions = {},
+): Promise<T> {
   if (!response.ok) {
     if ((response.status === 401 || response.status === 403) && !endpoint.includes('/api/auth')) {
       if (typeof window !== 'undefined') {
@@ -55,7 +83,7 @@ async function handleResponse<T>(response: Response, endpoint: string): Promise<
     const error = await readErrorPayload(response);
     const message = error.error || `HTTP ${response.status}`;
 
-    if (error.details) {
+    if (!options.suppressErrorDetailLog && hasMeaningfulErrorDetails(error.details)) {
       console.error('[API details]', {
         endpoint,
         status: response.status,
@@ -92,22 +120,23 @@ async function performRequest(endpoint: string, options: RequestInit): Promise<R
 
 export async function apiClient<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: ApiClientOptions = {}
 ): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('tee_token') : null;
+  const { suppressErrorDetailLog, ...requestOptions } = options;
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
-    ...options.headers,
+    ...requestOptions.headers,
   };
 
   const response = await performRequest(endpoint, {
-    ...options,
+    ...requestOptions,
     headers,
   });
 
-  return handleResponse<T>(response, endpoint);
+  return handleResponse<T>(response, endpoint, { suppressErrorDetailLog });
 }
 
 export async function apiUpload<T>(

@@ -73,6 +73,7 @@ describe('api-client', () => {
 	});
 
 	it('parses JSON error payloads into ApiError', async () => {
+		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const errorPayload = {
 			error: 'Validation failed',
 			code: 'INVALID_DATA',
@@ -90,6 +91,61 @@ describe('api-client', () => {
 			code: 'INVALID_DATA',
 			details: { field: 'email' },
 		});
+
+		expect(consoleSpy).toHaveBeenCalledWith(
+			'[API details]',
+			expect.objectContaining({
+				endpoint: '/api/error',
+				status: 400,
+				code: 'INVALID_DATA',
+				details: { field: 'email' },
+			})
+		);
+		consoleSpy.mockRestore();
+	});
+
+	it('does not log empty error detail objects', async () => {
+		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		vi.mocked(fetch).mockResolvedValueOnce(
+			jsonResponse(
+				{
+					error: 'Validation failed',
+					code: 'INVALID_DATA',
+					details: {},
+				},
+				{ status: 400, statusText: 'Bad Request' }
+			)
+		);
+
+		await expect(apiClient('/api/error-empty-details')).rejects.toBeInstanceOf(ApiError);
+
+		expect(consoleSpy).not.toHaveBeenCalled();
+		consoleSpy.mockRestore();
+	});
+
+	it('allows callers to suppress detail logs for expected API fallbacks', async () => {
+		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		vi.mocked(fetch).mockResolvedValueOnce(
+			jsonResponse(
+				{
+					error: 'Legacy route fallback',
+					code: 'DB_INVALID_INPUT',
+					details: { message: 'invalid input syntax for type uuid' },
+				},
+				{ status: 400, statusText: 'Bad Request' }
+			)
+		);
+
+		await expect(
+			apiClient('/api/elections/suboption-presets', {
+				suppressErrorDetailLog: true,
+			})
+		).rejects.toMatchObject({
+			code: 'DB_INVALID_INPUT',
+		});
+
+		expect(consoleSpy).not.toHaveBeenCalled();
+		consoleSpy.mockRestore();
 	});
 
 	it('parses text error payloads when the response is not json', async () => {

@@ -18,6 +18,39 @@ import { apiClient } from '@/lib/api-client';
 
 const pushMock = vi.fn();
 
+type ApiClientResolver = (endpoint: string, init?: RequestInit) => unknown | Promise<unknown>;
+
+type ImmediateStartConfigMockProps = {
+    onChange: (next: {
+        startsImmediately?: boolean;
+        startTime?: string;
+        endTime?: string;
+        durationValue?: string;
+        durationUnit?: string;
+    }) => void;
+    startTime: string;
+    endTime: string;
+    startsImmediately: boolean;
+    durationValue: string;
+    durationUnit: string;
+};
+
+type TagSelectorMockProps = {
+    onChange: (tagId: string) => void;
+};
+
+type TagMembersEditorMockProps = {
+    onChange: (students: Array<{
+        id: string;
+        carnet: string;
+        full_name: string;
+        sede: string;
+        career: string;
+        degree_level: string;
+        is_active: boolean;
+    }>) => void;
+};
+
 vi.mock('next/navigation', () => ({
     useRouter: () => ({
         push: pushMock,
@@ -29,7 +62,7 @@ vi.mock('@/lib/api-client', () => ({
 }));
 
 vi.mock('@/components/elections/ImmediateStartConfig', () => ({
-    default: ({ onChange, startTime, endTime, startsImmediately, durationValue, durationUnit }: any) => (
+    default: ({ onChange, startTime, endTime, startsImmediately, durationValue, durationUnit }: ImmediateStartConfigMockProps) => (
         <div>
             <label>
                 Inicio inmediato
@@ -83,7 +116,7 @@ vi.mock('@/components/elections/ImmediateStartConfig', () => ({
 }));
 
 vi.mock('@/components/tags/TagSelector', () => ({
-    default: ({ onChange }: any) => (
+    default: ({ onChange }: TagSelectorMockProps) => (
         <button type="button" onClick={() => onChange('tag-1')}>
             Seleccionar tag mock
         </button>
@@ -91,7 +124,7 @@ vi.mock('@/components/tags/TagSelector', () => ({
 }));
 
 vi.mock('@/components/tags/TagMembersEditor', () => ({
-    default: ({ onChange }: any) => (
+    default: ({ onChange }: TagMembersEditorMockProps) => (
         <button
             type="button"
             onClick={() =>
@@ -113,6 +146,38 @@ vi.mock('@/components/tags/TagMembersEditor', () => ({
     ),
 }));
 
+function resolveDefaultApiClient(endpoint: string, init?: RequestInit) {
+    if (endpoint === '/api/users/admins') {
+        return [{ id: 'admin-1' }, { id: 'admin-2' }];
+    }
+
+    if (endpoint === '/api/elections/suboption-presets') {
+        if (init?.method === 'POST') {
+            const body = JSON.parse((init.body as string) || '{}');
+
+            return {
+                id: 'preset-1',
+                name: body.name,
+                items: body.items,
+            };
+        }
+
+        return [];
+    }
+
+    if (endpoint === '/api/elections' && init?.method === 'POST') {
+        return { id: 'election-1' };
+    }
+
+    return [];
+}
+
+function installApiClientMock(resolver: ApiClientResolver = resolveDefaultApiClient) {
+    vi.mocked(apiClient).mockImplementation(
+        ((endpoint: string, init?: RequestInit) => Promise.resolve(resolver(endpoint, init))) as typeof apiClient
+    );
+}
+
 describe('CrearEleccionPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -127,7 +192,7 @@ describe('CrearEleccionPage', () => {
         vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
         Element.prototype.scrollIntoView = vi.fn();
 
-        vi.mocked(apiClient).mockResolvedValue([{ id: 'admin-1' }, { id: 'admin-2' }]);
+        installApiClientMock();
     });
 
     async function fillBasicValidForm() {
@@ -174,6 +239,10 @@ describe('CrearEleccionPage', () => {
         expect(
             screen.getByText(/Nueva votación/i)
         ).toBeInTheDocument();
+
+        await waitFor(() => {
+            expect(apiClient).toHaveBeenCalledWith('/api/users/admins');
+        });
     });
 
     it('validates required title', async () => {
@@ -254,6 +323,128 @@ describe('CrearEleccionPage', () => {
         ).toBeInTheDocument();
     });
 
+    it('applies a suboption preset to a group', async () => {
+        const user = userEvent.setup();
+
+        render(<CrearEleccionPage />);
+
+        await user.click(screen.getByLabelText(/Usar subopciones/i));
+        await user.selectOptions(
+            screen.getByRole('combobox', { name: /Preset de subopciones del grupo 1/i }),
+            'builtin:FOR_AGAINST_ABSTENTION'
+        );
+        await user.click(screen.getByRole('button', { name: /Usar preset en el grupo 1/i }));
+
+        expect(
+            screen.getByLabelText(/Nombre de la subopcion 1 del grupo 1/i)
+        ).toHaveValue('A favor');
+        expect(
+            screen.getByLabelText(/Nombre de la subopcion 2 del grupo 1/i)
+        ).toHaveValue('En contra');
+        expect(
+            screen.getByLabelText(/Nombre de la subopcion 3 del grupo 1/i)
+        ).toHaveValue('Abstencion');
+    });
+
+    it('saves a custom suboption preset and reuses it in another group', async () => {
+        const user = userEvent.setup();
+        const savedPresets: Array<{ id: string; name: string; items: string[] }> = [];
+        const apiClientMock = vi.mocked(apiClient);
+
+        installApiClientMock((endpoint, init) => {
+            if (endpoint === '/api/elections/suboption-presets') {
+                if (init?.method === 'POST') {
+                    const body = JSON.parse((init.body as string) || '{}');
+                    const preset = {
+                        id: 'preset-custom-1',
+                        name: body.name,
+                        items: body.items,
+                    };
+
+                    savedPresets.push(preset);
+                    return preset;
+                }
+
+                return savedPresets;
+            }
+
+            return resolveDefaultApiClient(endpoint, init);
+        });
+
+        render(<CrearEleccionPage />);
+
+        await user.click(screen.getByLabelText(/Usar subopciones/i));
+        await waitFor(() => {
+            expect(apiClientMock).toHaveBeenCalledWith('/api/elections/suboption-presets');
+        });
+
+        await user.type(
+            screen.getByLabelText(/Nombre de la subopcion 1 del grupo 1/i),
+            'A favor'
+        );
+        await user.type(
+            screen.getByLabelText(/Nombre de la subopcion 2 del grupo 1/i),
+            'En contra'
+        );
+        await user.type(
+            screen.getByLabelText(/Nombre del preset del grupo 1/i),
+            'Consulta base'
+        );
+
+        await user.click(screen.getByRole('button', { name: /Guardar preset del grupo 1/i }));
+
+        await waitFor(() => {
+            expect(apiClientMock).toHaveBeenCalledWith(
+                '/api/elections/suboption-presets',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: 'Consulta base',
+                        items: ['A favor', 'En contra'],
+                    }),
+                })
+            );
+        });
+
+        await user.selectOptions(
+            screen.getByRole('combobox', { name: /Preset de subopciones del grupo 2/i }),
+            'preset-custom-1'
+        );
+        await user.click(screen.getByRole('button', { name: /Usar preset en el grupo 2/i }));
+
+        expect(
+            screen.getByLabelText(/Nombre de la subopcion 1 del grupo 2/i)
+        ).toHaveValue('A favor');
+        expect(
+            screen.getByLabelText(/Nombre de la subopcion 2 del grupo 2/i)
+        ).toHaveValue('En contra');
+    });
+
+    it('falls back gracefully when the backend still resolves presets as an election id', async () => {
+        const user = userEvent.setup();
+
+        installApiClientMock((endpoint, init) => {
+            if (endpoint === '/api/elections/suboption-presets' && !init?.method) {
+                throw Object.assign(new Error('invalid input syntax for type uuid'), {
+                    code: 'DB_INVALID_INPUT',
+                });
+            }
+
+            return resolveDefaultApiClient(endpoint, init);
+        });
+
+        render(<CrearEleccionPage />);
+
+        await user.click(screen.getByLabelText(/Usar subopciones/i));
+
+        expect(
+            await screen.findAllByText(/Los presets guardados apareceran cuando reinicies el backend/i)
+        ).toHaveLength(2);
+        expect(
+            screen.queryByText(/No se pudieron cargar los presets guardados/i)
+        ).not.toBeInTheDocument();
+    });
+
     it('validates scheduled date window', async () => {
         const user = userEvent.setup();
 
@@ -284,10 +475,6 @@ describe('CrearEleccionPage', () => {
     it('submits correct payload for scheduled full padron election', async () => {
         const user = userEvent.setup();
         const apiClientMock = vi.mocked(apiClient);
-
-        apiClientMock
-            .mockResolvedValueOnce([{ id: 'admin-1' }, { id: 'admin-2' }])
-            .mockResolvedValueOnce({ id: 'election-1' });
 
         render(<CrearEleccionPage />);
 
@@ -356,10 +543,6 @@ describe('CrearEleccionPage', () => {
         const user = userEvent.setup();
         const apiClientMock = vi.mocked(apiClient);
 
-        apiClientMock
-            .mockResolvedValueOnce([{ id: 'admin-1' }])
-            .mockResolvedValueOnce({ id: 'election-1' });
-
         render(<CrearEleccionPage />);
 
         await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Elección inmediata');
@@ -396,6 +579,61 @@ describe('CrearEleccionPage', () => {
         expect(payload.end_time).toBeUndefined();
     });
 
+    it('submits a suboption preset payload without breaking the ballot structure', async () => {
+        const user = userEvent.setup();
+        const apiClientMock = vi.mocked(apiClient);
+
+        render(<CrearEleccionPage />);
+
+        await user.type(screen.getByLabelText(/Titulo de la votacion/i), 'Consulta estudiantil');
+        await user.click(screen.getByLabelText(/Usar subopciones/i));
+        await user.type(screen.getByLabelText(/Nombre de la opcion 1/i), 'Pregunta 1');
+        await user.selectOptions(
+            screen.getByRole('combobox', { name: /Preset de subopciones del grupo 1/i }),
+            'builtin:FOR_AGAINST_ABSTENTION'
+        );
+        await user.click(screen.getByRole('button', { name: /Usar preset en el grupo 1/i }));
+        await user.type(screen.getByLabelText(/Fecha de apertura/i), '2026-06-01T08:00');
+        await user.type(screen.getByLabelText(/Fecha de cierre/i), '2026-06-01T18:00');
+
+        await user.click(screen.getByRole('button', { name: /Crear votaci.n/i }));
+
+        await waitFor(() => {
+            expect(apiClientMock).toHaveBeenCalledWith(
+                '/api/elections',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: expect.any(String),
+                })
+            );
+        });
+
+        const postCall = apiClientMock.mock.calls.find(
+            (call) => call[0] === '/api/elections'
+        );
+
+        const payload = JSON.parse((postCall?.[1] as RequestInit).body as string);
+
+        expect(payload.allow_suboptions).toBe(true);
+        expect(payload.options).toHaveLength(1);
+        expect(payload.options[0]).toEqual(
+            expect.objectContaining({
+                label: 'Pregunta 1',
+                option_type: 'CANDIDATE',
+                display_order: 1,
+            })
+        );
+        expect(
+            payload.options[0].suboptions.map((suboption: { label: string }) => suboption.label)
+        ).toEqual([
+            'A favor',
+            'En contra',
+            'Abstencion',
+            'Voto en blanco',
+            'Voto nulo',
+        ]);
+    });
+
     it('validates manual voter source without selected students', async () => {
         const user = userEvent.setup();
 
@@ -419,10 +657,6 @@ describe('CrearEleccionPage', () => {
     it('submits manual voter payload when students are selected', async () => {
         const user = userEvent.setup();
         const apiClientMock = vi.mocked(apiClient);
-
-        apiClientMock
-            .mockResolvedValueOnce([{ id: 'admin-1' }])
-            .mockResolvedValueOnce({ id: 'election-1' });
 
         render(<CrearEleccionPage />);
 
@@ -474,10 +708,6 @@ describe('CrearEleccionPage', () => {
         const user = userEvent.setup();
         const apiClientMock = vi.mocked(apiClient);
 
-        apiClientMock
-            .mockResolvedValueOnce([{ id: 'admin-1' }])
-            .mockResolvedValueOnce({ id: 'election-1' });
-
         render(<CrearEleccionPage />);
 
         await fillBasicValidForm();
@@ -511,11 +741,13 @@ describe('CrearEleccionPage', () => {
 
     it('shows backend error when creation fails', async () => {
         const user = userEvent.setup();
-        const apiClientMock = vi.mocked(apiClient);
+        installApiClientMock((endpoint, init) => {
+            if (endpoint === '/api/elections' && init?.method === 'POST') {
+                throw new Error('Error del backend');
+            }
 
-        apiClientMock
-            .mockResolvedValueOnce([{ id: 'admin-1' }])
-            .mockRejectedValueOnce(new Error('Error del backend'));
+            return resolveDefaultApiClient(endpoint, init);
+        });
 
         render(<CrearEleccionPage />);
 

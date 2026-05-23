@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import lighthouse, { desktopConfig, generateReport } from 'lighthouse';
-import { launch } from 'chrome-launcher';
+import { launchChrome } from '../shared/chrome.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
@@ -244,7 +244,9 @@ function createNextEnv(apiUrl) {
   return {
     ...process.env,
     NEXT_TELEMETRY_DISABLED: '1',
-    NEXT_DIST_DIR: process.env.NEXT_DIST_DIR || '.next-lighthouse-admin',
+    ...(process.env.LIGHTHOUSE_SKIP_BUILD !== '1'
+      ? { NEXT_DIST_DIR: process.env.NEXT_DIST_DIR || '.next-lighthouse-admin' }
+      : {}),
     LIGHTHOUSE_SKIP_BUILD_CHECKS: '1',
     LIGHTHOUSE_FORCE_SINGLE_WORKER: '1',
     NEXT_PUBLIC_API_URL: apiUrl,
@@ -467,21 +469,6 @@ async function waitForHttp(url, timeoutMs) {
   }
 
   throw new Error(`Timed out waiting for ${url}${lastError ? `: ${lastError.message}` : ''}`);
-}
-
-async function launchChrome() {
-  return launch({
-    chromePath: resolveChromePath(),
-    chromeFlags: ['--headless=new', '--disable-gpu', '--disable-dev-shm-usage', '--no-sandbox'],
-  });
-}
-
-function resolveChromePath() {
-  return (
-    process.env.LIGHTHOUSE_CHROME_PATH ||
-    process.env.CHROME_PATH ||
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-  );
 }
 
 async function seedAdminSession(chromePort, frontendUrl) {

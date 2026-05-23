@@ -7,6 +7,7 @@ const useLighthouseWorkerConfig = process.env.LIGHTHOUSE_FORCE_SINGLE_WORKER ===
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: ['127.0.0.1', 'localhost'],
   ...(distDir ? { distDir } : {}),
   ...(useLighthouseWorkerConfig
     ? {
