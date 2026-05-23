@@ -199,7 +199,7 @@ function EscrutinioSubirContent() {
       setValue('');
       setActionMessage(
         response.finalized
-          ? 'Llave canjeada. Se alcanzo el minimo y el escrutinio quedo finalizado.'
+          ? 'Llave canjeada. Se alcanzó el mínimo y el escrutinio quedó finalizado.'
           : 'Llave canjeada. El progreso fue actualizado.'
       );
       await fetchScrutiny({ silent: true });
@@ -286,7 +286,7 @@ function EscrutinioSubirContent() {
                 <div className="text-3xl font-serif text-red-600 mt-1">{missingKeys}</div>
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Minimo</div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Mínimo</div>
                 <div className="text-3xl font-serif text-red-600 mt-1">{requiredKeys}</div>
               </div>
               <div>
@@ -305,7 +305,7 @@ function EscrutinioSubirContent() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-sm">
               <span style={{ color: 'var(--muted)' }}>
                 {missingKeys === 0
-                  ? 'Ya se alcanzo el minimo de llaves para finalizar.'
+                  ? 'Ya se alcanzo el mínimo de llaves para finalizar.'
                   : `Faltan ${missingKeys} ${missingKeys === 1 ? 'llave' : 'llaves'} para poder finalizar.`}
               </span>
               <button
@@ -331,7 +331,7 @@ function EscrutinioSubirContent() {
                   <div className="font-semibold mt-1">{metrics.total_elegibles.toLocaleString()}</div>
                 </div>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Participacion</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Participación</div>
                   <div className="font-semibold mt-1">{Math.round(metrics.participation_rate)}%</div>
                 </div>
               </div>
@@ -353,7 +353,7 @@ function EscrutinioSubirContent() {
                 className="text-sm font-semibold"
                 style={{ color: missingKeys === 0 ? 'var(--success)' : 'var(--warning)' }}
               >
-                {missingKeys === 0 ? 'Minimo alcanzado' : `${missingKeys} pendientes`}
+                {missingKeys === 0 ? 'Mínimo alcanzado' : `${missingKeys} pendientes`}
               </span>
             </div>
 
@@ -425,7 +425,7 @@ function EscrutinioSubirContent() {
                   ? 'Tu llave ya fue canjeada.'
                   : currentMember
                     ? 'Pega la llave de escrutinio asignada a tu usuario.'
-                    : 'Tu usuario no aparece como custodio de llave en esta eleccion.'}
+                    : 'Tu usuario no aparece como custodio de llave en esta elección.'}
               </div>
             </div>
 
@@ -500,14 +500,14 @@ function EscrutinioSubirContent() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <div className="font-semibold" style={{ color: 'var(--ink)' }}>
-                  Finalizacion del escrutinio
+                  Finalización del escrutinio
                 </div>
                 <div className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
                   {isFinalized
-                    ? 'Esta eleccion ya fue marcada como escrutada.'
+                    ? 'Esta elección ya fue marcada como escrutada.'
                     : canFinalize
-                      ? 'El minimo de llaves fue alcanzado. Ya puedes finalizar.'
-                      : `Faltan ${missingKeys} ${missingKeys === 1 ? 'llave' : 'llaves'} para habilitar la finalizacion.`}
+                      ? 'El mínimo de llaves fue alcanzado. Ya puedes finalizar.'
+                      : `Faltan ${missingKeys} ${missingKeys === 1 ? 'llave' : 'llaves'} para habilitar la finalización.`}
                 </div>
               </div>
 
@@ -537,7 +537,7 @@ function EscrutinioSubirContent() {
           )}
 
           <p className="text-center mt-6 text-xs" style={{ color: 'var(--muted)' }}>
-            Cada canje y la finalizacion quedan registrados en el log de auditoria.
+            Cada canje y la finalización quedan registrados en el log de auditoria.
           </p>
         </>
       )}

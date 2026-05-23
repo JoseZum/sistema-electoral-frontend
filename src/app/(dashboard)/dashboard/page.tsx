@@ -217,14 +217,14 @@ export default function DashboardPage() {
               {greeting}, <em>{firstName}</em>
             </h2>
             <p className="dash-hero-sub">
-              Panel de control · TEE Sistema Electoral. Una vista rapida del estado
-              actual de los procesos, padron y actividad del sistema.
+              Panel de control · TEE Sistema Electoral. Una vista rápida del estado
+              actual de los procesos, padrón y actividad del sistema.
             </p>
           </div>
           <div className="dash-hero-meta">
             <div className="dash-hero-stat">
               <span className="dash-hero-stat-value">{participationLabel}%</span>
-              <span className="dash-hero-stat-label">Participacion promedio</span>
+              <span className="dash-hero-stat-label">Participación promedio</span>
             </div>
           </div>
         </div>
@@ -302,7 +302,7 @@ export default function DashboardPage() {
         <StatCard
           label="Votos emitidos"
           value={data.stats.totalVotes.toLocaleString()}
-          sub={`${participationLabel}% participacion promedio`}
+          sub={`${participationLabel}% participación promedio`}
           icon={
             <svg
               aria-hidden="true"
@@ -324,7 +324,7 @@ export default function DashboardPage() {
         <StatCard
           label="Estudiantes activos"
           value={data.stats.activeStudents.toLocaleString()}
-          sub={`De ${data.stats.totalStudents.toLocaleString()} en el padron`}
+          sub={`De ${data.stats.totalStudents.toLocaleString()} en el padrón`}
           icon={
             <svg
               aria-hidden="true"
@@ -382,7 +382,7 @@ export default function DashboardPage() {
                     <div
                       className="dash-progress-track"
                       role="progressbar"
-                      aria-label={`Participacion de ${election.title}`}
+                      aria-label={`Participación de ${election.title}`}
                       aria-valuemin={0}
                       aria-valuemax={100}
                       aria-valuenow={Math.round(progress)}
@@ -390,7 +390,7 @@ export default function DashboardPage() {
                       <div className="dash-progress-fill" style={{ width: `${progress}%` }} />
                     </div>
                     <div className="dash-progress-foot">
-                      <span>Participacion</span>
+                      <span>Participación</span>
                       <strong>{progress.toFixed(0)}%</strong>
                     </div>
                   </div>
