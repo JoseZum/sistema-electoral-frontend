@@ -118,7 +118,7 @@ test.describe('generación de llaves', () => {
 
     // Verificar que se muestra la información
     await expect(page.getByText('Electoral masiva')).toBeVisible();
-    await expect(page.getByText('Padron completo')).toBeVisible();
+    await expect(page.getByText('Padrón completo')).toBeVisible();
     await expect(page.getByText('3').first()).toBeVisible();
     await expect(page.getByText('150')).toBeVisible();
   });

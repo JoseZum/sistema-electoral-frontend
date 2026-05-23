@@ -91,7 +91,7 @@ test.describe('results and suffrage flows', () => {
     await expectNoCriticalA11yViolations(page);
 
     await expect(page.getByText('Sufragio público')).toBeVisible();
-    await expect(page.getByText('Participacion por persona (2)')).toBeVisible();
+    await expect(page.getByText('Participación por persona (2)')).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Opcion elegida' })).toBeVisible();
     await expect(page.getByRole('cell', { name: 'Plan A' })).toBeVisible();
     await expect(page.getByText('No votó')).toBeVisible();

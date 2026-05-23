@@ -231,7 +231,7 @@ test.describe('generación de llaves - flujo de integración', () => {
     await expect(page.getByText('Minimo llaves').locator('..').getByText('2', { exact: true })).toBeVisible();
 
     await select.selectOption('election-3');
-    await expect(page.getByText('Padron completo')).toBeVisible();
+    await expect(page.getByText('Padrón completo')).toBeVisible();
     await expect(page.getByText('Elegibles').locator('..').getByText('300', { exact: true })).toBeVisible();
     await expect(page.getByText('Minimo llaves').locator('..').getByText('3', { exact: true })).toBeVisible();
   });
