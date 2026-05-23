@@ -52,6 +52,8 @@ jobs:
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -77,6 +79,8 @@ jobs:
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -99,6 +103,8 @@ jobs:
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -134,6 +140,8 @@ jobs:
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -156,6 +164,8 @@ jobs:
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -199,6 +209,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ github.token }}
 
       - name: Fast-forward main to the tested dev commit
         shell: bash
