@@ -263,12 +263,12 @@ describe('Flujo de integración: creación de elecciones', () => {
         );
 
         await user.selectOptions(
-            screen.getByLabelText(/duraci[oó]n\ de\ la\ votaci[oó]n\ inmediata/i),
+            screen.getByLabelText(/^Duraci[oó]n de la votaci[oó]n inmediata$/i),
             '2'
         );
 
         await user.selectOptions(
-            screen.getByLabelText(/Unidad\ de\ duraci[oó]n\ de\ la\ votaci[oó]n\ inmediata/i),
+            screen.getByLabelText(/^Unidad de duraci[oó]n de la votaci[oó]n inmediata$/i),
             'hours'
         );
 
