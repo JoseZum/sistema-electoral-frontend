@@ -5,6 +5,9 @@ on:
     branches:
       - dev
       - main
+  push:
+    branches:
+      - dev
   workflow_dispatch:
 
 permissions:
@@ -272,3 +275,39 @@ jobs:
           done
 
           echo "Frontend quality gate passed."
+
+  promote-dev-to-main:
+    name: 9) Promote Dev To Main
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: quality-gate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fast-forward main to the tested dev commit
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin main dev
+
+          if ! git merge-base --is-ancestor origin/main "$GITHUB_SHA"; then
+            echo "::error::main has commits that are not in dev. Sync dev with main before promoting."
+            exit 1
+          fi
+
+          if [ "$(git rev-parse origin/main)" = "$GITHUB_SHA" ]; then
+            echo "main is already aligned with the tested dev commit."
+            exit 0
+          fi
+
+          git push origin "$GITHUB_SHA:refs/heads/main"
