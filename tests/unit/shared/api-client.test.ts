@@ -9,8 +9,10 @@
  * - upload con FormData
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, apiClient, apiUpload } from '@/lib/api-client';
+
+const originalApiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function jsonResponse<T>(body: T, init: ResponseInit = {}): Response {
 	return new Response(JSON.stringify(body), {
@@ -30,6 +32,15 @@ describe('api-client', () => {
 	beforeEach(() => {
 		localStorage.clear();
 		vi.stubGlobal('fetch', vi.fn());
+	});
+
+	afterEach(() => {
+		if (originalApiUrl === undefined) {
+			delete process.env.NEXT_PUBLIC_API_URL;
+			return;
+		}
+
+		process.env.NEXT_PUBLIC_API_URL = originalApiUrl;
 	});
 
 	it('includes the bearer token and returns the parsed response', async () => {
@@ -68,6 +79,23 @@ describe('api-client', () => {
 					'Content-Type': 'application/json',
 					'X-Request-Id': 'request-1',
 				}),
+			})
+		);
+	});
+
+	it('normalizes a trailing slash in the configured api base url', async () => {
+		process.env.NEXT_PUBLIC_API_URL = 'https://api.example.com/';
+		vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ ok: true }));
+
+		await apiClient('/api/auth/microsoft', {
+			method: 'POST',
+			body: JSON.stringify({ idToken: 'token-123' }),
+		});
+
+		expect(fetch).toHaveBeenCalledWith(
+			'https://api.example.com/api/auth/microsoft',
+			expect.objectContaining({
+				method: 'POST',
 			})
 		);
 	});

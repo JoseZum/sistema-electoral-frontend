@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { buildApiUrl } from './api-url';
 
 interface ErrorPayload {
   error?: string;
@@ -106,7 +106,7 @@ async function handleResponse<T>(
 
 async function performRequest(endpoint: string, options: RequestInit): Promise<Response> {
   try {
-    return await fetch(`${API_URL}${endpoint}`, options);
+    return await fetch(buildApiUrl(endpoint), options);
   } catch (error) {
     throw new ApiError({
       endpoint,

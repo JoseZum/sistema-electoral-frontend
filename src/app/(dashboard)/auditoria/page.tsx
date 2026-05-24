@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { buildApiUrl } from '@/lib/api-url';
 import Loader from '@/components/Loader';
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -1529,8 +1530,6 @@ function EventDetail({ log, narrative }: { log: AuditLog; narrative: Narrative }
 // Export + purge panel
 // ────────────────────────────────────────────────────────────────────────────
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 function todayISO(offsetDays = 0): string {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
@@ -1748,7 +1747,7 @@ function ExportPanel({
       const qs = buildAuditQuery({ from, to, selectedCategoryIds: selectedCats });
       qs.set('format', format);
 
-      const res = await fetch(`${API_URL}/api/audit/export?${qs.toString()}`, {
+      const res = await fetch(`${buildApiUrl('/api/audit/export')}?${qs.toString()}`, {
         method: 'GET',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });

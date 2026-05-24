@@ -97,19 +97,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setState((prev) => ({ ...prev, isLoading: true }));
         setError(null);
 
-        console.log('[Auth] MSAL account detected:', account.username);
-
         const tokenResponse = await instance.acquireTokenSilent({
           ...loginRequest,
           account,
         });
 
-        console.log('[Auth] Sending token to backend...');
         const authResponse = await apiClient<AuthResponse>('/api/auth/microsoft', {
           method: 'POST',
           body: JSON.stringify({ idToken: tokenResponse.idToken }),
         });
-        console.log('[Auth] Backend validated. role:', authResponse.user?.role);
 
         localStorage.setItem('tee_token', authResponse.token);
         localStorage.setItem('tee_user', JSON.stringify(authResponse.user));
