@@ -93,7 +93,7 @@ test.describe('create election suboptions flow', () => {
     expect(adminRequest?.authorization).toBe(`Bearer ${adminToken}`);
     expect(adminRequest?.contentType ?? '').toContain('application/json');
 
-    const useSuboptions = page.getByRole('checkbox', { name: 'Usar subopciones' });
+    const useSuboptions = page.getByRole('checkbox', { name: '¿Cada opción tiene subopciones?' });
     await expect(useSuboptions).not.toBeChecked();
 
     const presetsResponse = page.waitForResponse((response) => (
@@ -105,7 +105,10 @@ test.describe('create election suboptions flow', () => {
     await useSuboptions.check();
     await presetsResponse;
 
-    await expect(page.getByRole('combobox', { name: 'Preset de subopciones del grupo 1' })).toBeVisible();
+    // Open the "Usar plantilla" disclosure for option 1
+    await page.getByText('Usar plantilla').first().click();
+
+    await expect(page.getByRole('combobox', { name: 'Plantilla de subopciones del cargo 1' })).toBeVisible();
 
     const presetRequest = observedRequests.find((request) => request.endpoint === '/api/elections/suboption-presets');
     expect(presetRequest?.method).toBe('GET');
@@ -113,12 +116,12 @@ test.describe('create election suboptions flow', () => {
     expect(presetRequest?.contentType ?? '').toContain('application/json');
     expect(frontendErrors, frontendErrors.join('\n')).toEqual([]);
 
-    const presetSelect = page.getByRole('combobox', { name: 'Preset de subopciones del grupo 1' });
+    const presetSelect = page.getByRole('combobox', { name: 'Plantilla de subopciones del cargo 1' });
     await presetSelect.selectOption('builtin:YES_NO');
-    await page.getByRole('button', { name: 'Usar preset en el grupo 1' }).click();
+    await page.getByRole('button', { name: 'Aplicar plantilla en el cargo 1' }).click();
 
-    await expect(page.getByLabel(/Nombre de la subopci[oó]n 1 del grupo 1/i)).toHaveValue('Si');
-    await expect(page.getByLabel(/Nombre de la subopci[oó]n 2 del grupo 1/i)).toHaveValue('No');
+    await expect(page.getByLabel(/Nombre de la subopci[oó]n 1 del cargo 1/i)).toHaveValue('Si');
+    await expect(page.getByLabel(/Nombre de la subopci[oó]n 2 del cargo 1/i)).toHaveValue('No');
     expect(frontendErrors, frontendErrors.join('\n')).toEqual([]);
   });
 });

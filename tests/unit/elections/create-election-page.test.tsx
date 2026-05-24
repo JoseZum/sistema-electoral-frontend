@@ -178,6 +178,20 @@ function installApiClientMock(resolver: ApiClientResolver = resolveDefaultApiCli
     );
 }
 
+type UserEventInstance = ReturnType<typeof userEvent.setup>;
+
+async function expandOption(user: UserEventInstance, optionIndex: number) {
+    const trigger = screen.getByRole('button', {
+        name: new RegExp(`Editar (opci[oó]n|cargo de elecci[oó]n) ${optionIndex}\\b`, 'i'),
+    });
+    await user.click(trigger);
+}
+
+async function openPresetsDisclosure(user: UserEventInstance, occurrence: number) {
+    const triggers = screen.getAllByText('Usar plantilla');
+    await user.click(triggers[occurrence]);
+}
+
 describe('CrearEleccionPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -213,6 +227,7 @@ describe('CrearEleccionPage', () => {
             'Candidato A'
         );
 
+        await expandOption(user, 2);
         await user.type(
             screen.getByLabelText(/Nombre de la opci[oó]n 2/i),
             'Candidato B'
@@ -292,6 +307,7 @@ describe('CrearEleccionPage', () => {
         await user.type(screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i), 'Elección');
 
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'Lista A');
+        await expandOption(user, 2);
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'Lista A');
 
         await user.type(
@@ -328,21 +344,22 @@ describe('CrearEleccionPage', () => {
 
         render(<CrearEleccionPage />);
 
-        await user.click(screen.getByLabelText(/Usar subopciones/i));
+        await user.click(screen.getByLabelText(/¿Cada opción tiene subopciones\?/i));
+        await openPresetsDisclosure(user, 0);
         await user.selectOptions(
-            screen.getByRole('combobox', { name: /Preset de subopciones del grupo 1/i }),
+            screen.getByRole('combobox', { name: /Plantilla de subopciones del cargo 1/i }),
             'builtin:FOR_AGAINST_ABSTENTION'
         );
-        await user.click(screen.getByRole('button', { name: /Usar preset en el grupo 1/i }));
+        await user.click(screen.getByRole('button', { name: /Aplicar plantilla en el cargo 1/i }));
 
         expect(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 1 del grupo 1/i)
+            screen.getByLabelText(/Nombre de la subopci[oó]n 1 del cargo 1/i)
         ).toHaveValue('A favor');
         expect(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 2 del grupo 1/i)
+            screen.getByLabelText(/Nombre de la subopci[oó]n 2 del cargo 1/i)
         ).toHaveValue('En contra');
         expect(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 3 del grupo 1/i)
+            screen.getByLabelText(/Nombre de la subopci[oó]n 3 del cargo 1/i)
         ).toHaveValue('Abstención');
     });
 
@@ -373,7 +390,7 @@ describe('CrearEleccionPage', () => {
 
         render(<CrearEleccionPage />);
 
-        await user.click(screen.getByLabelText(/Usar subopciones/i));
+        await user.click(screen.getByLabelText(/¿Cada opción tiene subopciones\?/i));
         await waitFor(() => {
             const hitSuboptionPresets = apiClientMock.mock.calls.some(
                 ([endpoint]) => endpoint === '/api/elections/suboption-presets'
@@ -382,19 +399,21 @@ describe('CrearEleccionPage', () => {
         });
 
         await user.type(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 1 del grupo 1/i),
+            screen.getByLabelText(/Nombre de la subopci[oó]n 1 del cargo 1/i),
             'A favor'
         );
         await user.type(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 2 del grupo 1/i),
+            screen.getByLabelText(/Nombre de la subopci[oó]n 2 del cargo 1/i),
             'En contra'
         );
+
+        await openPresetsDisclosure(user, 0);
         await user.type(
-            screen.getByLabelText(/Nombre del preset del grupo 1/i),
+            screen.getByLabelText(/Nombre de plantilla del cargo 1/i),
             'Consulta base'
         );
 
-        await user.click(screen.getByRole('button', { name: /Guardar preset del grupo 1/i }));
+        await user.click(screen.getByRole('button', { name: /Guardar plantilla del cargo 1/i }));
 
         await waitFor(() => {
             expect(apiClientMock).toHaveBeenCalledWith(
@@ -409,17 +428,19 @@ describe('CrearEleccionPage', () => {
             );
         });
 
+        await expandOption(user, 2);
+        await openPresetsDisclosure(user, 1);
         await user.selectOptions(
-            screen.getByRole('combobox', { name: /Preset de subopciones del grupo 2/i }),
+            screen.getByRole('combobox', { name: /Plantilla de subopciones del cargo 2/i }),
             'preset-custom-1'
         );
-        await user.click(screen.getByRole('button', { name: /Usar preset en el grupo 2/i }));
+        await user.click(screen.getByRole('button', { name: /Aplicar plantilla en el cargo 2/i }));
 
         expect(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 1 del grupo 2/i)
+            screen.getByLabelText(/Nombre de la subopci[oó]n 1 del cargo 2/i)
         ).toHaveValue('A favor');
         expect(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 2 del grupo 2/i)
+            screen.getByLabelText(/Nombre de la subopci[oó]n 2 del cargo 2/i)
         ).toHaveValue('En contra');
     });
 
@@ -438,10 +459,13 @@ describe('CrearEleccionPage', () => {
 
         render(<CrearEleccionPage />);
 
-        await user.click(screen.getByLabelText(/Usar subopciones/i));
+        await user.click(screen.getByLabelText(/¿Cada opción tiene subopciones\?/i));
+        await expandOption(user, 2);
+        await openPresetsDisclosure(user, 0);
+        await openPresetsDisclosure(user, 1);
 
         expect(
-            await screen.findAllByText(/Los presets guardados aparecer[áa]n cuando reinicies el backend/i)
+            await screen.findAllByText(/Las plantillas guardadas aparecer[áa]n cuando reinicies el backend/i)
         ).toHaveLength(2);
         expect(
             screen.queryByText(/No se pudieron cargar los presets guardados/i)
@@ -456,6 +480,7 @@ describe('CrearEleccionPage', () => {
         await user.type(screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i), 'Elección');
 
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'A');
+        await expandOption(user, 2);
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'B');
 
         await user.type(
@@ -550,6 +575,7 @@ describe('CrearEleccionPage', () => {
 
         await user.type(screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i), 'Elección inmediata');
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'Sí');
+        await expandOption(user, 2);
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'No');
 
         await user.click(screen.getByLabelText(/Inicio inmediato/i));
@@ -589,13 +615,14 @@ describe('CrearEleccionPage', () => {
         render(<CrearEleccionPage />);
 
         await user.type(screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i), 'Consulta estudiantil');
-        await user.click(screen.getByLabelText(/Usar subopciones/i));
+        await user.click(screen.getByLabelText(/¿Cada opción tiene subopciones\?/i));
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'Pregunta 1');
+        await openPresetsDisclosure(user, 0);
         await user.selectOptions(
-            screen.getByRole('combobox', { name: /Preset de subopciones del grupo 1/i }),
+            screen.getByRole('combobox', { name: /Plantilla de subopciones del cargo 1/i }),
             'builtin:FOR_AGAINST_ABSTENTION'
         );
-        await user.click(screen.getByRole('button', { name: /Usar preset en el grupo 1/i }));
+        await user.click(screen.getByRole('button', { name: /Aplicar plantilla en el cargo 1/i }));
         await user.type(screen.getByLabelText(/Fecha de apertura/i), '2026-06-01T08:00');
         await user.type(screen.getByLabelText(/Fecha de cierre/i), '2026-06-01T18:00');
 
@@ -644,6 +671,7 @@ describe('CrearEleccionPage', () => {
 
         await user.type(screen.getByLabelText(/t[íi]tulo de la votaci[oó]n/i), 'Manual');
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 1/i), 'A');
+        await expandOption(user, 2);
         await user.type(screen.getByLabelText(/Nombre de la opci[oó]n 2/i), 'B');
         await user.type(screen.getByLabelText(/Fecha de apertura/i), '2026-06-01T08:00');
         await user.type(screen.getByLabelText(/Fecha de cierre/i), '2026-06-01T18:00');

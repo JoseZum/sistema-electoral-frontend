@@ -98,6 +98,11 @@ describe('Flujo de integración: creación de elecciones', () => {
             'Candidato A'
         );
 
+        const expandOption2 = screen.getByRole('button', {
+            name: /Editar (opci[oó]n|cargo de elecci[oó]n) 2\b/i,
+        });
+        await user.click(expandOption2);
+
         await user.type(
             screen.getByLabelText(/Nombre de la opci[oó]n 2/i),
             'Candidato B'
