@@ -352,15 +352,10 @@ describe('CrearEleccionPage', () => {
         );
         await user.click(screen.getByRole('button', { name: /Aplicar plantilla en el cargo 1/i }));
 
-        expect(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 1 del cargo 1/i)
-        ).toHaveValue('A favor');
-        expect(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 2 del cargo 1/i)
-        ).toHaveValue('En contra');
-        expect(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 3 del cargo 1/i)
-        ).toHaveValue('Abstención');
+        // Plantilla applied suboptions are rendered as collapsed summary rows.
+        expect(screen.getByText('A favor')).toBeInTheDocument();
+        expect(screen.getByText('En contra')).toBeInTheDocument();
+        expect(screen.getByText('Abstención')).toBeInTheDocument();
     });
 
     it('saves a custom suboption preset and reuses it in another group', async () => {
@@ -436,12 +431,10 @@ describe('CrearEleccionPage', () => {
         );
         await user.click(screen.getByRole('button', { name: /Aplicar plantilla en el cargo 2/i }));
 
-        expect(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 1 del cargo 2/i)
-        ).toHaveValue('A favor');
-        expect(
-            screen.getByLabelText(/Nombre de la subopci[oó]n 2 del cargo 2/i)
-        ).toHaveValue('En contra');
+        // Plantilla applied suboptions are rendered as collapsed summary rows in cargo 2.
+        // cargo 1 still has expanded inputs (typed manually) — their values stay as input.value, not text content.
+        expect(screen.getByText('A favor')).toBeInTheDocument();
+        expect(screen.getByText('En contra')).toBeInTheDocument();
     });
 
     it('falls back gracefully when the backend still resolves presets as an election id', async () => {

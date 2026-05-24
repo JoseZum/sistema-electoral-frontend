@@ -3304,6 +3304,109 @@ body {
   color: var(--error);
 }
 
+/* ---- Tone-down: labels inside option/suboption cards use neutral gray ---- */
+.create-election-option-card .input-group label,
+.create-election-suboption-row .input-group label,
+.create-election-image-compact__label {
+  color: #374151;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+/* Override the uppercase/blue heading inside compact image label */
+.create-election-image-compact__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Make compact image field a single inline row */
+.create-election-image-field--compact-host {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.create-election-image-field--compact-host .create-election-image-compact {
+  flex: 1 1 100%;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.create-election-image-field--compact-host .create-election-image-compact__empty,
+.create-election-image-field--compact-host .create-election-image-compact__chip {
+  padding: 0.3rem 0.55rem;
+  min-height: 36px;
+}
+
+/* ---- Suboption collapsed summary row ---- */
+.create-election-suboption-row.is-collapsed {
+  align-items: center;
+  padding: 0.6rem 0.9rem;
+  background: var(--surface);
+  gap: 0.75rem;
+}
+
+.create-election-suboption-row.is-collapsed .create-election-suboption-row__index {
+  width: 28px;
+  height: 28px;
+  font-size: 0.7rem;
+}
+
+.create-election-suboption-summary {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.1rem;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.1rem 0;
+  min-width: 0;
+}
+
+.create-election-suboption-summary:hover .create-election-suboption-summary__name {
+  text-decoration: underline;
+}
+
+.create-election-suboption-summary__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.create-election-suboption-summary__name.is-placeholder {
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.create-election-suboption-summary__meta {
+  font-size: 0.75rem;
+  color: #6B7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.create-election-suboption-row__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.create-election-suboption-row.is-expanded .create-election-suboption-row__actions {
+  align-self: flex-start;
+  flex-direction: column;
+}
+
 .create-election-submit-card {
   padding: 1.1rem 1.2rem;
   display: flex;

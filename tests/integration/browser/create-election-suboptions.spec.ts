@@ -120,8 +120,9 @@ test.describe('create election suboptions flow', () => {
     await presetSelect.selectOption('builtin:YES_NO');
     await page.getByRole('button', { name: 'Aplicar plantilla en el cargo 1' }).click();
 
-    await expect(page.getByLabel(/Nombre de la subopci[oó]n 1 del cargo 1/i)).toHaveValue('Si');
-    await expect(page.getByLabel(/Nombre de la subopci[oó]n 2 del cargo 1/i)).toHaveValue('No');
+    // Plantilla-applied suboptions render as collapsed summary rows showing the names.
+    await expect(page.getByText('Si', { exact: true })).toBeVisible();
+    await expect(page.getByText('No', { exact: true })).toBeVisible();
     expect(frontendErrors, frontendErrors.join('\n')).toEqual([]);
   });
 });

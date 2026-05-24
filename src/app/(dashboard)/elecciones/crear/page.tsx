@@ -459,6 +459,12 @@ export default function CrearEleccionPage() {
   ]);
 
   const [expandedOptionIds, setExpandedOptionIds] = useState<string[]>(['option-1']);
+  const [expandedSuboptionIds, setExpandedSuboptionIds] = useState<string[]>([
+    'suboption-1',
+    'suboption-2',
+    'suboption-3',
+    'suboption-4',
+  ]);
   const [allowSuboptions, setAllowSuboptions] = useState(false);
   const [includeBlank, setIncludeBlank] = useState(true);
   const [includeNull, setIncludeNull] = useState(true);
@@ -794,6 +800,12 @@ export default function CrearEleccionPage() {
     }
   }
 
+  function toggleSuboptionExpanded(suboptionId: string) {
+    setExpandedSuboptionIds((prev) => (
+      prev.includes(suboptionId) ? prev.filter((id) => id !== suboptionId) : [...prev, suboptionId]
+    ));
+  }
+
   function addSuboption(optionIndex: number) {
     const nextSuboption = createSuboption();
     setOptions((prev) =>
@@ -803,6 +815,9 @@ export default function CrearEleccionPage() {
           : option
       ))
     );
+    setExpandedSuboptionIds((prev) => (
+      prev.includes(nextSuboption.id) ? prev : [...prev, nextSuboption.id]
+    ));
   }
 
   function applySuboptionPreset(optionIndex: number, presetId: string) {
@@ -811,6 +826,7 @@ export default function CrearEleccionPage() {
       return;
     }
 
+    const previousSuboptionIds = options[optionIndex]?.suboptions.map((suboption) => suboption.id) ?? [];
     const nextSuboptions = preset.items.map((label) => createSuboption({ label }));
     setError(null);
     setSuboptionPresetError(null);
@@ -821,6 +837,8 @@ export default function CrearEleccionPage() {
           : option
       ))
     );
+    // Presets arrive pre-filled, so leave them collapsed to keep the card tidy.
+    setExpandedSuboptionIds((prev) => prev.filter((id) => !previousSuboptionIds.includes(id)));
   }
 
   async function saveSuboptionPreset(optionIndex: number) {
@@ -894,6 +912,7 @@ export default function CrearEleccionPage() {
   }
 
   function removeSuboption(optionIndex: number, suboptionIndex: number) {
+    const targetId = options[optionIndex]?.suboptions[suboptionIndex]?.id;
     setOptions((prev) =>
       prev.map((option, currentIndex) => (
         currentIndex === optionIndex
@@ -906,6 +925,9 @@ export default function CrearEleccionPage() {
           : option
       ))
     );
+    if (targetId) {
+      setExpandedSuboptionIds((prev) => prev.filter((id) => id !== targetId));
+    }
   }
 
   function updateSuboption(
@@ -1494,11 +1516,11 @@ export default function CrearEleccionPage() {
                       <div className="create-election-option-card__actions">
                         <button
                           type="button"
-                          className="btn btn-outline btn-sm"
+                          className={isExpanded ? 'btn btn-accent btn-sm' : 'btn btn-outline btn-sm'}
                           onClick={() => toggleOptionExpanded(option.id)}
                           aria-expanded={isExpanded}
                         >
-                          {isExpanded ? 'Listo' : 'Editar'}
+                          {isExpanded ? 'Guardar' : 'Editar'}
                         </button>
                         <button
                           type="button"
@@ -1601,18 +1623,18 @@ export default function CrearEleccionPage() {
                           <div className="create-election-suboptions">
                             <div className="create-election-suboptions__header">
                               <div className="create-election-suboptions__intro">
-                                <div className="create-election-suboptions__title">Subopciones</div>
+                                <div className="create-election-suboptions__title">Opciones de respuesta</div>
                                 <p className="create-election-inline-help">
-                                  Las respuestas dentro de este cargo. Cada votante elegirá una.
+                                  Cada votante elegirá una opción para este cargo.
                                 </p>
                               </div>
                               <div className="create-election-suboptions__header-actions">
                                 <button
                                   type="button"
-                                  className="btn btn-outline btn-sm"
+                                  className="btn btn-accent btn-sm"
                                   onClick={() => addSuboption(index)}
                                 >
-                                  + Agregar subopción
+                                  + Agregar opción
                                 </button>
                                 <details className="create-election-presets-disclosure">
                                   <summary className="create-election-presets-disclosure__trigger">
@@ -1726,58 +1748,120 @@ export default function CrearEleccionPage() {
                             </div>
 
                             <div className="create-election-suboption-list">
-                              {option.suboptions.map((suboption, suboptionIndex) => (
-                                <div key={suboption.id} className="create-election-suboption-row">
-                                  <div className="create-election-suboption-row__index">
-                                    {suboptionIndex + 1}
-                                  </div>
-                                  <div className="create-election-suboption-row__fields">
-                                    <div className="input-group">
-                                      <label>Nombre de subopción</label>
-                                      <input
-                                        type="text"
-                                        className="input"
-                                        aria-label={`Nombre de la subopción ${suboptionIndex + 1} del cargo ${index + 1}`}
-                                        placeholder="Ej: Juan Pérez"
-                                        value={suboption.label}
-                                        onChange={(event) => updateSuboption(index, suboptionIndex, 'label', event.target.value)}
-                                      />
+                              {option.suboptions.map((suboption, suboptionIndex) => {
+                                const isSubExpanded = expandedSuboptionIds.includes(suboption.id);
+                                const subDisplayName = suboption.label.trim() || 'Sin nombre todavía';
+                                const subDescription = suboption.description.trim();
+                                const canRemoveSub = option.suboptions.length > 2;
+
+                                return (
+                                  <div
+                                    key={suboption.id}
+                                    className={`create-election-suboption-row ${isSubExpanded ? 'is-expanded' : 'is-collapsed'}`}
+                                  >
+                                    <div className="create-election-suboption-row__index">
+                                      {suboptionIndex + 1}
                                     </div>
 
-                                    <div className="input-group">
-                                      <label>Descripción</label>
-                                      <input
-                                        type="text"
-                                        className="input"
-                                        aria-label={`Descripción de la subopción ${suboptionIndex + 1} del cargo ${index + 1}`}
-                                        placeholder="Descripción corta opcional"
-                                        value={suboption.description}
-                                        onChange={(event) => updateSuboption(index, suboptionIndex, 'description', event.target.value)}
-                                      />
-                                    </div>
+                                    {isSubExpanded ? (
+                                      <>
+                                        <div className="create-election-suboption-row__fields">
+                                          <div className="input-group">
+                                            <label>Nombre de la opción</label>
+                                            <input
+                                              type="text"
+                                              className="input"
+                                              aria-label={`Nombre de la subopción ${suboptionIndex + 1} del cargo ${index + 1}`}
+                                              placeholder="Ej: Juan Pérez"
+                                              value={suboption.label}
+                                              onChange={(event) => updateSuboption(index, suboptionIndex, 'label', event.target.value)}
+                                            />
+                                          </div>
 
-                                    <div className="create-election-image-field create-election-image-field--compact-host">
-                                      <CompactBallotImageField
-                                        imageUrl={suboption.image_url}
-                                        imageName={suboption.image_name}
-                                        uploading={uploadingImageIds.includes(suboption.id)}
-                                        uploadAriaLabel={`Subir imagen de la subopción ${suboptionIndex + 1} del cargo ${index + 1}`}
-                                        onFileChange={(file) => uploadSuboptionImage(index, suboptionIndex, file)}
-                                        onClear={() => clearSuboptionImage(index, suboptionIndex)}
-                                      />
-                                    </div>
+                                          <div className="input-group">
+                                            <label>Descripción opcional</label>
+                                            <input
+                                              type="text"
+                                              className="input"
+                                              aria-label={`Descripción de la subopción ${suboptionIndex + 1} del cargo ${index + 1}`}
+                                              placeholder="Descripción corta opcional"
+                                              value={suboption.description}
+                                              onChange={(event) => updateSuboption(index, suboptionIndex, 'description', event.target.value)}
+                                            />
+                                          </div>
+
+                                          <div className="create-election-image-field create-election-image-field--compact-host">
+                                            <CompactBallotImageField
+                                              imageUrl={suboption.image_url}
+                                              imageName={suboption.image_name}
+                                              uploading={uploadingImageIds.includes(suboption.id)}
+                                              uploadAriaLabel={`Subir imagen de la subopción ${suboptionIndex + 1} del cargo ${index + 1}`}
+                                              onFileChange={(file) => uploadSuboptionImage(index, suboptionIndex, file)}
+                                              onClear={() => clearSuboptionImage(index, suboptionIndex)}
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="create-election-suboption-row__actions">
+                                          <button
+                                            type="button"
+                                            className="btn btn-ghost btn-sm"
+                                            onClick={() => toggleSuboptionExpanded(suboption.id)}
+                                          >
+                                            Cerrar edición
+                                          </button>
+                                          {canRemoveSub && (
+                                            <button
+                                              type="button"
+                                              className="btn btn-ghost btn-sm create-election-suboption-row__remove"
+                                              onClick={() => removeSuboption(index, suboptionIndex)}
+                                            >
+                                              Quitar
+                                            </button>
+                                          )}
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <button
+                                          type="button"
+                                          className="create-election-suboption-summary"
+                                          onClick={() => toggleSuboptionExpanded(suboption.id)}
+                                          aria-label={`Editar subopción ${suboptionIndex + 1} del cargo ${index + 1}`}
+                                        >
+                                          <span className={`create-election-suboption-summary__name ${suboption.label.trim() ? '' : 'is-placeholder'}`}>
+                                            {subDisplayName}
+                                          </span>
+                                          <span className="create-election-suboption-summary__meta">
+                                            {subDescription || 'Sin descripción'}
+                                            {' · '}
+                                            {suboption.image_url ? 'Imagen cargada' : 'Sin imagen'}
+                                          </span>
+                                        </button>
+
+                                        <div className="create-election-suboption-row__actions">
+                                          <button
+                                            type="button"
+                                            className="btn btn-ghost btn-sm"
+                                            onClick={() => toggleSuboptionExpanded(suboption.id)}
+                                          >
+                                            Editar
+                                          </button>
+                                          {canRemoveSub && (
+                                            <button
+                                              type="button"
+                                              className="btn btn-ghost btn-sm create-election-suboption-row__remove"
+                                              onClick={() => removeSuboption(index, suboptionIndex)}
+                                            >
+                                              Quitar
+                                            </button>
+                                          )}
+                                        </div>
+                                      </>
+                                    )}
                                   </div>
-                                  {option.suboptions.length > 2 && (
-                                    <button
-                                      type="button"
-                                      className="btn btn-ghost btn-sm create-election-suboption-row__remove"
-                                      onClick={() => removeSuboption(index, suboptionIndex)}
-                                    >
-                                      Quitar
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         )}
