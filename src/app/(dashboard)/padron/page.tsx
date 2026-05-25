@@ -209,7 +209,7 @@ export default function PadronPage() {
         careers={catalog.careers}
       />
 
-      {loading ? (
+      {loading && students.length === 0 ? (
         <Loader />
       ) : (
         <StudentTable
