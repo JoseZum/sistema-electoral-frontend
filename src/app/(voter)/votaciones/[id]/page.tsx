@@ -54,8 +54,9 @@ function getGroupedOptions(options: ElectionOption[]) {
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 12 10" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="1 5 4.5 9 11 1" />
+    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="2" y1="2" x2="10" y2="10" />
+      <line x1="10" y1="2" x2="2" y2="10" />
     </svg>
   );
 }

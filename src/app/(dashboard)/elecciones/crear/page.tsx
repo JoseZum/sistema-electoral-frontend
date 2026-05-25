@@ -1487,7 +1487,7 @@ export default function CrearEleccionPage() {
               <ToggleCard
                 checked={allowSuboptions}
                 title="¿Cada opción tiene subopciones?"
-                description="Actívalo si la boleta agrupa cargos o preguntas (por ejemplo Presidencia con Presidente y Vicepresidente)."
+                description="Actívalo si la boleta agrupa cargos o preguntas."
                 onChange={(checked) => {
                   setError(null);
                   setAllowSuboptions(checked);

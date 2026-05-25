@@ -1710,7 +1710,13 @@ body {
   flex-shrink: 0;
 }
 .ballot-initials--img {
-  object-fit: cover;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  background: white;
+  border: 1px solid #E2DAD0;
+  border-radius: 6px;
+  padding: 4px;
 }
 .ballot-candidate-info {
   flex: 1;
