@@ -6,9 +6,11 @@
  * - generacion de HTML para PDF y DOCX
  * - tratamiento de elecciones anonimas y no anonimas
  * - calculo de secciones visibles del reporte
+ * - replica visual de la papeleta (normal y con subvotaciones)
+ * - reglas de impresion y manejo del logo institucional
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportResultsToDOCX, exportResultsToPDF } from '@/lib/export-results';
 import type { ElectionResults } from '@/types/elections';
 
@@ -112,6 +114,12 @@ function createBaseResults(overrides: Partial<ElectionResults> = {}): ElectionRe
 describe('export-results', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
+		// Logo fetch is stubbed to fail by default so the report falls back to the text logo.
+		// Tests that want to verify the embedded <img> can override this stub.
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue({ ok: false, status: 404 } as Response),
+		);
 		Object.defineProperty(globalThis, 'Blob', {
 			value: TestBlob,
 			configurable: true,
@@ -123,10 +131,14 @@ describe('export-results', () => {
 			value: originalBlob,
 			configurable: true,
 		});
+		vi.unstubAllGlobals();
 	});
 
 	function installBlobUrlMocks(blobUrl: string) {
-		const createObjectUrlMock = vi.fn(() => blobUrl);
+		const createObjectUrlMock = vi.fn((blob: Blob) => {
+			void blob;
+			return blobUrl;
+		});
 		const revokeObjectUrlMock = vi.fn();
 
 		Object.defineProperty(URL, 'createObjectURL', {
@@ -201,7 +213,7 @@ describe('export-results', () => {
 		};
 		const openSpy = vi.spyOn(window, 'open').mockReturnValue(previewWindow as unknown as WindowProxy);
 
-		exportResultsToPDF(results);
+		await exportResultsToPDF(results);
 
 		expect(openSpy).toHaveBeenCalledWith('blob:preview-url', '_blank');
 		expect(previewWindow.addEventListener).toHaveBeenCalledWith('load', expect.any(Function));
@@ -262,14 +274,14 @@ describe('export-results', () => {
 			return originalCreateElement(tagName);
 		});
 
-		exportResultsToDOCX(results);
+		await exportResultsToDOCX(results);
 
 		expect(createElementSpy).toHaveBeenCalledWith('a');
 		expect(clickSpy).toHaveBeenCalledTimes(1);
 		expect(anchor.download).toBe('resultados_primaria_2026_consejo_estudiantil.doc');
 
 		const html = await createObjectUrlMock.mock.calls[0][0].text();
-		expect(html.startsWith('\ufeff')).toBe(true);
+		expect(html.startsWith('﻿')).toBe(true);
 		expect(html).toContain('Sufragio por papeleta');
 		expect(html).toContain('Voto emitido');
 		expect(html).toContain('Sí');
@@ -301,7 +313,7 @@ describe('export-results', () => {
 			return originalCreateElement(tagName);
 		});
 
-		exportResultsToDOCX(results);
+		await exportResultsToDOCX(results);
 
 		const html = await createObjectUrlMock.mock.calls[0][0].text();
 		expect(html).toContain('No hay personas elegibles registradas para esta votación.');
@@ -309,5 +321,211 @@ describe('export-results', () => {
 		expect(html).toContain('Total de votos');
 		expect(html).toContain('Participación');
 		expect(html).not.toContain('Nombre completo');
+	});
+
+	it('renders the ballot replica with eyebrow, empty checkboxes and candidate photo for plain elections', async () => {
+		const photoDataUrl = 'data:image/png;base64,AAAA';
+		const results = createBaseResults({
+			election: {
+				...createBaseResults().election,
+				is_anonymous: false,
+				allow_suboptions: false,
+				title: 'Elección Presidencial',
+				description: null,
+			},
+			options: [
+				{
+					id: 'opt-a',
+					label: 'Helou',
+					option_type: 'NORMAL',
+					image_url: photoDataUrl,
+					vote_count: 5,
+					percentage: 50,
+				},
+				{
+					id: 'opt-b',
+					label: 'Da',
+					option_type: 'NORMAL',
+					vote_count: 3,
+					percentage: 30,
+				},
+				{
+					id: 'opt-c',
+					label: 'EE',
+					option_type: 'NORMAL',
+					vote_count: 2,
+					percentage: 20,
+				},
+				{
+					id: 'opt-blank',
+					label: 'Voto en blanco',
+					option_type: 'BLANK',
+					vote_count: 0,
+					percentage: 0,
+				},
+				{
+					id: 'opt-null',
+					label: 'Voto nulo',
+					option_type: 'NULL_VOTE',
+					vote_count: 0,
+					percentage: 0,
+				},
+			],
+		});
+
+		const { createObjectUrlMock } = installBlobUrlMocks('blob:replica-plain');
+		const anchor = { click: vi.fn(), href: '', download: '' } as unknown as HTMLAnchorElement;
+		const originalCreateElement = document.createElement.bind(document);
+		vi.spyOn(document, 'createElement').mockImplementation((tagName: string) =>
+			tagName.toLowerCase() === 'a' ? anchor : originalCreateElement(tagName),
+		);
+
+		await exportResultsToDOCX(results);
+		const html = await createObjectUrlMock.mock.calls[0][0].text();
+
+		expect(html).toContain('Réplica de la papeleta de voto');
+		expect(html).toContain('SUFRAGIO PÚBLICO');
+		expect(html).toContain('Selecciona una opción para emitir tu voto');
+		expect(html).toContain('ballot-replica-choice-box');
+		expect(html).toContain('ballot-replica-special-box');
+		expect(html).toContain(`src="${photoDataUrl}"`);
+		// Voto en blanco / nulo deben aparecer al pie de la papeleta como opciones especiales.
+		expect(html).toContain('Voto en blanco');
+		expect(html).toContain('Voto nulo');
+	});
+
+	it('renders the ballot replica with Roman numerals and section headers for suboption elections', async () => {
+		const results = createBaseResults({
+			election: {
+				...createBaseResults().election,
+				is_anonymous: false,
+				allow_suboptions: true,
+				title: 'Mesa directiva 2026',
+				description: null,
+			},
+			options: [
+				{
+					id: 'parent-1',
+					label: 'Candidatura Azul',
+					option_type: 'NORMAL',
+					vote_count: 0,
+					percentage: 0,
+					suboptions: [
+						{ id: 'p1-a', label: 'Presidencia', option_type: 'NORMAL', parent_option_id: 'parent-1', vote_count: 4, percentage: 40 },
+						{ id: 'p1-b', label: 'Vicepresidencia', option_type: 'NORMAL', parent_option_id: 'parent-1', vote_count: 2, percentage: 20 },
+					],
+				},
+				{
+					id: 'parent-2',
+					label: 'Candidatura Roja',
+					option_type: 'NORMAL',
+					vote_count: 0,
+					percentage: 0,
+					suboptions: [
+						{ id: 'p2-a', label: 'Presidencia', option_type: 'NORMAL', parent_option_id: 'parent-2', vote_count: 3, percentage: 30 },
+						{ id: 'p2-b', label: 'Voto en blanco', option_type: 'BLANK', parent_option_id: 'parent-2', vote_count: 1, percentage: 10 },
+					],
+				},
+			],
+		});
+
+		const { createObjectUrlMock } = installBlobUrlMocks('blob:replica-sub');
+		const anchor = { click: vi.fn(), href: '', download: '' } as unknown as HTMLAnchorElement;
+		const originalCreateElement = document.createElement.bind(document);
+		vi.spyOn(document, 'createElement').mockImplementation((tagName: string) =>
+			tagName.toLowerCase() === 'a' ? anchor : originalCreateElement(tagName),
+		);
+
+		await exportResultsToDOCX(results);
+		const html = await createObjectUrlMock.mock.calls[0][0].text();
+
+		expect(html).toContain('Selecciona una opción por cada candidatura para emitir tu voto');
+		expect(html).toContain('ballot-replica-section-roman');
+		// Hay dos secciones, por lo que ambos numerales romanos deben aparecer.
+		expect(html).toMatch(/ballot-replica-section-roman[^>]*>\s*I\s*</);
+		expect(html).toMatch(/ballot-replica-section-roman[^>]*>\s*II\s*</);
+		expect(html).toContain('Candidatura Azul');
+		expect(html).toContain('Candidatura Roja');
+		// El voto en blanco asociado al grupo Rojo debe quedar al pie de su sección.
+		expect(html).toContain('Voto en blanco');
+	});
+
+	it('emits print-safe CSS rules so tables and panels do not split across pages', async () => {
+		const results = createBaseResults();
+
+		const { createObjectUrlMock } = installBlobUrlMocks('blob:print-rules');
+		const anchor = { click: vi.fn(), href: '', download: '' } as unknown as HTMLAnchorElement;
+		const originalCreateElement = document.createElement.bind(document);
+		vi.spyOn(document, 'createElement').mockImplementation((tagName: string) =>
+			tagName.toLowerCase() === 'a' ? anchor : originalCreateElement(tagName),
+		);
+
+		await exportResultsToDOCX(results);
+		const html = await createObjectUrlMock.mock.calls[0][0].text();
+
+		expect(html).toContain('@page');
+		expect(html).toContain('margin: 18mm 16mm 22mm 16mm');
+		expect(html).toContain('counter(page)');
+		expect(html).toContain('page-break-inside: avoid');
+		expect(html).toContain('table-header-group');
+	});
+
+	it('embeds the institutional logo as a data URL when the asset is reachable', async () => {
+		// Reset the cached logo from prior tests by reloading the module under a fresh fetch stub.
+		vi.resetModules();
+
+		const fakeBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+		const fakeBlob = {
+			arrayBuffer: async () => fakeBytes.buffer,
+			size: fakeBytes.byteLength,
+			type: 'image/png',
+		} as unknown as Blob;
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue({
+				ok: true,
+				status: 200,
+				blob: async () => fakeBlob,
+			} as unknown as Response),
+		);
+
+		// Force FileReader to resolve to a known data URL.
+		const originalFileReader = globalThis.FileReader;
+		class StubFileReader {
+			public onloadend: (() => void) | null = null;
+			public onerror: (() => void) | null = null;
+			public result: string | null = null;
+			readAsDataURL(_blob: Blob) {
+				void _blob;
+				this.result = 'data:image/png;base64,iVBORw0KGgo=';
+				queueMicrotask(() => this.onloadend?.());
+			}
+		}
+		Object.defineProperty(globalThis, 'FileReader', {
+			value: StubFileReader,
+			configurable: true,
+		});
+
+		try {
+			const mod = await import('@/lib/export-results');
+
+			const { createObjectUrlMock } = installBlobUrlMocks('blob:logo-url');
+			const anchor = { click: vi.fn(), href: '', download: '' } as unknown as HTMLAnchorElement;
+			const originalCreateElement = document.createElement.bind(document);
+			vi.spyOn(document, 'createElement').mockImplementation((tagName: string) =>
+				tagName.toLowerCase() === 'a' ? anchor : originalCreateElement(tagName),
+			);
+
+			await mod.exportResultsToDOCX(createBaseResults());
+			const html = await createObjectUrlMock.mock.calls[0][0].text();
+
+			expect(html).toContain('src="data:image/png;base64,iVBORw0KGgo="');
+			expect(html).toContain('class="tribunal-logo"');
+		} finally {
+			Object.defineProperty(globalThis, 'FileReader', {
+				value: originalFileReader,
+				configurable: true,
+			});
+		}
 	});
 });
