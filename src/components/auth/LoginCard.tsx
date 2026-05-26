@@ -18,10 +18,6 @@ export default function LoginCard() {
 
       <MicrosoftLoginButton />
       <AuthError />
-
-      <div className="mt-6 pt-6 border-t border-border text-center text-[0.8125rem] text-muted">
-        Acceso institucional del TEE
-      </div>
     </div>
   );
 }
