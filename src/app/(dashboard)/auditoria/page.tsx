@@ -1128,7 +1128,7 @@ export default function AuditPage() {
             aria-label="Buscar eventos"
           />
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginLeft: 'auto' }}>
           <button
             type="button"
             className="audit-export-trigger"
