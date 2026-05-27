@@ -11,6 +11,7 @@ import {
 import { apiClient } from '@/lib/api-client';
 import { buildApiUrl } from '@/lib/api-url';
 import Loader from '@/components/Loader';
+import { buildAuditXlsxBlob, type AuditLogRow } from '@/lib/audit-xlsx';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Types
@@ -957,6 +958,7 @@ export default function AuditPage() {
   const [showRaw, setShowRaw] = useState<Record<string, boolean>>({});
   const [stats, setStats] = useState<AuditStatRow[]>([]);
   const [exportOpen, setExportOpen] = useState(false);
+  const [purgeOpen, setPurgeOpen] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1126,24 +1128,42 @@ export default function AuditPage() {
             aria-label="Buscar eventos"
           />
         </div>
-        <button
-          type="button"
-          className="audit-export-trigger"
-          onClick={() => setExportOpen(true)}
-        >
-          <span aria-hidden="true">{Icon.upload}</span>
-          Exportar / vaciar
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="audit-export-trigger"
+            onClick={() => setExportOpen(true)}
+          >
+            <span aria-hidden="true">{Icon.upload}</span>
+            Exportar
+          </button>
+          <button
+            type="button"
+            className="audit-export-trigger audit-export-trigger--danger"
+            onClick={() => setPurgeOpen(true)}
+            style={{
+              borderColor: 'rgba(220, 38, 38, 0.35)',
+              color: '#B91C1C',
+              background: 'rgba(220, 38, 38, 0.06)',
+            }}
+          >
+            <span aria-hidden="true">{Icon.trash ?? Icon.upload}</span>
+            Vaciar registros
+          </button>
+        </div>
       </div>
 
       {exportOpen && (
-        <ExportPanel
-          onClose={() => setExportOpen(false)}
+        <ExportPanel onClose={() => setExportOpen(false)} />
+      )}
+
+      {purgeOpen && (
+        <PurgePanel
+          onClose={() => setPurgeOpen(false)}
           onPurged={() => {
-            setExportOpen(false);
+            setPurgeOpen(false);
             setPage(1);
             fetchLogs();
-            // refresh sidebar counts
             apiClient<AuditStatRow[]>(`/api/audit/stats`)
               .then((rows) => setStats(rows))
               .catch(() => {});
@@ -1584,25 +1604,20 @@ function isWithinDays(date: string, days: number): boolean {
 
 function ExportPanel({
   onClose,
-  onPurged,
 }: {
   onClose: () => void;
-  onPurged: () => void;
 }) {
   const [activeDays, setActiveDays] = useState<ActiveDay[] | null>(null);
   const [activeDaysError, setActiveDaysError] = useState<string | null>(null);
   const [from, setFrom] = useState<string>('');
   const [to, setTo] = useState<string>('');
-  const [format, setFormat] = useState<'csv' | 'json'>('csv');
+  const [format, setFormat] = useState<'xlsx' | 'json'>('xlsx');
   const [selectedCats, setSelectedCats] = useState<string[]>(['all']);
   const [previewCount, setPreviewCount] = useState<number | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const [exported, setExported] = useState<{ count: number; signature: string } | null>(null);
-  const [purgeText, setPurgeText] = useState('');
-  const [purging, setPurging] = useState(false);
-  const [purgeError, setPurgeError] = useState<string | null>(null);
+  const [lastExportCount, setLastExportCount] = useState<number | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1656,46 +1671,6 @@ function ExportPanel({
     setTo(window[0].date);
   };
 
-  const handleDayClick = (date: string) => {
-    if (!from || !to) {
-      setFrom(date);
-      setTo(date);
-      return;
-    }
-    if (date === from && date === to) {
-      // click on the only selected day → keep it
-      return;
-    }
-    if (date < from) {
-      setFrom(date);
-      return;
-    }
-    if (date > to) {
-      setTo(date);
-      return;
-    }
-    // date is within current range → collapse to single day
-    setFrom(date);
-    setTo(date);
-  };
-
-  const isDayInRange = (date: string) =>
-    Boolean(from && to && date >= from && date <= to);
-
-  const filterSignature = useMemo(
-    () => `${from}|${to}|${[...selectedCats].sort().join(',')}`,
-    [from, to, selectedCats],
-  );
-
-  // Reset post-export state if the user changes filters after exporting.
-  useEffect(() => {
-    if (exported && exported.signature !== filterSignature) {
-      setExported(null);
-      setPurgeText('');
-      setPurgeError(null);
-    }
-  }, [filterSignature, exported]);
-
   // Debounced live preview of matching count.
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -1745,7 +1720,9 @@ function ExportPanel({
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('tee_token') : null;
       const qs = buildAuditQuery({ from, to, selectedCategoryIds: selectedCats });
-      qs.set('format', format);
+      // El backend sólo conoce csv/json. Para xlsx pedimos JSON y lo construimos en el cliente.
+      const backendFormat = format === 'xlsx' ? 'json' : format;
+      qs.set('format', backendFormat);
 
       const res = await fetch(`${buildApiUrl('/api/audit/export')}?${qs.toString()}`, {
         method: 'GET',
@@ -1763,19 +1740,43 @@ function ExportPanel({
         throw new Error(msg);
       }
 
-      const count = parseInt(res.headers.get('X-Audit-Export-Count') ?? '0', 10);
-      const blob = await res.blob();
+      const headerCount = parseInt(res.headers.get('X-Audit-Export-Count') ?? '0', 10);
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      let blob: Blob;
+      let filename: string;
+      let count = headerCount;
+
+      if (format === 'xlsx') {
+        const payload = await res.json();
+        const logs = (Array.isArray(payload) ? payload : payload?.logs ?? []) as AuditLogRow[];
+        count = headerCount || logs.length;
+        const categoryLabels = selectedCats.includes('all')
+          ? ['Todas']
+          : selectedCats
+              .map((id) => CATEGORIES.find((c) => c.id === id)?.label ?? id)
+              .filter(Boolean);
+        blob = await buildAuditXlsxBlob(logs, {
+          from,
+          to,
+          categories: categoryLabels,
+          generatedAt: new Date(),
+        });
+        filename = `auditoria_${from}_a_${to}_${stamp}.xlsx`;
+      } else {
+        blob = await res.blob();
+        filename = `auditoria_${from}_a_${to}_${stamp}.${format}`;
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-      a.download = `auditoria_${from}_a_${to}_${stamp}.${format}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      setExported({ count, signature: filterSignature });
+      setLastExportCount(count);
     } catch (err) {
       setPreviewError(err instanceof Error ? err.message : 'Error al exportar');
     } finally {
@@ -1783,36 +1784,11 @@ function ExportPanel({
     }
   };
 
-  const handlePurge = async () => {
-    if (!exported) return;
-    if (purgeText.trim().toUpperCase() !== 'ELIMINAR') {
-      setPurgeError('Escriba ELIMINAR para confirmar.');
-      return;
-    }
-    setPurging(true);
-    setPurgeError(null);
-    try {
-      const qs = buildAuditQuery({ from, to, selectedCategoryIds: selectedCats });
-      const res = await apiClient<{ deleted: number }>(
-        `/api/audit?${qs.toString()}`,
-        { method: 'DELETE' },
-      );
-      alert(
-        `Se eliminaron ${res.deleted.toLocaleString('es-CR')} eventos de auditoría.`,
-      );
-      onPurged();
-    } catch (err) {
-      setPurgeError(err instanceof Error ? err.message : 'Error al purgar');
-    } finally {
-      setPurging(false);
-    }
-  };
-
   return (
     <div className="audit-export-overlay" role="dialog" aria-modal="true">
       <div className="audit-export-panel">
         <header className="audit-export-head">
-          <h3>Exportar y vaciar auditoría</h3>
+          <h3>Exportar auditoría</h3>
           <button
             type="button"
             className="audit-export-close"
@@ -1824,8 +1800,7 @@ function ExportPanel({
         </header>
 
         <p className="audit-export-intro">
-          Descarga los eventos del rango y categorías seleccionadas. Una vez
-          descargado el archivo podrás vaciarlos de la base de datos.
+          Descarga los eventos del rango y categorías seleccionadas en formato Excel o JSON.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
@@ -1853,10 +1828,10 @@ function ExportPanel({
               <span style={{ color: 'var(--muted)', fontWeight: 600 }}>Formato:</span>
               <select
                 value={format}
-                onChange={(e) => setFormat(e.target.value as 'csv' | 'json')}
+                onChange={(e) => setFormat(e.target.value as 'xlsx' | 'json')}
                 style={{ padding: '0.375rem 0.5rem', borderRadius: 6, border: '1px solid var(--border, #d4d2cf)' }}
               >
-                <option value="csv">CSV (Excel)</option>
+                <option value="xlsx">Excel (.xlsx)</option>
                 <option value="json">JSON</option>
               </select>
             </label>
@@ -1866,85 +1841,70 @@ function ExportPanel({
             style={{
               border: '1px solid var(--border, #d4d2cf)',
               borderRadius: 8,
-              padding: '0.75rem',
+              padding: '0.75rem 0.875rem',
               background: 'var(--surface, #faf9f7)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.625rem',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
-              <strong style={{ fontSize: '0.8125rem' }}>Días con actividad</strong>
-              <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                {from && to
-                  ? from === to
-                    ? `Seleccionado: ${formatActiveDayLabel(from)}`
-                    : `Seleccionado: ${formatActiveDayLabel(from)} → ${formatActiveDayLabel(to)}`
-                  : 'Click en un día para empezar; click en otro para cerrar el rango'}
-              </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem' }}>
+                <span style={{ color: 'var(--muted)', fontWeight: 600 }}>Desde</span>
+                <input
+                  type="date"
+                  value={from}
+                  max={to || undefined}
+                  onChange={(e) => setFrom(e.target.value)}
+                  style={{
+                    padding: '0.35rem 0.5rem',
+                    borderRadius: 6,
+                    border: '1px solid var(--border, #d4d2cf)',
+                    fontSize: '0.8125rem',
+                  }}
+                />
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem' }}>
+                <span style={{ color: 'var(--muted)', fontWeight: 600 }}>Hasta</span>
+                <input
+                  type="date"
+                  value={to}
+                  min={from || undefined}
+                  onChange={(e) => setTo(e.target.value)}
+                  style={{
+                    padding: '0.35rem 0.5rem',
+                    borderRadius: 6,
+                    border: '1px solid var(--border, #d4d2cf)',
+                    fontSize: '0.8125rem',
+                  }}
+                />
+              </label>
+              {from && to && (
+                <span style={{ fontSize: '0.75rem', color: 'var(--muted)', marginLeft: 'auto' }}>
+                  {from === to
+                    ? formatActiveDayLabel(from)
+                    : `${formatActiveDayLabel(from)} → ${formatActiveDayLabel(to)}`}
+                </span>
+              )}
             </div>
 
             {activeDaysError ? (
               <span className="audit-export-warn">{activeDaysError}</span>
             ) : activeDays === null ? (
-              <span style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>Cargando…</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Cargando actividad…</span>
             ) : activeDays.length === 0 ? (
-              <span style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                 No hay eventos de auditoría registrados todavía.
               </span>
             ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.375rem',
-                  maxHeight: 180,
-                  overflowY: 'auto',
-                }}
-              >
-                {activeDays.map((day) => {
-                  const selected = isDayInRange(day.date);
-                  const isEdge = day.date === from || day.date === to;
-                  return (
-                    <button
-                      key={day.date}
-                      type="button"
-                      onClick={() => handleDayClick(day.date)}
-                      title={`${formatActiveDayLabel(day.date)} · ${day.count} evento${day.count === 1 ? '' : 's'}`}
-                      style={{
-                        padding: '0.3rem 0.6rem',
-                        borderRadius: 999,
-                        border: `1px solid ${isEdge ? 'var(--accent, #2563eb)' : selected ? 'var(--accent, #2563eb)' : 'var(--border, #d4d2cf)'}`,
-                        background: selected ? 'var(--accent, #2563eb)' : 'var(--surface-raised, #fff)',
-                        color: selected ? '#fff' : 'var(--ink, #1f2937)',
-                        fontSize: '0.75rem',
-                        fontWeight: isEdge ? 700 : 500,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                      }}
-                    >
-                      <span>{formatActiveDayLabel(day.date)}</span>
-                      <span
-                        style={{
-                          fontSize: '0.65rem',
-                          opacity: 0.85,
-                          background: selected ? 'rgba(255,255,255,0.2)' : 'var(--surface-sunken, #ececea)',
-                          color: selected ? '#fff' : 'var(--muted)',
-                          padding: '0.05rem 0.4rem',
-                          borderRadius: 999,
-                        }}
-                      >
-                        {day.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {activeDays && activeDays.length > 0 && (
-              <div style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--muted)' }}>
-                {activeDays.length} día{activeDays.length === 1 ? '' : 's'} con actividad · {totalEvents.toLocaleString('es-CR')} evento{totalEvents === 1 ? '' : 's'} en total
-              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                {(() => {
+                  const inRange = activeDays.filter((d) => from && to && d.date >= from && d.date <= to);
+                  const dayCount = inRange.length;
+                  const eventCount = inRange.reduce((acc, d) => acc + d.count, 0);
+                  return `${dayCount.toLocaleString('es-CR')} día${dayCount === 1 ? '' : 's'} con actividad en el rango · ${eventCount.toLocaleString('es-CR')} evento${eventCount === 1 ? '' : 's'} · Total histórico: ${totalEvents.toLocaleString('es-CR')}`;
+                })()}
+              </span>
             )}
           </div>
         </div>
@@ -1990,38 +1950,325 @@ function ExportPanel({
             onClick={handleExport}
             disabled={!datesValid || exporting || previewCount === 0}
           >
-            {exporting ? 'Exportando…' : `Descargar ${format.toUpperCase()}`}
+            {exporting
+              ? 'Exportando…'
+              : format === 'xlsx'
+                ? 'Descargar Excel (.xlsx)'
+                : 'Descargar JSON'}
           </button>
         </div>
 
-        {exported && (
-          <div className="audit-export-purge">
-            <h4>2. Vaciar de la base de datos</h4>
-            <p>
-              Se descargaron <strong>{exported.count.toLocaleString('es-CR')}</strong>{' '}
-              eventos. Esta acción es <strong>irreversible</strong> y eliminará{' '}
-              <strong>exactamente</strong> los registros del rango y categorías
-              actuales. Escribe <code>ELIMINAR</code> para confirmar.
-            </p>
-            <input
-              type="text"
-              className="audit-export-confirm-input"
-              placeholder="Escriba ELIMINAR"
-              value={purgeText}
-              onChange={(e) => setPurgeText(e.target.value)}
-              autoCapitalize="characters"
-            />
-            {purgeError && <span className="audit-export-warn">{purgeError}</span>}
-            <button
-              type="button"
-              className="audit-export-btn danger"
-              onClick={handlePurge}
-              disabled={purging || purgeText.trim().toUpperCase() !== 'ELIMINAR'}
-            >
-              {purging ? 'Eliminando…' : 'Vaciar registros exportados'}
-            </button>
+        {lastExportCount !== null && (
+          <div
+            style={{
+              marginTop: '0.75rem',
+              padding: '0.625rem 0.875rem',
+              borderRadius: 8,
+              background: 'rgba(45, 134, 83, 0.10)',
+              color: '#1F6B43',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+            }}
+          >
+            Se descargaron {lastExportCount.toLocaleString('es-CR')} evento
+            {lastExportCount === 1 ? '' : 's'}. Para borrar registros usa el botón
+            <strong> «Vaciar registros»</strong> en la barra de auditoría.
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function PurgePanel({
+  onClose,
+  onPurged,
+}: {
+  onClose: () => void;
+  onPurged: () => void;
+}) {
+  const [activeDays, setActiveDays] = useState<ActiveDay[] | null>(null);
+  const [activeDaysError, setActiveDaysError] = useState<string | null>(null);
+  const [from, setFrom] = useState<string>('');
+  const [to, setTo] = useState<string>('');
+  const [selectedCats, setSelectedCats] = useState<string[]>(['all']);
+  const [previewCount, setPreviewCount] = useState<number | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [purgeText, setPurgeText] = useState('');
+  const [purging, setPurging] = useState(false);
+  const [purgeError, setPurgeError] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiClient<ActiveDay[]>('/api/audit/active-days');
+        if (cancelled) return;
+        setActiveDays(res);
+        if (res.length > 0) {
+          setFrom(res[res.length - 1].date);
+          setTo(res[0].date);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setActiveDaysError(
+          err instanceof Error ? err.message : 'No se pudieron cargar los días con actividad',
+        );
+        setActiveDays([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const applyPreset = (preset: 'today' | '7d' | '30d' | 'all') => {
+    const days = activeDays ?? [];
+    if (days.length === 0) return;
+    const earliest = days[days.length - 1].date;
+    const latest = days[0].date;
+    if (preset === 'all') {
+      setFrom(earliest);
+      setTo(latest);
+      return;
+    }
+    const window =
+      preset === 'today'
+        ? days.filter((d) => d.date === todayISO())
+        : preset === '7d'
+          ? days.filter((d) => isWithinDays(d.date, 7))
+          : days.filter((d) => isWithinDays(d.date, 30));
+    if (window.length === 0) {
+      setFrom(latest);
+      setTo(latest);
+      return;
+    }
+    setFrom(window[window.length - 1].date);
+    setTo(window[0].date);
+  };
+
+  const toggleCat = (id: string) => {
+    setSelectedCats((prev) => {
+      if (id === 'all') return ['all'];
+      const without = prev.filter((p) => p !== 'all');
+      if (without.includes(id)) {
+        const next = without.filter((p) => p !== id);
+        return next.length === 0 ? ['all'] : next;
+      }
+      return [...without, id];
+    });
+  };
+
+  const datesValid = Boolean(from && to && from <= to);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!datesValid) {
+      setPreviewCount(null);
+      return;
+    }
+    setPreviewLoading(true);
+    setPreviewError(null);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const qs = buildAuditQuery({ from, to, selectedCategoryIds: selectedCats });
+        qs.set('page', '1');
+        qs.set('limit', '1');
+        const res = await apiClient<AuditResponse>(`/api/audit?${qs.toString()}`);
+        setPreviewCount(res.total);
+      } catch (err) {
+        setPreviewError(err instanceof Error ? err.message : 'Error al consultar');
+        setPreviewCount(null);
+      } finally {
+        setPreviewLoading(false);
+      }
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [from, to, selectedCats, datesValid]);
+
+  const handlePurge = async () => {
+    if (!datesValid) return;
+    if (purgeText.trim().toUpperCase() !== 'ELIMINAR') {
+      setPurgeError('Escriba ELIMINAR para confirmar.');
+      return;
+    }
+    setPurging(true);
+    setPurgeError(null);
+    try {
+      const qs = buildAuditQuery({ from, to, selectedCategoryIds: selectedCats });
+      const res = await apiClient<{ deleted: number }>(`/api/audit?${qs.toString()}`, {
+        method: 'DELETE',
+      });
+      alert(`Se eliminaron ${res.deleted.toLocaleString('es-CR')} eventos de auditoría.`);
+      onPurged();
+    } catch (err) {
+      setPurgeError(err instanceof Error ? err.message : 'Error al purgar');
+    } finally {
+      setPurging(false);
+    }
+  };
+
+  return (
+    <div className="audit-export-overlay" role="dialog" aria-modal="true">
+      <div className="audit-export-panel">
+        <header className="audit-export-head">
+          <h3 style={{ color: '#B91C1C' }}>Vaciar registros de auditoría</h3>
+          <button
+            type="button"
+            className="audit-export-close"
+            onClick={onClose}
+            aria-label="Cerrar"
+          >
+            ×
+          </button>
+        </header>
+
+        <p
+          className="audit-export-intro"
+          style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.18)', borderRadius: 8, padding: '0.625rem 0.875rem', color: '#7F1D1D' }}
+        >
+          Esta acción es <strong>irreversible</strong>. Eliminará permanentemente los eventos
+          que coincidan con el rango y categorías. <strong>Antes de continuar, exporta una
+          copia desde el botón «Exportar».</strong>
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--muted)', fontWeight: 600, marginRight: '0.25rem' }}>
+              Rango:
+            </span>
+            {(
+              [
+                { id: 'today', label: 'Hoy' },
+                { id: '7d', label: 'Últimos 7 días' },
+                { id: '30d', label: 'Últimos 30 días' },
+                { id: 'all', label: 'Todo el historial' },
+              ] as const
+            ).map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="filter-chip"
+                onClick={() => applyPreset(preset.id)}
+                disabled={!activeDays || activeDays.length === 0}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
+          <div
+            style={{
+              border: '1px solid var(--border, #d4d2cf)',
+              borderRadius: 8,
+              padding: '0.75rem 0.875rem',
+              background: 'var(--surface, #faf9f7)',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+              alignItems: 'center',
+            }}
+          >
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem' }}>
+              <span style={{ color: 'var(--muted)', fontWeight: 600 }}>Desde</span>
+              <input
+                type="date"
+                value={from}
+                max={to || undefined}
+                onChange={(e) => setFrom(e.target.value)}
+                style={{
+                  padding: '0.35rem 0.5rem',
+                  borderRadius: 6,
+                  border: '1px solid var(--border, #d4d2cf)',
+                  fontSize: '0.8125rem',
+                }}
+              />
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem' }}>
+              <span style={{ color: 'var(--muted)', fontWeight: 600 }}>Hasta</span>
+              <input
+                type="date"
+                value={to}
+                min={from || undefined}
+                onChange={(e) => setTo(e.target.value)}
+                style={{
+                  padding: '0.35rem 0.5rem',
+                  borderRadius: 6,
+                  border: '1px solid var(--border, #d4d2cf)',
+                  fontSize: '0.8125rem',
+                }}
+              />
+            </label>
+            {activeDaysError && (
+              <span className="audit-export-warn" style={{ marginLeft: 'auto' }}>{activeDaysError}</span>
+            )}
+          </div>
+        </div>
+
+        <fieldset className="audit-export-cats">
+          <legend>Categorías</legend>
+          {CATEGORIES.map((c) => {
+            const checked = selectedCats.includes(c.id);
+            return (
+              <label key={c.id} className="audit-export-cat">
+                <input type="checkbox" checked={checked} onChange={() => toggleCat(c.id)} />
+                <span style={{ color: c.tone, background: c.tint }} className="audit-export-cat-chip">
+                  {c.label}
+                </span>
+              </label>
+            );
+          })}
+        </fieldset>
+
+        <div className="audit-export-preview">
+          {!datesValid ? (
+            <span className="audit-export-warn">El rango de fechas no es válido.</span>
+          ) : previewLoading ? (
+            <span>Calculando…</span>
+          ) : previewError ? (
+            <span className="audit-export-warn">{previewError}</span>
+          ) : previewCount !== null ? (
+            <>
+              Se eliminarán <strong>{previewCount.toLocaleString('es-CR')}</strong> evento
+              {previewCount === 1 ? '' : 's'}.
+            </>
+          ) : null}
+        </div>
+
+        <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <label style={{ fontSize: '0.8125rem', color: 'var(--muted)', fontWeight: 600 }}>
+            Para confirmar, escribe <code>ELIMINAR</code> a continuación:
+          </label>
+          <input
+            type="text"
+            className="audit-export-confirm-input"
+            placeholder="ELIMINAR"
+            value={purgeText}
+            onChange={(e) => setPurgeText(e.target.value)}
+            autoCapitalize="characters"
+          />
+          {purgeError && <span className="audit-export-warn">{purgeError}</span>}
+        </div>
+
+        <div className="audit-export-actions" style={{ marginTop: '1rem' }}>
+          <button
+            type="button"
+            className="audit-export-btn danger"
+            onClick={handlePurge}
+            disabled={
+              !datesValid ||
+              purging ||
+              previewCount === 0 ||
+              purgeText.trim().toUpperCase() !== 'ELIMINAR'
+            }
+          >
+            {purging ? 'Eliminando…' : 'Vaciar registros'}
+          </button>
+        </div>
       </div>
     </div>
   );

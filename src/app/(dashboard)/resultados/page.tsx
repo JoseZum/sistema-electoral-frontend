@@ -327,12 +327,12 @@ export default function ResultadosPage() {
                   position: 'absolute',
                   top: 'calc(100% + 6px)',
                   right: 0,
-                  background: 'var(--surface)',
+                  background: 'var(--surface, #ffffff)',
                   border: '1px solid var(--border)',
                   borderRadius: '0.5rem',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                  zIndex: 50,
-                  minWidth: '160px',
+                  boxShadow: '0 8px 28px rgba(0,0,0,0.18)',
+                  zIndex: 1000,
+                  minWidth: '200px',
                   overflow: 'hidden',
                 }}
               >

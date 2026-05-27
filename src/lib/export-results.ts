@@ -132,7 +132,12 @@ function buildParticipationSection(results: ElectionResults): string {
 
   const abstentions = voters.filter((voter) => !voter.has_voted).length;
   const headerLabel = results.election.is_anonymous ? 'Voto emitido' : 'Opción elegida';
-  const rows = voters
+  // Primero quienes votaron, luego los abstencionistas. Orden estable dentro de cada grupo.
+  const sortedVoters = [...voters].sort((a, b) => {
+    if (a.has_voted === b.has_voted) return 0;
+    return a.has_voted ? -1 : 1;
+  });
+  const rows = sortedVoters
     .map(
       (voter) => `
         <tr class="${voter.has_voted ? '' : 'row--abstention'}">
