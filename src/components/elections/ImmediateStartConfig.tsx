@@ -57,6 +57,17 @@ export function getImmediateDurationMinutes(value: string, unit: ImmediateDurati
   return numericValue * 24 * 60;
 }
 
+function formatLocalDateTime(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function getMinStartLocal(): string {
+  const reference = new Date();
+  reference.setSeconds(0, 0);
+  return formatLocalDateTime(reference);
+}
+
 export default function ImmediateStartConfig({
   startTime,
   endTime,
@@ -67,6 +78,19 @@ export default function ImmediateStartConfig({
 }: ImmediateStartConfigProps) {
   const options = DURATION_OPTIONS[durationUnit];
   const summary = formatImmediateDuration(durationValue, durationUnit);
+
+  const minStartLocal = getMinStartLocal();
+  const minEndLocal = startTime && startTime >= minStartLocal ? startTime : minStartLocal;
+
+  const startInPast = !startsImmediately && Boolean(startTime) && startTime < minStartLocal;
+  const endBeforeStart = !startsImmediately
+    && Boolean(startTime)
+    && Boolean(endTime)
+    && endTime <= startTime;
+  const endInPast = !startsImmediately
+    && Boolean(endTime)
+    && !startTime
+    && endTime < minStartLocal;
 
   return (
     <div className="schedule-mode-grid">
@@ -98,9 +122,16 @@ export default function ImmediateStartConfig({
                 className="input"
                 aria-label="Fecha y hora de apertura"
                 value={startTime}
+                min={minStartLocal}
                 onChange={(event) => onChange({ startTime: event.target.value })}
                 disabled={startsImmediately}
+                aria-invalid={startInPast || undefined}
               />
+              {!startsImmediately && startInPast && (
+                <p className="input-group__error" role="alert">
+                  La apertura no puede estar en el pasado.
+                </p>
+              )}
             </div>
             <div className="input-group">
               <label>Fecha y hora de cierre</label>
@@ -109,9 +140,21 @@ export default function ImmediateStartConfig({
                 className="input"
                 aria-label="Fecha y hora de cierre"
                 value={endTime}
+                min={minEndLocal}
                 onChange={(event) => onChange({ endTime: event.target.value })}
                 disabled={startsImmediately}
+                aria-invalid={endBeforeStart || endInPast || undefined}
               />
+              {!startsImmediately && endBeforeStart && (
+                <p className="input-group__error" role="alert">
+                  El cierre debe ser posterior a la apertura.
+                </p>
+              )}
+              {!startsImmediately && endInPast && (
+                <p className="input-group__error" role="alert">
+                  El cierre no puede estar en el pasado.
+                </p>
+              )}
             </div>
           </div>
           <p className="schedule-mode-card__summary">

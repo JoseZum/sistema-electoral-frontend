@@ -182,11 +182,21 @@ const EMPTY_BALLOT_IMAGE = {
   image_name: '',
 } as const;
 
+function getMinScheduleStartMs() {
+  const reference = new Date();
+  reference.setSeconds(0, 0);
+  return reference.getTime();
+}
+
 function isScheduledWindowValid(startTime: string, endTime: string) {
   const start = new Date(startTime);
   const end = new Date(endTime);
 
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return false;
+  }
+
+  if (start.getTime() < getMinScheduleStartMs()) {
     return false;
   }
 
@@ -1129,7 +1139,18 @@ export default function CrearEleccionPage() {
           throw new Error('Selecciona la fecha y hora de apertura y cierre');
         }
 
-        if (!isScheduledWindowValid(form.start_time, form.end_time)) {
+        const scheduledStart = new Date(form.start_time);
+        const scheduledEnd = new Date(form.end_time);
+
+        if (Number.isNaN(scheduledStart.getTime()) || Number.isNaN(scheduledEnd.getTime())) {
+          throw new Error('La fecha u hora seleccionada no es válida');
+        }
+
+        if (scheduledStart.getTime() < getMinScheduleStartMs()) {
+          throw new Error('La fecha y hora de apertura no puede estar en el pasado');
+        }
+
+        if (scheduledEnd <= scheduledStart) {
           throw new Error('La fecha de cierre debe ser posterior a la fecha de apertura');
         }
       }
