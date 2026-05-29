@@ -233,6 +233,33 @@ describe('export-results', () => {
 		expect(previewWindow.print).toHaveBeenCalledTimes(1);
 	});
 
+	it('uses Montserrat for regular report text while preserving legacy display fonts', async () => {
+		const { createObjectUrlMock } = installBlobUrlMocks('blob:fonts-url');
+		const anchor = {
+			click: vi.fn(),
+			href: '',
+			download: '',
+		} as unknown as HTMLAnchorElement;
+		const originalCreateElement = document.createElement.bind(document);
+		vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+			if (tagName.toLowerCase() === 'a') {
+				return anchor;
+			}
+
+			return originalCreateElement(tagName);
+		});
+
+		await exportResultsToDOCX(createBaseResults());
+
+		const html = await createObjectUrlMock.mock.calls[0][0].text();
+		expect(html).toContain('family=Montserrat');
+		expect(html).toContain('font-family: "Montserrat", "Segoe UI", Arial, sans-serif;');
+		expect(html).toContain('.section-kicker {');
+		expect(html).toContain('.metric-label {');
+		expect(html).toContain('.ballot-replica-title {');
+		expect(html).toContain('font-family: Georgia, "Times New Roman", serif;');
+	});
+
 	it('downloads a DOCX report with a sanitized filename and anonymous participation labels', async () => {
 		const results = createBaseResults({
 			election: {

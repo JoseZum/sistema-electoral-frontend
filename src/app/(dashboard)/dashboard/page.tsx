@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { getElectionCountdown } from '@/lib/election-countdown';
 import type { Election } from '@/types/elections';
 import Loader from '@/components/Loader';
 
@@ -138,6 +139,7 @@ function StatCard({
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [now, setNow] = useState(() => Date.now());
   const [data, setData] = useState<DashboardData>({
     stats: EMPTY_STATS,
     elections: [],
@@ -174,6 +176,20 @@ export default function DashboardPage() {
     fetchAll();
   }, [fetchAll]);
 
+  useEffect(() => {
+    if (data.stats.ongoingElections.length === 0) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [data.stats.ongoingElections.length]);
+
   const openElectionItems = data.stats.ongoingElections;
   const recentAuditLogs = data.auditLogs.slice(0, 3);
   const scheduledElections = data.elections.filter((election) => election.status === 'SCHEDULED');
@@ -181,6 +197,10 @@ export default function DashboardPage() {
     (election) => election.status === 'CLOSED' || election.status === 'SCRUTINIZED'
   );
   const participationLabel = Number(data.stats.participation).toFixed(1);
+  const nextClosingElection = openElectionItems[0] ?? null;
+  const nextClosingCountdown = nextClosingElection
+    ? getElectionCountdown({ status: 'OPEN', endTime: nextClosingElection.endTime }, now)
+    : null;
 
   if (loading) {
     return <Loader />;
@@ -239,8 +259,13 @@ export default function DashboardPage() {
                 ? 'Hay 1 votacion abierta ahora mismo'
                 : `Hay ${data.stats.openElections} votaciones abiertas ahora mismo`}
             </strong>
-            {openElectionItems[0]?.endTime && (
+            {nextClosingElection?.endTime && nextClosingCountdown && (
               <span> · Cierra {formatDate(openElectionItems[0].endTime)}</span>
+            )}
+            {nextClosingElection?.endTime && nextClosingCountdown && (
+              <span title={`Cierre previsto: ${formatDate(nextClosingElection.endTime)}`}>
+                {` | ${nextClosingCountdown.label} ${nextClosingCountdown.value}`}
+              </span>
             )}
           </span>
           <Link href="/elecciones" className="dash-live-link">
@@ -364,6 +389,10 @@ export default function DashboardPage() {
                   0,
                   Math.min(100, Number(election.progressPercentage || 0))
                 );
+                const countdown = getElectionCountdown(
+                  { status: 'OPEN', endTime: election.endTime },
+                  now
+                );
 
                 return (
                   <div key={election.id} className="dash-election">
@@ -377,6 +406,25 @@ export default function DashboardPage() {
                           </div>
                         )}
                         <div>Cierra {formatDate(election.endTime)}</div>
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            gap: '0.35rem',
+                            marginTop: '0.35rem',
+                            padding: '0.28rem 0.5rem',
+                            borderRadius: '999px',
+                            background: countdown.isLive ? 'var(--accent-light)' : 'var(--surface-sunken)',
+                            color: countdown.isLive ? 'var(--accent)' : 'var(--muted)',
+                          }}
+                          title={`Cierre previsto: ${formatDate(election.endTime)}`}
+                        >
+                          <span>{countdown.label}</span>
+                          <strong style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                            {countdown.value}
+                          </strong>
+                        </div>
                       </div>
                     </div>
                     <div

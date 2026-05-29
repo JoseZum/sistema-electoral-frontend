@@ -239,6 +239,8 @@ function buildReportHTML(results: ElectionResults, logoDataUrl: string | null): 
   <meta charset="UTF-8" />
   <title>Informe de resultados - ${escapeHtml(results.election.title)}</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
     @page {
       size: A4;
       margin: 18mm 16mm 22mm 16mm;
@@ -247,7 +249,7 @@ function buildReportHTML(results: ElectionResults, logoDataUrl: string | null): 
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: "Segoe UI", Arial, sans-serif;
+      font-family: "Montserrat", "Segoe UI", Arial, sans-serif;
       color: #172033;
       background: #ffffff;
       padding: 24px;
@@ -277,7 +279,7 @@ function buildReportHTML(results: ElectionResults, logoDataUrl: string | null): 
       height: auto;
     }
     .tribunal-logo-text {
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: "Montserrat", "Segoe UI", Arial, sans-serif;
       font-weight: 700;
       color: #0F1E40;
       font-size: 12pt;
@@ -348,6 +350,7 @@ function buildReportHTML(results: ElectionResults, logoDataUrl: string | null): 
     }
     .section-header > div { display: block; }
     .section-kicker {
+      font-family: "Segoe UI", Arial, sans-serif;
       font-size: 8pt;
       text-transform: uppercase;
       letter-spacing: 0.14em;
@@ -403,6 +406,7 @@ function buildReportHTML(results: ElectionResults, logoDataUrl: string | null): 
       print-color-adjust: exact;
     }
     .metric-label {
+      font-family: "Segoe UI", Arial, sans-serif;
       font-size: 8pt;
       color: #6B6557;
       font-weight: 700;

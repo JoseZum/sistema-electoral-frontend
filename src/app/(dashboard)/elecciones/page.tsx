@@ -8,6 +8,7 @@ import Badge, { type BadgeVariant } from '@/components/ui/Badge';
 import type { Election } from '@/types/elections';
 import Loader from '@/components/Loader';
 import { resolveTagColor } from '@/lib/tag-colors';
+import { getElectionCountdown } from '@/lib/election-countdown';
 
 type StatusFilter = 'ALL' | 'OPEN' | 'DRAFT' | 'CLOSED' | 'ARCHIVED' | 'SCHEDULED' | 'SCRUTINIZED';
 type FeedbackState = { tone: 'success' | 'error'; message: string } | null;
@@ -75,10 +76,12 @@ const STATUS_BADGE_ICONS: Record<Election['status'], ReactNode> = {
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '-';
 
-  return new Date(dateStr).toLocaleDateString('es-CR', {
+  return new Date(dateStr).toLocaleString('es-CR', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -100,6 +103,7 @@ function deleteSeverity(status: Election['status']): DeleteSeverity {
 }
 
 export default function EleccionesPage() {
+  const [now, setNow] = useState(() => Date.now());
   const [elections, setElections] = useState<Election[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StatusFilter>('ALL');
@@ -128,6 +132,24 @@ export default function EleccionesPage() {
   useEffect(() => {
     fetchElections();
   }, [fetchElections]);
+
+  useEffect(() => {
+    const hasLiveCountdown = elections.some(
+      (election) => election.status === 'OPEN' || election.status === 'SCHEDULED'
+    );
+
+    if (!hasLiveCountdown) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [elections]);
 
   async function handleArchive(election: Election) {
     if (!canArchiveElection(election)) {
@@ -535,6 +557,7 @@ export default function EleccionesPage() {
                 <th>Elegibles</th>
                 <th>Participación</th>
                 <th>Fecha</th>
+                <th>Cuenta regresiva</th>
                 <th style={{ width: '150px' }}>Archivar</th>
                 <th style={{ width: '56px' }} />
               </tr>
@@ -558,6 +581,14 @@ export default function EleccionesPage() {
                     : 'Solo se pueden archivar votaciones escrutadas o cerradas sin escrutinio';
                 const isDeleting = deletingId === election.id;
                 const severity = deleteSeverity(election.status);
+                const countdown = getElectionCountdown(
+                  {
+                    status: election.status,
+                    startTime: election.start_time,
+                    endTime: election.end_time,
+                  },
+                  now
+                );
                 const deleteHint = severity === 'low'
                   ? 'Eliminar votación'
                   : 'Eliminar votación (acción destructiva: borra votos, opciones y configuración)';
@@ -608,7 +639,46 @@ export default function EleccionesPage() {
                         </div>
                       )}
                     </td>
-                    <td style={{ fontSize: '0.8125rem' }}>{formatDate(election.start_time || election.created_at)}</td>
+                    <td style={{ fontSize: '0.8125rem' }}>
+                      <div>{formatDate(election.start_time || election.created_at)}</div>
+                      {election.end_time && (
+                        <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.28rem' }}>
+                          Cierra {formatDate(election.end_time)}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.28rem' }}>
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.45rem',
+                            width: 'fit-content',
+                            padding: '0.32rem 0.55rem',
+                            borderRadius: 999,
+                            background: countdown.isLive ? 'var(--accent-light)' : 'var(--surface-sunken)',
+                            color: countdown.isLive ? 'var(--accent)' : 'var(--muted)',
+                            fontSize: '0.78rem',
+                          }}
+                        >
+                          <span>{countdown.label}</span>
+                          <strong style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                            {countdown.value}
+                          </strong>
+                        </div>
+                        {election.status === 'OPEN' && election.end_time && (
+                          <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
+                            Cierre exacto: {formatDate(election.end_time)}
+                          </span>
+                        )}
+                        {election.status === 'SCHEDULED' && election.start_time && (
+                          <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
+                            Inicio exacto: {formatDate(election.start_time)}
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td>
                       <span title={archiveHint} style={{ display: 'inline-flex' }}>
                         <button

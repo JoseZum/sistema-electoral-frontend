@@ -48,6 +48,7 @@ const mockElection1 = {
     total_voters: 100,
     votes_cast: 50,
     start_time: '2026-01-01T00:00:00Z',
+    end_time: '2099-01-02T00:00:00Z',
     created_at: '2026-01-01T00:00:00Z',
     requires_keys: false,
     starts_immediately: false,
@@ -64,6 +65,7 @@ const mockElection2 = {
     total_voters: 200,
     votes_cast: 0,
     start_time: '2026-01-02T00:00:00Z',
+    end_time: null,
     created_at: '2026-01-02T00:00:00Z',
     requires_keys: false,
     starts_immediately: false,
@@ -129,6 +131,14 @@ describe('EleccionesPage', () => {
 
         await waitFor(() => {
             expect(screen.getByText('50%')).toBeInTheDocument();
+        });
+    });
+
+    it('renders a live countdown for open elections', async () => {
+        render(<EleccionesPage />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/Cierra en/i)).toBeInTheDocument();
         });
     });
 
