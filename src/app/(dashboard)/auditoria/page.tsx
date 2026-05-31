@@ -1584,6 +1584,7 @@ function buildAuditQuery(params: {
 }
 
 type ActiveDay = { date: string; count: number };
+type RangePreset = 'today' | '7d' | '30d' | 'all';
 
 function formatActiveDayLabel(date: string): string {
   const [y, m, d] = date.split('-').map(Number);
@@ -1602,6 +1603,38 @@ function isWithinDays(date: string, days: number): boolean {
   return date >= cutoff && date <= today;
 }
 
+function getPresetRange(
+  days: ActiveDay[],
+  preset: RangePreset,
+): { from: string; to: string } | null {
+  if (days.length === 0) {
+    return null;
+  }
+
+  const earliest = days[days.length - 1].date;
+  const latest = days[0].date;
+
+  if (preset === 'all') {
+    return { from: earliest, to: latest };
+  }
+
+  const window =
+    preset === 'today'
+      ? days.filter((d) => d.date === todayISO())
+      : preset === '7d'
+        ? days.filter((d) => isWithinDays(d.date, 7))
+        : days.filter((d) => isWithinDays(d.date, 30));
+
+  if (window.length === 0) {
+    return { from: latest, to: latest };
+  }
+
+  return {
+    from: window[window.length - 1].date,
+    to: window[0].date,
+  };
+}
+
 function ExportPanel({
   onClose,
 }: {
@@ -1611,6 +1644,7 @@ function ExportPanel({
   const [activeDaysError, setActiveDaysError] = useState<string | null>(null);
   const [from, setFrom] = useState<string>('');
   const [to, setTo] = useState<string>('');
+  const [activePreset, setActivePreset] = useState<RangePreset | null>('all');
   const [format, setFormat] = useState<'xlsx' | 'json'>('xlsx');
   const [selectedCats, setSelectedCats] = useState<string[]>(['all']);
   const [previewCount, setPreviewCount] = useState<number | null>(null);
@@ -1628,9 +1662,11 @@ function ExportPanel({
         const res = await apiClient<ActiveDay[]>('/api/audit/active-days');
         if (cancelled) return;
         setActiveDays(res);
-        if (res.length > 0) {
-          setFrom(res[res.length - 1].date);
-          setTo(res[0].date);
+        const fullRange = getPresetRange(res, 'all');
+        if (fullRange) {
+          setFrom(fullRange.from);
+          setTo(fullRange.to);
+          setActivePreset('all');
         }
       } catch (err) {
         if (cancelled) return;
@@ -1648,27 +1684,12 @@ function ExportPanel({
     [activeDays],
   );
 
-  const applyPreset = (preset: 'today' | '7d' | '30d' | 'all') => {
-    const days = activeDays ?? [];
-    if (days.length === 0) return;
-    const earliest = days[days.length - 1].date;
-    const latest = days[0].date;
-    if (preset === 'all') {
-      setFrom(earliest);
-      setTo(latest);
-      return;
-    }
-    const window =
-      preset === 'today' ? days.filter((d) => d.date === todayISO())
-      : preset === '7d' ? days.filter((d) => isWithinDays(d.date, 7))
-      : days.filter((d) => isWithinDays(d.date, 30));
-    if (window.length === 0) {
-      setFrom(latest);
-      setTo(latest);
-      return;
-    }
-    setFrom(window[window.length - 1].date);
-    setTo(window[0].date);
+  const applyPreset = (preset: RangePreset) => {
+    const range = getPresetRange(activeDays ?? [], preset);
+    if (!range) return;
+    setFrom(range.from);
+    setTo(range.to);
+    setActivePreset(preset);
   };
 
   // Debounced live preview of matching count.
@@ -1817,9 +1838,10 @@ function ExportPanel({
               <button
                 key={preset.id}
                 type="button"
-                className="filter-chip"
+                className={`filter-chip ${activePreset === preset.id ? 'active' : ''}`}
                 onClick={() => applyPreset(preset.id)}
                 disabled={!activeDays || activeDays.length === 0}
+                aria-pressed={activePreset === preset.id}
               >
                 {preset.label}
               </button>
@@ -1855,7 +1877,10 @@ function ExportPanel({
                   type="date"
                   value={from}
                   max={to || undefined}
-                  onChange={(e) => setFrom(e.target.value)}
+                  onChange={(e) => {
+                    setFrom(e.target.value);
+                    setActivePreset(null);
+                  }}
                   style={{
                     padding: '0.35rem 0.5rem',
                     borderRadius: 6,
@@ -1870,7 +1895,10 @@ function ExportPanel({
                   type="date"
                   value={to}
                   min={from || undefined}
-                  onChange={(e) => setTo(e.target.value)}
+                  onChange={(e) => {
+                    setTo(e.target.value);
+                    setActivePreset(null);
+                  }}
                   style={{
                     padding: '0.35rem 0.5rem',
                     borderRadius: 6,
@@ -1991,6 +2019,7 @@ function PurgePanel({
   const [activeDaysError, setActiveDaysError] = useState<string | null>(null);
   const [from, setFrom] = useState<string>('');
   const [to, setTo] = useState<string>('');
+  const [activePreset, setActivePreset] = useState<RangePreset | null>('all');
   const [selectedCats, setSelectedCats] = useState<string[]>(['all']);
   const [previewCount, setPreviewCount] = useState<number | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -2007,9 +2036,11 @@ function PurgePanel({
         const res = await apiClient<ActiveDay[]>('/api/audit/active-days');
         if (cancelled) return;
         setActiveDays(res);
-        if (res.length > 0) {
-          setFrom(res[res.length - 1].date);
-          setTo(res[0].date);
+        const fullRange = getPresetRange(res, 'all');
+        if (fullRange) {
+          setFrom(fullRange.from);
+          setTo(fullRange.to);
+          setActivePreset('all');
         }
       } catch (err) {
         if (cancelled) return;
@@ -2024,29 +2055,12 @@ function PurgePanel({
     };
   }, []);
 
-  const applyPreset = (preset: 'today' | '7d' | '30d' | 'all') => {
-    const days = activeDays ?? [];
-    if (days.length === 0) return;
-    const earliest = days[days.length - 1].date;
-    const latest = days[0].date;
-    if (preset === 'all') {
-      setFrom(earliest);
-      setTo(latest);
-      return;
-    }
-    const window =
-      preset === 'today'
-        ? days.filter((d) => d.date === todayISO())
-        : preset === '7d'
-          ? days.filter((d) => isWithinDays(d.date, 7))
-          : days.filter((d) => isWithinDays(d.date, 30));
-    if (window.length === 0) {
-      setFrom(latest);
-      setTo(latest);
-      return;
-    }
-    setFrom(window[window.length - 1].date);
-    setTo(window[0].date);
+  const applyPreset = (preset: RangePreset) => {
+    const range = getPresetRange(activeDays ?? [], preset);
+    if (!range) return;
+    setFrom(range.from);
+    setTo(range.to);
+    setActivePreset(preset);
   };
 
   const toggleCat = (id: string) => {
@@ -2152,9 +2166,10 @@ function PurgePanel({
               <button
                 key={preset.id}
                 type="button"
-                className="filter-chip"
+                className={`filter-chip ${activePreset === preset.id ? 'active filter-chip-danger-active' : ''}`}
                 onClick={() => applyPreset(preset.id)}
                 disabled={!activeDays || activeDays.length === 0}
+                aria-pressed={activePreset === preset.id}
               >
                 {preset.label}
               </button>
@@ -2179,7 +2194,10 @@ function PurgePanel({
                 type="date"
                 value={from}
                 max={to || undefined}
-                onChange={(e) => setFrom(e.target.value)}
+                onChange={(e) => {
+                  setFrom(e.target.value);
+                  setActivePreset(null);
+                }}
                 style={{
                   padding: '0.35rem 0.5rem',
                   borderRadius: 6,
@@ -2194,7 +2212,10 @@ function PurgePanel({
                 type="date"
                 value={to}
                 min={from || undefined}
-                onChange={(e) => setTo(e.target.value)}
+                onChange={(e) => {
+                  setTo(e.target.value);
+                  setActivePreset(null);
+                }}
                 style={{
                   padding: '0.35rem 0.5rem',
                   borderRadius: 6,

@@ -4,7 +4,7 @@
  * Pendiente:
  * - inclusion del token en Authorization
  * - parseo de errores JSON y texto
- * - limpieza de sesion en 401 y 403
+ * - limpieza de sesion solo en errores reales de autenticacion
  * - manejo de fallos de red
  * - upload con FormData
  */
@@ -192,19 +192,52 @@ describe('api-client', () => {
 		});
 	});
 
-	it.each([401, 403])('cleans the session on %s responses', async (status) => {
+	it('cleans the session on 401 responses', async () => {
 		localStorage.setItem('tee_token', 'token-123');
 		localStorage.setItem('tee_user', '{"id":"user-1"}');
 
 		vi.mocked(fetch).mockResolvedValueOnce(
-			jsonResponse({ error: 'Unauthorized' }, { status })
+			jsonResponse({ error: 'Unauthorized' }, { status: 401 })
 		);
 
 		await expect(apiClient('/api/dashboard')).rejects.toBeInstanceOf(ApiError);
 
 		expect(localStorage.getItem('tee_token')).toBeNull();
 		expect(localStorage.getItem('tee_user')).toBeNull();
-		expect(window.location.href).toBe('http://localhost:3000/');
+	});
+
+	it('cleans the session on 403 auth responses with auth codes', async () => {
+		localStorage.setItem('tee_token', 'token-123');
+		localStorage.setItem('tee_user', '{"id":"user-1"}');
+
+		vi.mocked(fetch).mockResolvedValueOnce(
+			jsonResponse({ error: 'Forbidden', code: 'AUTH_REQUIRED' }, { status: 403 })
+		);
+
+		await expect(apiClient('/api/dashboard')).rejects.toBeInstanceOf(ApiError);
+
+		expect(localStorage.getItem('tee_token')).toBeNull();
+		expect(localStorage.getItem('tee_user')).toBeNull();
+	});
+
+	it('keeps the session on 403 business errors', async () => {
+		localStorage.setItem('tee_token', 'token-123');
+		localStorage.setItem('tee_user', '{"id":"user-1"}');
+		window.history.pushState({}, '', '/escrutinio/subir?id=1');
+
+		vi.mocked(fetch).mockResolvedValueOnce(
+			jsonResponse({ error: 'Key invalida', code: 'SCRUTINY_KEY_INVALID' }, { status: 403 })
+		);
+
+		await expect(apiClient('/api/scrutiny/election-1/submit-key')).rejects.toMatchObject({
+			status: 403,
+			code: 'SCRUTINY_KEY_INVALID',
+			message: 'Key invalida',
+		});
+
+		expect(localStorage.getItem('tee_token')).toBe('token-123');
+		expect(localStorage.getItem('tee_user')).toBe('{"id":"user-1"}');
+		expect(window.location.href).toBe('http://localhost:3000/escrutinio/subir?id=1');
 	});
 
 	it('does not clear the session for auth endpoints', async () => {

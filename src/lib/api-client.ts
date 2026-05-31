@@ -2,6 +2,7 @@ import { buildApiUrl } from './api-url';
 
 interface ErrorPayload {
   error?: string;
+  message?: string;
   code?: string;
   details?: unknown;
 }
@@ -66,22 +67,44 @@ function hasMeaningfulErrorDetails(details: unknown): boolean {
   return true;
 }
 
+function shouldClearSession(endpoint: string, status: number, code?: string): boolean {
+  if (endpoint.includes('/api/auth')) {
+    return false;
+  }
+
+  if (status === 401) {
+    return true;
+  }
+
+  if (status !== 403 || !code) {
+    return false;
+  }
+
+  return code === 'AUTH_REQUIRED' || code.startsWith('AUTH_');
+}
+
+function clearSessionAndRedirect(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  localStorage.removeItem('tee_token');
+  localStorage.removeItem('tee_user');
+  window.location.href = '/';
+}
+
 async function handleResponse<T>(
   response: Response,
   endpoint: string,
   options: ApiClientOptions = {},
 ): Promise<T> {
   if (!response.ok) {
-    if ((response.status === 401 || response.status === 403) && !endpoint.includes('/api/auth')) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('tee_token');
-        localStorage.removeItem('tee_user');
-        window.location.href = '/';
-      }
-    }
-
     const error = await readErrorPayload(response);
-    const message = error.error || `HTTP ${response.status}`;
+    const message = error.error || error.message || `HTTP ${response.status}`;
+
+    if (shouldClearSession(endpoint, response.status, error.code)) {
+      clearSessionAndRedirect();
+    }
 
     if (!options.suppressErrorDetailLog && hasMeaningfulErrorDetails(error.details)) {
       console.error('[API details]', {

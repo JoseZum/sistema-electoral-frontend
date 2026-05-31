@@ -2138,6 +2138,12 @@ body {
 }
 .filter-chip:hover { border-color: var(--ink); }
 .filter-chip.active { background: var(--ink); color: white; border-color: var(--ink); }
+.filter-chip.filter-chip-danger-active.active {
+  background: #b91c1c;
+  color: #fff;
+  border-color: #b91c1c;
+  box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.18);
+}
 
 /* ─── Wizard Steps ─── */
 .wizard-steps { display: flex; gap: 0; margin-bottom: 2.5rem; }

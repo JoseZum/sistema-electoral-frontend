@@ -105,7 +105,14 @@ await page.route(`**/api/scrutiny/${electionId}`, async (route) => {
 await page.route(`**/api/scrutiny/${electionId}/submit-key`, async (route) => {
   const payload = JSON.parse(route.request().postData() || '{}');
   if (payload.key !== '123456') {
-    await route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ message: 'Key invalida' }) });
+    await route.fulfill({
+      status: 403,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: 'Key invalida',
+        code: 'SCRUTINY_KEY_INVALID',
+      }),
+    });
     return;
   }
   keyRedeemed = true;
@@ -181,9 +188,12 @@ await page.route(`**/api/scrutiny/${electionId}/submit-key`, async (route) => {
   test('muestra error cuando la llave es incorrecta', async ({ page }) => {
     await page.goto(`/escrutinio/subir?id=${electionId}`);
 
+    await expect(page.getByRole('heading', { name: 'Escrutinio de resultados' })).toBeVisible();
     await page.getByPlaceholder('Pegar llave...').fill('999999');
     await page.getByRole('button', { name: 'Canjear' }).click();
 
-    //await expect(page.getByText(/Key invalida/i)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/escrutinio/subir\\?id=${electionId}$`));
+    await expect(page.getByText(/Key invalida/i)).toBeVisible();
+    await expect(page.getByPlaceholder('Pegar llave...')).toHaveValue('999999');
   });
 });
