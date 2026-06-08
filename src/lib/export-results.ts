@@ -315,7 +315,7 @@ function buildReportHTML(results: ElectionResults, logoDataUrl: string | null): 
       border-top: 1px solid transparent;
     }
     .hero-title-row h1 {
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: "Montserrat", "Segoe UI", Arial, sans-serif;
       font-size: 20pt;
       color: #0F1E40;
       margin-bottom: 4px;
@@ -324,7 +324,7 @@ function buildReportHTML(results: ElectionResults, logoDataUrl: string | null): 
     .hero-folio {
       font-size: 9pt;
       color: #6B6557;
-      font-family: "Courier New", Courier, monospace;
+      font-family: "Montserrat", "Segoe UI", Arial, sans-serif;
     }
     .hero-folio strong { color: #0F1E40; font-weight: 700; }
     .content { padding: 20px 24px 28px; }
@@ -338,7 +338,7 @@ function buildReportHTML(results: ElectionResults, logoDataUrl: string | null): 
       mso-page-break-inside: avoid;
     }
     .panel h2 {
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: "Montserrat", "Segoe UI", Arial, sans-serif;
       font-size: 13pt;
       margin-bottom: 4px;
       color: #0F1E40;
