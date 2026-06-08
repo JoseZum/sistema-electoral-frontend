@@ -11,7 +11,7 @@
 
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import CrearEleccionPage from '@/app/(dashboard)/elecciones/crear/page';
 import { apiClient } from '@/lib/api-client';
@@ -197,6 +197,12 @@ describe('CrearEleccionPage', () => {
         vi.clearAllMocks();
         pushMock.mockClear();
 
+        // Las fechas de los tests están hardcodeadas a 2026-06-01. Congelamos la fecha del sistema
+        // antes de esa fecha para que las validaciones de "apertura en el futuro" sigan siendo válidas
+        // sin importar cuándo se ejecute la suite. Solo se fakea Date para no romper userEvent.
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date('2026-05-15T08:00:00'));
+
         class MockIntersectionObserver {
             observe = vi.fn();
             disconnect = vi.fn();
@@ -207,6 +213,10 @@ describe('CrearEleccionPage', () => {
         Element.prototype.scrollIntoView = vi.fn();
 
         installApiClientMock();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     async function fillBasicValidForm() {

@@ -11,7 +11,7 @@
 
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import CrearEleccionPage from '@/app/(dashboard)/elecciones/crear/page';
 import * as apiClientModule from '@/lib/api-client';
@@ -64,6 +64,11 @@ describe('Flujo de integración: creación de elecciones', () => {
         vi.clearAllMocks();
         pushMock.mockClear();
 
+        // Las fechas hardcodeadas (2026-06-01) deben mantenerse en el futuro respecto al "ahora" del
+        // test; fakeamos solo Date para no afectar los timers de userEvent.
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date('2026-05-15T08:00:00'));
+
         class MockIntersectionObserver {
             observe = vi.fn();
             unobserve = vi.fn();
@@ -78,6 +83,10 @@ describe('Flujo de integración: creación de elecciones', () => {
             { id: 'admin-2' },
             { id: 'admin-3' },
         ]);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     async function fillBaseForm() {
