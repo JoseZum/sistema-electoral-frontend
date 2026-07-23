@@ -44,14 +44,25 @@
     "file-saver": "^2.0.5",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
-    "next": "^16.2.6",
+    "next": "^16.2.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-is": "^19.2.5",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "sharp": "^0.35.3"
   },
   "overrides": {
+    "minimatch@3.1.5": {
+      "brace-expansion": "1.1.16"
+    },
+    "minimatch@5.1.9": {
+      "brace-expansion": "2.1.2"
+    },
+    "minimatch@9.0.9": {
+      "brace-expansion": "2.1.2"
+    },
     "postcss": "8.5.14",
+    "sharp": "$sharp",
     "tmp": "0.2.7"
   },
   "devDependencies": {
@@ -70,7 +81,7 @@
     "autoprefixer": "^10.4.20",
     "chrome-launcher": "1.2.1",
     "eslint": "^9.39.4",
-    "eslint-config-next": "^16.2.6",
+    "eslint-config-next": "^16.2.11",
     "jsdom": "^23.0.1",
     "lighthouse": "13.2.0",
     "postcss": "8.5.14",
