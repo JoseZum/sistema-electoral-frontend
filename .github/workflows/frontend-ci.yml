@@ -196,11 +196,126 @@ jobs:
           path: tests/lighthouse/**/.reports/**
           if-no-files-found: warn
 
+  system-e2e-tests:
+    name: 6) System E2E (Backend-owned suite)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    needs: lighthouse-audits
+    env:
+      AZURE_CLIENT_ID: aa4e880b-a43f-49d9-b0f2-98bbd86f2dec
+      AZURE_TENANT_ID: common
+      JWT_SECRET: ci_jwt_secret_change_in_prod
+      VOTE_TOKEN_SECRET: ci_vote_token_secret_change_in_prod
+      CORS_ORIGIN: http://localhost:3000
+      DATABASE_URL: postgresql://tee_admin:tee_local_password@localhost:5432/tee_voting
+      E2E_DATABASE_URL: postgresql://tee_admin:tee_local_password@localhost:5432/tee_voting
+      E2E_BACKEND_URL: http://localhost:3001
+      E2E_FRONTEND_URL: http://localhost:3000
+    steps:
+      - name: Checkout backend E2E suite
+        uses: actions/checkout@v4
+        with:
+          repository: JoseZum/sistema-electoral-backend
+          ref: main
+          path: sistema-electoral-backend
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout frontend commit under test
+        uses: actions/checkout@v4
+        with:
+          path: sistema-electoral-backend/sistema-electoral-frontend
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sistema-electoral-backend/package-lock.json
+
+      - name: Install backend E2E dependencies
+        working-directory: sistema-electoral-backend
+        run: npm ci
+
+      - name: Install Playwright browser
+        working-directory: sistema-electoral-backend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run backend-owned system E2E suite against this frontend commit
+        working-directory: sistema-electoral-backend
+        run: |
+          set -euo pipefail
+
+          cleanup() {
+            docker compose -p tee-frontend-e2e-ci -f docker-compose.e2e.yml logs > e2e-docker.log 2>&1 || true
+            docker compose -p tee-frontend-e2e-ci -f docker-compose.e2e.yml down -v --remove-orphans
+          }
+          trap cleanup EXIT
+
+          docker compose -p tee-frontend-e2e-ci -f docker-compose.e2e.yml up --build -d postgres backend frontend
+
+          ensure_service_running() {
+            local service="$1"
+            local container_id
+            local status
+
+            container_id="$(docker compose -p tee-frontend-e2e-ci -f docker-compose.e2e.yml ps -q "$service")"
+            if [ -z "$container_id" ]; then
+              echo "$service container was not created"
+              docker compose -p tee-frontend-e2e-ci -f docker-compose.e2e.yml ps
+              exit 1
+            fi
+
+            status="$(docker inspect -f '{{.State.Status}}' "$container_id")"
+            if [ "$status" = "exited" ] || [ "$status" = "dead" ]; then
+              echo "$service container stopped before becoming ready"
+              docker compose -p tee-frontend-e2e-ci -f docker-compose.e2e.yml logs "$service"
+              exit 1
+            fi
+          }
+
+          for url in "$E2E_BACKEND_URL/api/health" "$E2E_FRONTEND_URL"; do
+            for attempt in {1..120}; do
+              if curl -fs "$url" >/dev/null 2>&1; then
+                break
+              fi
+
+              if [ "$url" = "$E2E_BACKEND_URL/api/health" ]; then
+                ensure_service_running backend
+              else
+                ensure_service_running frontend
+              fi
+
+              if [ "$attempt" -eq 120 ]; then
+                echo "Timed out waiting for $url"
+                docker compose -p tee-frontend-e2e-ci -f docker-compose.e2e.yml logs
+                exit 1
+              fi
+
+              sleep 2
+            done
+          done
+
+          npx playwright test --config=playwright.config.ts
+
+      - name: Upload system E2E artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-system-e2e-artifacts
+          path: |
+            sistema-electoral-backend/playwright-report/
+            sistema-electoral-backend/test-results/
+            sistema-electoral-backend/e2e-docker.log
+          if-no-files-found: warn
+
   promote-dev-to-main:
-    name: 6) Promote Dev To Main
+    name: 7) Promote Dev To Main
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: lighthouse-audits
+    needs: system-e2e-tests
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     permissions:
       contents: write

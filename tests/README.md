@@ -47,7 +47,9 @@ Mapeo sugerido:
 - `tags`: `src/components/tags`, `src/lib/tags-api.ts`, `src/lib/tag-colors.ts`
 - `voting`: `src/app/(voter)/votaciones`
 
-En este repo el gate del frontend valida integracion de UI con Playwright. El E2E sistémico real entre frontend, backend y persistencia queda fuera de este pipeline y debe orquestarse desde el backend.
+El gate del frontend valida primero la integración de UI con Playwright y mocks controlados. Como último gate antes de promover `dev` a `main`, el workflow obtiene la suite E2E canónica desde `JoseZum/sistema-electoral-backend@main`, inserta el commit actual del frontend en el entorno Docker del backend y ejecuta todos los recorridos contra frontend, backend y PostgreSQL reales.
+
+La suite sistémica sigue siendo propiedad del backend: no se duplican archivos E2E en este repositorio. Así, cualquier prueba añadida o corregida en el backend se incorpora automáticamente al siguiente pipeline del frontend sin mantener dos copias divergentes.
 
 Para `tests/lighthouse`, la division es por modulo funcional y cada archivo `*.test.ts` representa una pagina/ruta completa a auditar con Lighthouse. Esto facilita definir presupuestos por pantalla cuando se agregue Lighthouse CI o Playwright + Lighthouse.
 
