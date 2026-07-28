@@ -10,6 +10,8 @@
     "lint:ci": "eslint src tests/integration/browser tests/security next.config.ts playwright.config.ts vitest.config.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:ci": "tsc --noEmit --project tsconfig.ci.json",
+    "test": "npm run test:unit:ci",
+    "test:ci": "npm run lint:ci && npm run typecheck:ci && npm run test:unit:ci",
     "test:unit": "vitest",
     "test:unit:ui": "vitest --ui",
     "test:unit:ci": "vitest run tests/unit",
