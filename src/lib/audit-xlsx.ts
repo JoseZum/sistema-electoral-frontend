@@ -1,4 +1,4 @@
-import ExcelJS from 'exceljs';
+import writeXlsxFile, { type Cell, type SheetData } from 'write-excel-file/browser';
 
 export interface AuditLogRow {
   id: string;
@@ -28,12 +28,13 @@ export interface AuditXlsxMeta {
   generatedAt?: Date;
 }
 
-const TRIBUNAL_NAVY = 'FF0F1E40';
-const TRIBUNAL_CREAM = 'FFFDFAF4';
-const TRIBUNAL_CREAM_DARK = 'FFF3EFE5';
-const ZEBRA_GREY = 'FFFAFAF8';
-const BORDER_GREY = 'FFC4BDB0';
-const MUTED_TEXT = 'FF6B6557';
+const TRIBUNAL_NAVY = '#0F1E40';
+const TRIBUNAL_CREAM = '#FDFAF4';
+const TRIBUNAL_CREAM_DARK = '#F3EFE5';
+const ZEBRA_GREY = '#FAFAF8';
+const BORDER_GREY = '#C4BDB0';
+const MUTED_TEXT = '#6B6557';
+const BODY_TEXT = '#172033';
 
 function formatPerson(name?: string | null, carnet?: string | null): string {
   if (name && carnet) return `${name} · ${carnet}`;
@@ -45,215 +46,174 @@ function pickActor(log: AuditLogRow): string {
 }
 
 function pickTarget(log: AuditLogRow): string {
-  const direct = formatPerson(log.target_name, log.target_carnet);
-  if (direct) return direct;
-  const holder = formatPerson(log.holder_name, log.holder_carnet);
-  if (holder) return holder;
-  return log.resource_id ?? '';
+  return (
+    formatPerson(log.target_name, log.target_carnet) ||
+    formatPerson(log.holder_name, log.holder_carnet) ||
+    log.resource_id ||
+    ''
+  );
 }
 
 function pickMessage(log: AuditLogRow): string {
   if (log.activityMessage) return log.activityMessage;
-  const verb = log.actionLabel ?? log.action;
-  const subj = log.resourceLabel ?? log.resource_type;
-  return `${verb} · ${subj}`;
+  return `${log.actionLabel ?? log.action} · ${log.resourceLabel ?? log.resource_type}`;
 }
 
-function applyHeaderStyle(row: ExcelJS.Row) {
-  row.height = 24;
-  row.eachCell((cell) => {
-    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11, name: 'Calibri' };
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: TRIBUNAL_NAVY },
-    };
-    cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: false };
-    cell.border = {
-      top: { style: 'thin', color: { argb: TRIBUNAL_NAVY } },
-      bottom: { style: 'medium', color: { argb: TRIBUNAL_NAVY } },
-      left: { style: 'thin', color: { argb: TRIBUNAL_NAVY } },
-      right: { style: 'thin', color: { argb: TRIBUNAL_NAVY } },
-    };
-  });
-}
-
-function applyBodyZebra(sheet: ExcelJS.Worksheet, startRow: number, endRow: number) {
-  for (let r = startRow; r <= endRow; r += 1) {
-    const row = sheet.getRow(r);
-    row.eachCell({ includeEmpty: true }, (cell) => {
-      cell.alignment = { vertical: 'top', wrapText: true };
-      cell.border = {
-        bottom: { style: 'hair', color: { argb: BORDER_GREY } },
-        right: { style: 'hair', color: { argb: BORDER_GREY } },
-      };
-      cell.font = { name: 'Calibri', size: 10, color: { argb: 'FF172033' } };
-      if ((r - startRow) % 2 === 1) {
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: ZEBRA_GREY },
-        };
-      }
-    });
-  }
-}
-
-function safeSheetName(input: string): string {
-  return input.replace(/[\\/?*[\]:]/g, '').slice(0, 31) || 'Hoja';
-}
-
-export async function buildAuditXlsxBlob(
-  logs: AuditLogRow[],
-  meta: AuditXlsxMeta,
-): Promise<Blob> {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Tribunal Electoral Estudiantil';
-  workbook.company = 'Tribunal Electoral Estudiantil';
-  workbook.created = meta.generatedAt ?? new Date();
-
-  // ── Hoja "Resumen" ────────────────────────────────────────────────────────
-  const summary = workbook.addWorksheet(safeSheetName('Resumen'), {
-    properties: { defaultColWidth: 22 },
-    views: [{ showGridLines: false, state: 'normal' }],
-  });
-  summary.columns = [
-    { header: 'Campo', key: 'k', width: 32 },
-    { header: 'Valor', key: 'v', width: 60 },
-  ];
-
-  // Título (merged row)
-  summary.mergeCells('A1:B1');
-  const titleCell = summary.getCell('A1');
-  titleCell.value = 'Reporte de auditoría — Tribunal Electoral Estudiantil';
-  titleCell.font = { name: 'Georgia', size: 16, bold: true, color: { argb: TRIBUNAL_NAVY } };
-  titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
-  titleCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: TRIBUNAL_CREAM },
+function headerCell(value: string): Cell {
+  return {
+    value,
+    fontFamily: 'Calibri',
+    fontSize: 11,
+    fontWeight: 'bold',
+    textColor: '#FFFFFF',
+    backgroundColor: TRIBUNAL_NAVY,
+    alignVertical: 'center',
+    bottomBorderColor: TRIBUNAL_NAVY,
+    bottomBorderStyle: 'medium',
+    leftBorderColor: TRIBUNAL_NAVY,
+    leftBorderStyle: 'thin',
+    rightBorderColor: TRIBUNAL_NAVY,
+    rightBorderStyle: 'thin',
+    topBorderColor: TRIBUNAL_NAVY,
+    topBorderStyle: 'thin',
+    height: 24,
   };
-  summary.getRow(1).height = 32;
+}
 
-  // Sub-título
-  summary.mergeCells('A2:B2');
-  const subCell = summary.getCell('A2');
-  subCell.value = `Generado el ${(meta.generatedAt ?? new Date()).toLocaleString('es-CR')}`;
-  subCell.font = { name: 'Calibri', size: 10, italic: true, color: { argb: MUTED_TEXT } };
-  subCell.alignment = { vertical: 'middle', horizontal: 'left' };
+function bodyCell(value: string | number | Date, zebra = false): Cell {
+  return {
+    value,
+    fontFamily: 'Calibri',
+    fontSize: 10,
+    textColor: BODY_TEXT,
+    alignVertical: 'top',
+    wrap: true,
+    backgroundColor: zebra ? ZEBRA_GREY : undefined,
+    bottomBorderColor: BORDER_GREY,
+    bottomBorderStyle: 'hair',
+    rightBorderColor: BORDER_GREY,
+    rightBorderStyle: 'hair',
+  };
+}
 
-  // Filtros usados
-  const filtersRows: Array<[string, string | number]> = [
-    ['', ''],
-    ['Rango — desde', meta.from || 'No especificado'],
-    ['Rango — hasta', meta.to || 'No especificado'],
-    ['Categorías', meta.categories.length > 0 ? meta.categories.join(', ') : 'Todas'],
-    ['Total de eventos exportados', logs.length],
-  ];
-  filtersRows.forEach(([k, v]) => {
-    const row = summary.addRow({ k, v });
-    row.getCell('k').font = { bold: true, color: { argb: MUTED_TEXT }, name: 'Calibri', size: 10 };
-    row.getCell('v').font = { name: 'Calibri', size: 10, color: { argb: 'FF172033' } };
-    row.getCell('k').alignment = { vertical: 'top' };
-    row.getCell('v').alignment = { vertical: 'top', wrapText: true };
-  });
-
-  // Espaciado y sección "Eventos por categoría"
-  summary.addRow({});
-  const catHeaderRow = summary.addRow({ k: 'Categoría', v: 'Eventos' });
-  catHeaderRow.getCell('k').font = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Calibri', size: 11 };
-  catHeaderRow.getCell('v').font = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Calibri', size: 11 };
-  catHeaderRow.eachCell((cell) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: TRIBUNAL_NAVY } };
-    cell.alignment = { vertical: 'middle' };
-  });
-
+function summarySheet(logs: AuditLogRow[], meta: AuditXlsxMeta, generatedAt: Date): SheetData {
   const byCategory = new Map<string, number>();
   logs.forEach((log) => {
-    const key = log.resourceLabel ?? log.resource_type ?? '—';
-    byCategory.set(key, (byCategory.get(key) ?? 0) + 1);
-  });
-  const sortedCats = [...byCategory.entries()].sort((a, b) => b[1] - a[1]);
-  sortedCats.forEach(([cat, count]) => {
-    const row = summary.addRow({ k: cat, v: count });
-    row.getCell('v').alignment = { horizontal: 'right' };
-    row.getCell('v').numFmt = '#,##0';
+    const category = log.resourceLabel ?? log.resource_type ?? '—';
+    byCategory.set(category, (byCategory.get(category) ?? 0) + 1);
   });
 
-  // ── Hoja "Eventos" ────────────────────────────────────────────────────────
-  const events = workbook.addWorksheet(safeSheetName('Eventos'), {
-    views: [{ state: 'frozen', ySplit: 1, showGridLines: false }],
-  });
-  events.columns = [
-    { header: 'Fecha', key: 'fecha', width: 22 },
-    { header: 'Categoría', key: 'categoria', width: 18 },
-    { header: 'Acción', key: 'accion', width: 22 },
-    { header: 'Actor', key: 'actor', width: 30 },
-    { header: 'Objetivo', key: 'objetivo', width: 30 },
-    { header: 'Mensaje', key: 'mensaje', width: 60 },
-    { header: 'Elección', key: 'eleccion', width: 30 },
-    { header: 'IP', key: 'ip', width: 18 },
-    { header: 'ID del evento', key: 'id', width: 38 },
-  ];
-  applyHeaderStyle(events.getRow(1));
-
-  logs.forEach((log) => {
-    const createdAt = (() => {
-      const d = new Date(log.created_at);
-      return Number.isNaN(d.getTime()) ? log.created_at : d;
-    })();
-    events.addRow({
-      fecha: createdAt,
-      categoria: log.resourceLabel ?? log.resource_type ?? '',
-      accion: log.actionLabel ?? log.action ?? '',
-      actor: pickActor(log) || '—',
-      objetivo: pickTarget(log) || '—',
-      mensaje: pickMessage(log),
-      eleccion: log.election_title ?? '',
-      ip: log.ip_address ?? '',
-      id: log.id,
-    });
-  });
-
-  // Date formatting for the "fecha" column
-  events.getColumn('fecha').numFmt = 'yyyy-mm-dd hh:mm:ss';
-
-  const lastRow = events.rowCount;
-  if (lastRow > 1) {
-    applyBodyZebra(events, 2, lastRow);
-  }
-
-  // AutoFilter sobre las columnas
-  events.autoFilter = {
-    from: { row: 1, column: 1 },
-    to: { row: 1, column: events.columnCount },
+  const title: Cell = {
+    value: 'Reporte de auditoría — Tribunal Electoral Estudiantil',
+    columnSpan: 2,
+    fontFamily: 'Georgia',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textColor: TRIBUNAL_NAVY,
+    backgroundColor: TRIBUNAL_CREAM,
+    alignVertical: 'center',
+    height: 32,
   };
+  const subtitle: Cell = {
+    value: `Generado el ${generatedAt.toLocaleString('es-CR')}`,
+    columnSpan: 2,
+    fontFamily: 'Calibri',
+    fontSize: 10,
+    fontStyle: 'italic',
+    textColor: MUTED_TEXT,
+  };
+  const labelCell = (value: string): Cell => ({
+    value,
+    fontFamily: 'Calibri',
+    fontSize: 10,
+    fontWeight: 'bold',
+    textColor: MUTED_TEXT,
+    alignVertical: 'top',
+  });
+  const valueCell = (value: string | number): Cell => ({
+    value,
+    fontFamily: 'Calibri',
+    fontSize: 10,
+    textColor: BODY_TEXT,
+    alignVertical: 'top',
+    wrap: true,
+  });
 
-  // Misma cosa para summary
-  summary.getColumn('k').width = 32;
-  summary.getColumn('v').width = 60;
+  return [
+    [title, null],
+    [subtitle, null],
+    [null, null],
+    [labelCell('Rango — desde'), valueCell(meta.from || 'No especificado')],
+    [labelCell('Rango — hasta'), valueCell(meta.to || 'No especificado')],
+    [labelCell('Categorías'), valueCell(meta.categories.length ? meta.categories.join(', ') : 'Todas')],
+    [labelCell('Total de eventos exportados'), valueCell(logs.length)],
+    [null, null],
+    [headerCell('Categoría'), headerCell('Eventos')],
+    ...[...byCategory.entries()]
+      .sort(([, a], [, b]) => b - a)
+      .map(([category, count], index) => [bodyCell(category, index % 2 === 1), bodyCell(count, index % 2 === 1)]),
+  ];
+}
 
-  // Empty state
-  if (logs.length === 0) {
-    const emptyRow = events.addRow({
-      fecha: '',
-      categoria: '',
-      accion: '',
-      actor: '',
-      objetivo: '',
-      mensaje: 'No hay eventos que coincidan con los filtros aplicados.',
-      eleccion: '',
-      ip: '',
-      id: '',
-    });
-    emptyRow.eachCell((cell) => {
-      cell.font = { italic: true, color: { argb: MUTED_TEXT }, name: 'Calibri', size: 10 };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: TRIBUNAL_CREAM_DARK } };
-    });
+function eventsSheet(logs: AuditLogRow[]): SheetData {
+  const header = ['Fecha', 'Categoría', 'Acción', 'Actor', 'Objetivo', 'Mensaje', 'Elección', 'IP', 'ID del evento'];
+  const rows = logs.map((log, index) => {
+    const parsedDate = new Date(log.created_at);
+    const dateCell = Number.isNaN(parsedDate.getTime())
+      ? bodyCell(log.created_at, index % 2 === 1)
+      : { ...bodyCell(parsedDate, index % 2 === 1), format: 'yyyy-mm-dd hh:mm:ss' };
+    const zebra = index % 2 === 1;
+    return [
+      dateCell,
+      bodyCell(log.resourceLabel ?? log.resource_type ?? '', zebra),
+      bodyCell(log.actionLabel ?? log.action ?? '', zebra),
+      bodyCell(pickActor(log) || '—', zebra),
+      bodyCell(pickTarget(log) || '—', zebra),
+      bodyCell(pickMessage(log), zebra),
+      bodyCell(log.election_title ?? '', zebra),
+      bodyCell(log.ip_address ?? '', zebra),
+      bodyCell(log.id, zebra),
+    ];
+  });
+
+  if (rows.length === 0) {
+    rows.push([
+      bodyCell('', false),
+      bodyCell('', false),
+      bodyCell('', false),
+      bodyCell('', false),
+      bodyCell('', false),
+      {
+        ...bodyCell('No hay eventos que coincidan con los filtros aplicados.', false),
+        fontStyle: 'italic',
+        textColor: MUTED_TEXT,
+        backgroundColor: TRIBUNAL_CREAM_DARK,
+      },
+      bodyCell('', false),
+      bodyCell('', false),
+      bodyCell('', false),
+    ]);
   }
 
-  const buffer = await workbook.xlsx.writeBuffer();
-  return new Blob([buffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  });
+  return [[...header.map(headerCell)], ...rows];
+}
+
+export async function buildAuditXlsxBlob(logs: AuditLogRow[], meta: AuditXlsxMeta): Promise<Blob> {
+  const generatedAt = meta.generatedAt ?? new Date();
+  const workbook = writeXlsxFile([
+    {
+      sheet: 'Resumen',
+      data: summarySheet(logs, meta, generatedAt),
+      columns: [{ width: 32 }, { width: 60 }],
+      showGridLines: false,
+    },
+    {
+      sheet: 'Eventos',
+      data: eventsSheet(logs),
+      columns: [{ width: 22 }, { width: 18 }, { width: 22 }, { width: 30 }, { width: 30 }, { width: 60 }, { width: 30 }, { width: 18 }, { width: 38 }],
+      showGridLines: false,
+    },
+  ]);
+
+  return workbook.toBlob();
 }

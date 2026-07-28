@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="./public/logo-frontend.png" alt="TEE Voting System Frontend" width="180">
+<img src="./public/logo-frontend.png" alt="TEE Voting System Frontend" width="400">
 
-# TEE Voting System · Frontend
+# TEE Voting System - Frontend
 
 Aplicación web de producción para el Tribunal Electoral Estudiantil del Instituto Tecnológico de Costa Rica. Reúne la experiencia del votante y la operación administrativa de una elección institucional en una interfaz clara, accesible y responsive.
 
