@@ -33,29 +33,7 @@ Aplicación web de producción para el Tribunal Electoral Estudiantil del Instit
 
 El frontend usa **Next.js App Router**, MSAL y un cliente REST tipado. La autorización, las reglas electorales y la persistencia pertenecen al backend: el navegador no se conecta directamente a PostgreSQL.
 
-```mermaid
-flowchart LR
-    subgraph Browser["Navegador · frontera no confiable"]
-        UI["Next.js UI"]
-        MSAL["MSAL"]
-        Session["Sesión TEE JWT"]
-        UI <--> MSAL
-        UI <--> Session
-    end
-
-    Entra["Microsoft Entra ID"]
-
-    subgraph Backend["Frontera de confianza del backend"]
-        API["Express API\nidentidad · autorización · reglas electorales"]
-        DB[("PostgreSQL\nelegibilidad · voto transaccional · auditoría")]
-        API <--> DB
-    end
-
-    MSAL <-->|"login institucional"| Entra
-    UI -->|"ID token"| API
-    API -->|"sesión TEE"| Session
-    UI -->|"HTTPS + Bearer JWT"| API
-```
+![Arquitectura del frontend del TEE Voting System](./public/architecture-diagram.png)
 
 Microsoft Entra ID autentica la identidad institucional. El backend valida el padrón y el rol antes de emitir la sesión utilizada por el frontend. La interfaz no decide permisos ni persiste secretos; los datos electorales se consultan y validan exclusivamente a través de la API.
 
