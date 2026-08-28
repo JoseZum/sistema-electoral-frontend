@@ -1,10 +1,26 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Loader from '@/components/Loader';
+
+/**
+ * Selector entre las dos secciones del votante.
+ *
+ * El cliente lo pidió explícitamente: "Mostrar la opción en la pantalla del
+ * usuario para elegir si desea ver las votaciones o las postulaciones
+ * disponibles."
+ */
+const VOTER_SECTIONS = [
+  { href: '/votaciones', label: 'Votaciones' },
+  // La ruta del votante es /mis-postulaciones porque /postulaciones ya la
+  // ocupa la gestión del admin: los route groups no cambian la URL, así que
+  // dos páginas con el mismo path chocarían. Mismo criterio que la API.
+  { href: '/mis-postulaciones', label: 'Postulaciones' },
+];
 
 export default function VoterLayout({
   children,
@@ -13,6 +29,7 @@ export default function VoterLayout({
 }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -70,6 +87,20 @@ export default function VoterLayout({
             </button>
           </div>
         )}
+
+        <nav className="voter-section-switch" aria-label="Secciones disponibles">
+          {VOTER_SECTIONS.map((section) => (
+            <Link
+              key={section.href}
+              href={section.href}
+              className={`filter-chip ${pathname.startsWith(section.href) ? 'active' : ''}`}
+              aria-current={pathname.startsWith(section.href) ? 'page' : undefined}
+            >
+              {section.label}
+            </Link>
+          ))}
+        </nav>
+
         {children}
       </main>
     </div>

@@ -6282,3 +6282,37 @@ body {
 .postulacion-decision-btn.conditioned.active { background: #d97706; border-color: #d97706; color: white; }
 .postulacion-decision-btn.rejected.active    { background: #dc2626; border-color: #dc2626; color: white; }
 
+/* ─── Toggle Votaciones / Postulaciones del votante ─── */
+.voter-section-switch {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  max-width: 760px;
+  padding: 0 1rem;
+}
+
+.voter-section-switch .filter-chip { flex: 1; max-width: 200px; text-align: center; }
+
+/* ─── Estado de campo bloqueado en el formulario del estudiante ─── */
+.postulacion-input-locked {
+  background: var(--surface-sunken);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.postulacion-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.postulacion-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.875rem;
+}
+
+@media (max-width: 900px) {
+  .postulacion-layout { grid-template-columns: 1fr; }
+}
