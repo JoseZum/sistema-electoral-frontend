@@ -78,6 +78,17 @@ const sections: NavSection[] = [
           </svg>
         ),
       },
+      {
+        label: 'Postulaciones',
+        href: '/postulaciones',
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+            <path d="M14 2v6h6" />
+            <path d="m9 15 2 2 4-4" />
+          </svg>
+        ),
+      },
     ],
   },
   {
@@ -168,9 +179,36 @@ const sections: NavSection[] = [
   },
 ];
 
+/**
+ * Resuelve qué enlace del menú corresponde a la ruta actual.
+ *
+ * No basta con `startsWith`: hay pares como `/padron` y `/padron/cargar`, o
+ * `/postulaciones` y `/postulaciones/crear`, donde el prefijo corto marcaría
+ * dos ítems a la vez. Gana siempre la coincidencia más específica, de modo
+ * que una subruta como `/postulaciones/<id>` ilumina su sección padre.
+ */
+function resolveActiveHref(pathname: string, navSections: NavSection[]): string | null {
+  const hrefs = navSections
+    .flatMap((section) => section.items)
+    .map((item) => item.href)
+    .filter((href): href is string => Boolean(href) && !!href);
+
+  let best: string | null = null;
+
+  for (const href of hrefs) {
+    const matches = pathname === href || pathname.startsWith(`${href}/`);
+    if (matches && (best === null || href.length > best.length)) {
+      best = href;
+    }
+  }
+
+  return best;
+}
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const activeHref = resolveActiveHref(pathname, sections);
 
   const initials = user?.fullName
     ? user.fullName
@@ -218,10 +256,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   );
                 }
 
-                const isActive =
-                  pathname === item.href ||
-                  (item.href !== '/' && pathname.startsWith(item.href) && item.href === '/padron' && pathname === '/padron') ||
-                  pathname === item.href;
+                const isActive = item.href === activeHref;
 
                 return (
                   <Link
