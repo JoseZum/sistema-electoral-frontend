@@ -6123,3 +6123,46 @@ body {
   font-weight: 500;
 }
 
+/* ─── Visor de adjuntos ─── */
+.postulacion-viewer {
+  max-width: 900px;
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  gap: 1rem;
+}
+
+.postulacion-viewer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.postulacion-viewer-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.postulacion-viewer-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+
+.postulacion-viewer-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+  overflow: auto;
+}
+
+.postulacion-viewer-frame { width: 100%; height: 70vh; border: 0; }
+.postulacion-viewer-image { max-width: 100%; max-height: 70vh; object-fit: contain; }
+
