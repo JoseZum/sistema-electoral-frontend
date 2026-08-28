@@ -18,11 +18,18 @@ const pageTitles: Record<string, string> = {
   '/generar-llaves': 'Generar llaves',
   '/escrutinio': 'Escrutinio',
   '/escrutinio/agregar-llaves': 'Agregar llaves',
+  '/postulaciones': 'Postulaciones',
+  '/postulaciones/crear': 'Crear formulario de postulacion',
 };
 
 export default function Header({ onToggleSidebar }: HeaderProps) {
   const pathname = usePathname();
-  const title = pageTitles[pathname] || 'Dashboard';
+  // Las rutas de detalle (p. ej. /postulaciones/<id>) no están en el mapa;
+  // heredan el título de su sección padre en vez de caer a "Dashboard".
+  const title =
+    pageTitles[pathname] ||
+    pageTitles[`/${pathname.split('/').filter(Boolean)[0] ?? ''}`] ||
+    'Dashboard';
 
   return (
     <header className="main-header">
