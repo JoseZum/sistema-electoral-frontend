@@ -155,6 +155,20 @@ const Icon = {
       <polyline points="12 5 19 12 12 19" />
     </svg>
   ),
+  clipboard: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M9 13h6" />
+      <path d="M9 17h4" />
+    </svg>
+  ),
+  badge: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="9" r="5" />
+      <path d="M8.5 13.5 7 22l5-2.5L17 22l-1.5-8.5" />
+    </svg>
+  ),
 } as const;
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -198,6 +212,15 @@ const CATEGORIES: Category[] = [
     resourceTypes: ['election', 'election_option'],
     tone: '#6B21A8',
     tint: '#F5EFFB',
+  },
+  {
+    id: 'postulaciones',
+    label: 'Postulaciones',
+    description: 'Convocatorias, puestos y candidaturas',
+    icon: Icon.clipboard,
+    resourceTypes: ['application_form', 'application', 'application_position'],
+    tone: '#0F766E',
+    tint: '#E6F4F2',
   },
   {
     id: 'tags',
@@ -253,6 +276,9 @@ const RESOURCE_META: Record<
   vote: { icon: Icon.checkCircle, label: 'Voto', tone: '#0F766E', tint: '#E6F4F2' },
   admin: { icon: Icon.shield, label: 'Administrador', tone: 'var(--accent)', tint: 'var(--accent-light)' },
   scrutiny_key: { icon: Icon.key, label: 'Llave', tone: '#B45309', tint: '#FBF4E6' },
+  application_form: { icon: Icon.clipboard, label: 'Convocatoria', tone: '#0F766E', tint: '#E6F4F2' },
+  application: { icon: Icon.checkCircle, label: 'Postulación', tone: '#0F766E', tint: '#E6F4F2' },
+  application_position: { icon: Icon.badge, label: 'Puesto', tone: '#0F766E', tint: '#E6F4F2' },
 };
 
 function resourceMeta(resourceType: string) {
@@ -304,6 +330,20 @@ const FIELD_LABELS: Record<string, string> = {
   voter_scope: 'alcance',
   privacy_mode: 'privacidad',
   publication_mode: 'publicación',
+  // Postulaciones
+  form_title: 'convocatoria',
+  position_name: 'puesto',
+  position_count: 'cantidad de puestos',
+  positions_summary: 'puestos',
+  display_order: 'orden',
+  allow_other_documents: 'otros documentos',
+  other_documents_label: 'rótulo de otros documentos',
+  voter_source: 'audiencia',
+  review_comment: 'comentario de revisión',
+  unlocked_fields: 'campos habilitados',
+  correction_deadline: 'plazo de corrección',
+  submitted_at: 'enviada el',
+  reviewed_at: 'revisada el',
 };
 
 function fieldLabel(key: string): string {
@@ -317,11 +357,21 @@ const STATUS_LABELS: Record<string, string> = {
   CLOSED: 'Cerrada',
   SCRUTINIZED: 'Escrutada',
   ARCHIVED: 'Archivada',
+  // Estados de una postulación
+  SUBMITTED: 'Enviada',
+  APPROVED: 'Aprobada',
+  CONDITIONED: 'Condicionada',
+  REJECTED: 'Denegada',
+  // Audiencia de una convocatoria
+  FULL_PADRON: 'Todo el padrón',
+  FILTERED: 'Padrón filtrado',
+  MANUAL: 'Selección manual',
+  TAG: 'Tag',
 };
 
 function prettyValue(field: string, value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';
-  if (field === 'status' && typeof value === 'string') {
+  if ((field === 'status' || field === 'voter_source') && typeof value === 'string') {
     return STATUS_LABELS[value] || value;
   }
   if (field === 'password_hash') return '••••••••';
@@ -390,6 +440,32 @@ function getTagAuditName(
     log.resource_id ||
     'tag'
   );
+}
+
+/**
+ * El trigger adjunta el título de la convocatoria a todo evento del módulo,
+ * pero los registros anteriores a esa migración no lo llevan: en ese caso se
+ * busca en el cuerpo del propio evento antes de rendirse.
+ */
+function formTitle(log: AuditLog): string | undefined {
+  const details = (log.details ?? {}) as Record<string, unknown>;
+  const newRow = (getField<Record<string, unknown>>(details, 'new') ?? {}) as Record<string, unknown>;
+  const oldRow = (getField<Record<string, unknown>>(details, 'old') ?? {}) as Record<string, unknown>;
+
+  const candidatos = [
+    details.form_title,
+    log.resource_type === 'application_form' ? newRow.title : undefined,
+    log.resource_type === 'application_form' ? oldRow.title : undefined,
+  ];
+
+  return candidatos.find((v): v is string => typeof v === 'string' && v.trim().length > 0);
+}
+
+function positionName(log: AuditLog, fallbackRow: Record<string, unknown>): string | undefined {
+  const details = (log.details ?? {}) as Record<string, unknown>;
+  const candidatos = [details.position_name, fallbackRow.name];
+
+  return candidatos.find((v): v is string => typeof v === 'string' && v.trim().length > 0);
 }
 
 function buildNarrative(log: AuditLog): Narrative {
@@ -856,10 +932,149 @@ function buildNarrative(log: AuditLog): Narrative {
       };
     }
 
-    default: {
+    // ─── Postulaciones ──────────────────────────────────────────────
+    case 'application_form.insert': {
+      const title = (newRow.title as string | undefined) || formTitle(log) || '';
+      const positionCount = Number(newRow.position_count ?? 0);
+      const eligibleCount = Number(newRow.eligible_count ?? 0);
+      const positionsSummary =
+        typeof newRow.positions_summary === 'string' ? newRow.positions_summary : undefined;
+      const voterScope = typeof newRow.voter_scope === 'string' ? newRow.voter_scope : undefined;
+      const trailerParts = [
+        positionCount > 0 ? `${positionCount} puestos` : null,
+        eligibleCount > 0 ? `${eligibleCount} personas convocadas` : null,
+        voterScope ? `alcance: ${voterScope}` : null,
+        positionsSummary ? `puestos: ${positionsSummary}` : null,
+      ].filter(Boolean);
       return {
-        lead: log.actionLabel || log.action,
-        subject: log.resource_id || '',
+        lead: 'creó la convocatoria',
+        subject: `«${title}»`,
+        trailer: trailerParts.length > 0 ? trailerParts.join(' | ') : undefined,
+        opBadge,
+      };
+    }
+
+    case 'application_form.update': {
+      const title = formTitle(log) || (newRow.title as string | undefined) || 'sin título';
+      const fields = Object.keys(changes).filter((k) => k !== 'updated_at');
+
+      if (fields.length === 1 && fields[0] === 'status') {
+        const nuevo = String(changes.status);
+        return {
+          lead: `cambió la convocatoria «${title}» a`,
+          subject: STATUS_LABELS[nuevo] || nuevo,
+          opBadge,
+        };
+      }
+
+      return {
+        lead: 'actualizó la convocatoria',
+        subject: `«${title}»`,
+        trailer:
+          fields.length > 0 ? `cambió ${fields.map(fieldLabel).join(', ')}` : undefined,
+        opBadge,
+      };
+    }
+
+    case 'application_form.delete': {
+      const title = formTitle(log) || (oldRow.title as string | undefined) || 'sin título';
+      return { lead: 'eliminó la convocatoria', subject: `«${title}»`, opBadge };
+    }
+
+    case 'application_position.insert':
+    case 'application_position.delete': {
+      const name = positionName(log, op === 'delete' ? oldRow : newRow) || 'sin nombre';
+      const title = formTitle(log);
+      return {
+        lead: op === 'delete' ? 'quitó el puesto' : 'agregó el puesto',
+        subject: `«${name}»`,
+        trailer: title ? `en «${title}»` : undefined,
+        opBadge,
+      };
+    }
+
+    case 'application_position.update': {
+      const anterior = (previous.name as string | undefined) || undefined;
+      const actual = positionName(log, changes) || 'sin nombre';
+      const title = formTitle(log);
+      return {
+        lead: anterior ? `renombró el puesto «${anterior}» a` : 'actualizó el puesto',
+        subject: `«${actual}»`,
+        trailer: title ? `en «${title}»` : undefined,
+        opBadge,
+      };
+    }
+
+    case 'application.insert':
+    case 'application.update':
+    case 'application.delete': {
+      const persona = formatPersonLabel(log.target_name, log.target_carnet, 'un postulante');
+      const title = formTitle(log);
+      const puesto = positionName(log, {});
+      const destino = [
+        puesto ? `al puesto «${puesto}»` : null,
+        title ? `de «${title}»` : null,
+      ]
+        .filter(Boolean)
+        .join(' ');
+
+      if (log.action === 'application.delete') {
+        return {
+          lead: 'eliminó la postulación de',
+          subject: persona,
+          trailer: destino || undefined,
+          opBadge,
+        };
+      }
+
+      // Solo se auditan los cambios de estado, así que la frase se arma
+      // alrededor de la resolución: enviada, aprobada, condicionada…
+      const nuevoEstado = typeof changes.status === 'string' ? changes.status : undefined;
+      const leads: Record<string, string> = {
+        SUBMITTED: 'recibió la postulación de',
+        APPROVED: 'aprobó la postulación de',
+        CONDITIONED: 'condicionó la postulación de',
+        REJECTED: 'denegó la postulación de',
+        DRAFT: 'reabrió la postulación de',
+      };
+      const badges: Record<string, Narrative['opBadge']> = {
+        SUBMITTED: { label: 'Enviada', variant: 'create' },
+        APPROVED: { label: 'Aprobada', variant: 'create' },
+        CONDITIONED: { label: 'Condicionada', variant: 'update' },
+        REJECTED: { label: 'Denegada', variant: 'delete' },
+        DRAFT: { label: 'Reabierta', variant: 'update' },
+      };
+
+      const trailerParts = [destino || null];
+      if (nuevoEstado === 'CONDITIONED') {
+        const campos = Array.isArray(changes.unlocked_fields)
+          ? (changes.unlocked_fields as unknown[]).filter(
+              (f): f is string => typeof f === 'string',
+            )
+          : [];
+        if (campos.length > 0) {
+          trailerParts.push(`puede corregir: ${campos.map(fieldLabel).join(', ')}`);
+        }
+        if (typeof changes.correction_deadline === 'string') {
+          trailerParts.push(`hasta ${prettyValue('correction_deadline', changes.correction_deadline)}`);
+        }
+      }
+
+      return {
+        lead: (nuevoEstado && leads[nuevoEstado]) || 'actualizó la postulación de',
+        subject: persona,
+        trailer: trailerParts.filter(Boolean).join(' · ') || undefined,
+        opBadge: (nuevoEstado && badges[nuevoEstado]) || opBadge,
+      };
+    }
+
+    default: {
+      // El backend ya redacta una frase para cada evento que conoce; usarla
+      // antes de caer al identificador crudo evita que un tipo de evento
+      // nuevo aparezca en pantalla como un UUID.
+      return {
+        lead: log.activityMessage || log.actionLabel || log.action,
+        subject: log.activityMessage ? '' : log.resource_id || '',
         opBadge,
       };
     }
