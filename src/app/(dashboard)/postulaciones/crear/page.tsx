@@ -23,6 +23,8 @@ interface FormState {
   career: string;
   tag_id: string | null;
   election_id: string;
+  /** Puestos a crear junto con el formulario; se pueden editar después. */
+  positions: string[];
 }
 
 interface FormErrors {
@@ -91,7 +93,9 @@ export default function CrearPostulacionPage() {
     career: '',
     tag_id: null,
     election_id: '',
+    positions: [],
   });
+  const [nuevoPuesto, setNuevoPuesto] = useState('');
 
   const [catalog, setCatalog] = useState<{ sedes: string[]; careers: string[] }>({
     sedes: [],
@@ -148,6 +152,7 @@ export default function CrearPostulacionPage() {
             : null,
         tag_id: form.voter_source === 'TAG' ? form.tag_id : null,
         election_id: form.election_id || null,
+        positions: form.positions,
       });
 
       router.push(`/postulaciones/${created.id}`);
@@ -321,9 +326,70 @@ export default function CrearPostulacionPage() {
           )}
         </section>
 
-        {/* 4. Documentos */}
+        {/* 4. Puestos */}
         <section className="card" style={{ padding: '1.5rem', display: 'grid', gap: '1rem' }}>
-          <div className="overline">4. Documentos solicitados</div>
+          <div className="overline">4. Puestos disponibles</div>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
+            El postulante tendrá que elegir uno al enviar. Si no agregas ninguno, no se le
+            preguntará. Podrás añadir o quitar puestos después, aunque el formulario ya esté
+            abierto.
+          </p>
+
+          {form.positions.length > 0 && (
+            <div style={{ display: 'grid', gap: '0.4rem' }}>
+              {form.positions.map((puesto, indice) => (
+                <div key={`${puesto}-${indice}`} className="postulacion-position-row">
+                  <span className="postulacion-position-name">{puesto}</span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() =>
+                      update('positions', form.positions.filter((_, i) => i !== indice))
+                    }
+                  >
+                    Quitar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              className="input"
+              value={nuevoPuesto}
+              placeholder="Ej. Presidencia, Tesorería…"
+              aria-label="Nombre del puesto"
+              onChange={(e) => setNuevoPuesto(e.target.value)}
+              onKeyDown={(e) => {
+                // Enter agrega el puesto en vez de enviar el formulario entero.
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const nombre = nuevoPuesto.trim();
+                  if (nombre && !form.positions.includes(nombre)) {
+                    update('positions', [...form.positions, nombre]);
+                    setNuevoPuesto('');
+                  }
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="btn btn-outline"
+              disabled={!nuevoPuesto.trim() || form.positions.includes(nuevoPuesto.trim())}
+              onClick={() => {
+                update('positions', [...form.positions, nuevoPuesto.trim()]);
+                setNuevoPuesto('');
+              }}
+            >
+              Agregar
+            </button>
+          </div>
+        </section>
+
+        {/* 5. Documentos */}
+        <section className="card" style={{ padding: '1.5rem', display: 'grid', gap: '1rem' }}>
+          <div className="overline">5. Documentos solicitados</div>
 
           <p style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
             Estos adjuntos son obligatorios y no se pueden cambiar:
@@ -357,9 +423,9 @@ export default function CrearPostulacionPage() {
           )}
         </section>
 
-        {/* 5. Votación asociada */}
+        {/* 6. Votación asociada */}
         <section className="card" style={{ padding: '1.5rem', display: 'grid', gap: '1rem' }}>
-          <div className="overline">5. Votación asociada (opcional)</div>
+          <div className="overline">6. Votación asociada (opcional)</div>
 
           <div className="input-group">
             <label htmlFor="election_id">Votación</label>
