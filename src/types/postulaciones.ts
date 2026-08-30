@@ -22,6 +22,7 @@ export type ApplicationFieldKey =
   | 'phone'
   | 'sede'
   | 'career'
+  | 'position_id'
   | 'enrollment_report'
   | 'id_copy'
   | 'carnet_copy'
@@ -33,6 +34,21 @@ export type FileFieldKey = Extract<
   ApplicationFieldKey,
   'enrollment_report' | 'id_copy' | 'carnet_copy' | 'tdf_letter' | 'th_letter' | 'other'
 >;
+
+/** Puesto al que se puede presentar un postulante. Solo tiene nombre. */
+export interface ApplicationPosition {
+  id: string;
+  form_id: string;
+  name: string;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Puesto con su conteo de postulantes, para avisar antes de borrarlo. */
+export interface ApplicationPositionWithUsage extends ApplicationPosition {
+  application_count: number;
+}
 
 export interface ApplicationForm {
   id: string;
@@ -56,6 +72,7 @@ export interface ApplicationFormWithStats extends ApplicationForm {
   tag_name: string | null;
   tag_color: string | null;
   election_title: string | null;
+  positions: ApplicationPosition[];
   eligible_count: number;
   submitted_count: number;
   approved_count: number;
@@ -100,6 +117,7 @@ export interface Application {
   phone: string | null;
   sede: string | null;
   career: string | null;
+  position_id: string | null;
   unlocked_fields: ApplicationFieldKey[] | null;
   correction_deadline: string | null;
   review_comment: string | null;
@@ -114,6 +132,7 @@ export interface ApplicationSummary extends Application {
   student_full_name: string;
   student_carnet: string;
   student_email: string;
+  position_name: string | null;
   files_count: number;
 }
 
@@ -161,6 +180,7 @@ export interface MyApplicationDetail {
   reviews: ApplicationReview[];
   prefill: ApplicationPrefill;
   editable_fields: ApplicationFieldKey[];
+  positions: ApplicationPosition[];
   sedes: string[];
   careers: string[];
 }
@@ -182,6 +202,8 @@ export interface CreateApplicationFormPayload {
   tag_id?: string | null;
   election_id?: string | null;
   student_ids?: string[];
+  /** Nombres de los puestos a crear junto con el formulario. */
+  positions?: string[];
 }
 
 export type UpdateApplicationFormPayload = Partial<CreateApplicationFormPayload>;
@@ -202,7 +224,8 @@ export type SaveApplicationPayload = Partial<
     | 'carnet'
     | 'phone'
     | 'sede'
-    | 'career',
+    | 'career'
+    | 'position_id',
     string | null
   >
 >;

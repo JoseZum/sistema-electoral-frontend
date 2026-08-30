@@ -66,6 +66,17 @@ export const SELECT_FIELDS: SelectFieldDef[] = [
   { key: 'career', label: 'Carrera', placeholder: 'Selecciona tu carrera' },
 ];
 
+/**
+ * El puesto se trata aparte de SELECT_FIELDS porque sus opciones no vienen
+ * de un catálogo global sino de los puestos que el admin definió en ese
+ * formulario, y el campo solo existe si hay alguno.
+ */
+export const POSITION_FIELD = {
+  key: 'position_id' as const,
+  label: 'Puesto al que se postula',
+  placeholder: 'Selecciona el puesto',
+};
+
 export interface FileFieldDef {
   key: FileFieldKey;
   label: string;
@@ -94,6 +105,7 @@ export const FILE_FIELDS: FileFieldDef[] = [
 export const FIELD_LABELS: Record<ApplicationFieldKey, string> = {
   ...Object.fromEntries(TEXT_FIELDS.map((f) => [f.key, f.label])),
   ...Object.fromEntries(SELECT_FIELDS.map((f) => [f.key, f.label])),
+  [POSITION_FIELD.key]: POSITION_FIELD.label,
   ...Object.fromEntries(FILE_FIELDS.map((f) => [f.key, f.label])),
 } as Record<ApplicationFieldKey, string>;
 
@@ -104,6 +116,7 @@ export const FIELD_LABELS: Record<ApplicationFieldKey, string> = {
 export const UNLOCKABLE_FIELDS: ApplicationFieldKey[] = [
   ...TEXT_FIELDS.filter((f) => f.key !== 'email').map((f) => f.key),
   ...SELECT_FIELDS.map((f) => f.key),
+  POSITION_FIELD.key,
   ...FILE_FIELDS.map((f) => f.key),
 ];
 

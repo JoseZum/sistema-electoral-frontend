@@ -4,6 +4,8 @@ import type {
   ApplicationDetail,
   ApplicationFileMeta,
   ApplicationFormWithStats,
+  ApplicationPosition,
+  ApplicationPositionWithUsage,
   ApplicationSummary,
   CreateApplicationFormPayload,
   FileFieldKey,
@@ -42,6 +44,38 @@ export async function updateForm(id: string, payload: UpdateApplicationFormPaylo
 
 export async function deleteForm(id: string) {
   return apiClient<{ success: boolean }>(`/api/postulaciones/formularios/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// ============================================
+// PUESTOS (admin)
+//
+// Editables en cualquier momento, tambien con el formulario ya abierto.
+// ============================================
+
+export async function listPositions(formId: string) {
+  return apiClient<ApplicationPositionWithUsage[]>(
+    `/api/postulaciones/formularios/${formId}/puestos`
+  );
+}
+
+export async function createPosition(formId: string, name: string) {
+  return apiClient<ApplicationPosition>(`/api/postulaciones/formularios/${formId}/puestos`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function updatePosition(positionId: string, name: string) {
+  return apiClient<ApplicationPosition>(`/api/postulaciones/puestos/${positionId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function deletePosition(positionId: string) {
+  return apiClient<{ success: boolean }>(`/api/postulaciones/puestos/${positionId}`, {
     method: 'DELETE',
   });
 }
