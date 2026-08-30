@@ -127,6 +127,14 @@ export default function PostulacionesPage() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    {(form.status === 'DRAFT' || form.status === 'SCHEDULED') && (
+                      <Link
+                        href={`/postulaciones/${form.id}/editar`}
+                        className="btn btn-accent btn-sm"
+                      >
+                        {form.status === 'DRAFT' ? 'Editar borrador' : 'Editar'}
+                      </Link>
+                    )}
                     <Link href={`/postulaciones/${form.id}`} className="btn btn-outline btn-sm">
                       Ver respuestas ({form.submitted_count + form.conditioned_count + form.approved_count + form.rejected_count + form.draft_count})
                     </Link>

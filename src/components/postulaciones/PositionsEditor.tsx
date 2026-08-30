@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   createPosition,
   deletePosition,
@@ -47,8 +47,7 @@ export default function PositionsEditor({ formId, onChange }: PositionsEditorPro
     cargar();
   }, [cargar]);
 
-  async function handleAgregar(event: FormEvent) {
-    event.preventDefault();
+  async function handleAgregar() {
     if (!nuevo.trim()) return;
 
     setGuardando(true);
@@ -183,19 +182,30 @@ export default function PositionsEditor({ formId, onChange }: PositionsEditorPro
         </div>
       )}
 
-      <form onSubmit={handleAgregar} style={{ display: 'flex', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
         <input
           className="input"
           value={nuevo}
           placeholder="Ej. Presidencia, Tesorería…"
           onChange={(e) => setNuevo(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              void handleAgregar();
+            }
+          }}
           disabled={guardando}
           aria-label="Nombre del puesto nuevo"
         />
-        <button type="submit" className="btn btn-outline" disabled={guardando || !nuevo.trim()}>
+        <button
+          type="button"
+          className="btn btn-outline"
+          disabled={guardando || !nuevo.trim()}
+          onClick={() => void handleAgregar()}
+        >
           {guardando ? 'Guardando…' : 'Agregar puesto'}
         </button>
-      </form>
+      </div>
 
       {error && <div className="postulacion-field-error">{error}</div>}
     </div>

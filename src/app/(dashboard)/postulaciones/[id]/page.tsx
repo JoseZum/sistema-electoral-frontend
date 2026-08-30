@@ -229,6 +229,11 @@ export default function RevisarPostulacionesPage() {
             {form?.title}
           </h2>
           {form && <FormStatusBadge status={form.status} />}
+          {form && (form.status === 'DRAFT' || form.status === 'SCHEDULED') && (
+            <Link href={`/postulaciones/${form.id}/editar`} className="btn btn-accent btn-sm">
+              {form.status === 'DRAFT' ? 'Editar borrador' : 'Editar formulario'}
+            </Link>
+          )}
         </div>
         <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', marginTop: '0.25rem' }}>
           {applications.length} postulación(es) · {form?.eligible_count} estudiantes elegibles ·
@@ -252,6 +257,13 @@ export default function RevisarPostulacionesPage() {
         </div>
       )}
 
+      {form && (
+        <section className="card" style={{ padding: '1rem', display: 'grid', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div className="overline">Puestos</div>
+          <PositionsEditor formId={formId} onChange={loadAll} />
+        </section>
+      )}
+
       {applications.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
           <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Sin postulaciones todavía</div>
@@ -261,13 +273,8 @@ export default function RevisarPostulacionesPage() {
         </div>
       ) : (
         <div className="postulacion-layout">
-          {/* Puestos + lista de respuestas */}
+          {/* Lista de respuestas */}
           <div style={{ display: 'grid', gap: '1rem' }}>
-            <section className="card" style={{ padding: '1rem', display: 'grid', gap: '0.75rem' }}>
-              <div className="overline">Puestos</div>
-              <PositionsEditor formId={formId} onChange={loadAll} />
-            </section>
-
             <div className="voter-filter-row" style={{ margin: 0, padding: 0, flexWrap: 'wrap' }}>
               {STATUS_FILTERS.filter(
                 // Solo se ofrecen los estados que existen, para no llenar de
