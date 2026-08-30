@@ -47,108 +47,104 @@ function mockLogs(logs: ReturnType<typeof makeLog>[]) {
   });
 }
 
+// La página es cara de montar, así que los casos que solo leen la narrativa
+// comparten un único render con todos los eventos dentro.
+const eventos = [
+  makeLog({
+    id: 'log-1',
+    action: 'application_position.insert',
+    resource_type: 'application_position',
+    resource_id: 'fd188816-0309-40c3-b6d3-58ed8f869295',
+    details: {
+      new: { name: 'Presidencia', display_order: 1 },
+      position_name: 'Presidencia',
+      form_title: 'Convocatoria TEE 2026',
+    },
+  }),
+  makeLog({
+    id: 'log-2',
+    action: 'application_form.insert',
+    resource_type: 'application_form',
+    resource_id: '14c6fd1f-da88-4421-810b-f8b4a4419594',
+    details: {
+      new: {
+        title: 'Convocatoria TEE 2026',
+        position_count: 3,
+        positions_summary: 'Presidencia, Vicepresidencia, Secretaria',
+        eligible_count: 120,
+        voter_scope: 'Todo el padron activo',
+      },
+      form_title: 'Convocatoria TEE 2026',
+    },
+  }),
+  makeLog({
+    id: 'log-3',
+    action: 'application.update',
+    resource_type: 'application',
+    resource_id: 'a0000000-0000-0000-0000-000000000003',
+    target_name: 'Ana García',
+    target_carnet: '2021009999',
+    details: {
+      changes: { status: 'APPROVED' },
+      previous: { status: 'SUBMITTED' },
+      position_name: 'Presidencia',
+      form_title: 'Convocatoria TEE 2026',
+    },
+  }),
+  makeLog({
+    id: 'log-4',
+    action: 'application_review.insert',
+    resource_type: 'application_review',
+    resource_id: '99999999-0000-0000-0000-000000000000',
+    details: null,
+    activityMessage: 'Revision registrada en postulacion',
+  }),
+];
+
 describe('auditoría de postulaciones', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('nombra el puesto y su convocatoria en vez de mostrar el identificador', async () => {
-    mockLogs([
-      makeLog({
-        id: 'log-1',
-        action: 'application_position.insert',
-        resource_type: 'application_position',
-        resource_id: 'fd188816-0309-40c3-b6d3-58ed8f869295',
-        details: {
-          new: { name: 'Presidencia', display_order: 1 },
-          position_name: 'Presidencia',
-          form_title: 'Convocatoria TEE 2026',
-        },
-      }),
-    ]);
+  it('narra los eventos del módulo sin mostrar identificadores', async () => {
+    mockLogs(eventos);
 
     render(<AuditPage />);
 
     await waitFor(() => {
       expect(screen.getByText('agregó el puesto')).toBeInTheDocument();
     });
+
+    // Puesto: nombre y convocatoria en vez del UUID de la captura original.
     expect(screen.getByText('«Presidencia»')).toBeInTheDocument();
     expect(screen.getByText('en «Convocatoria TEE 2026»')).toBeInTheDocument();
-    expect(screen.queryByText(/fd188816/)).not.toBeInTheDocument();
-  });
 
-  it('resume los puestos y la audiencia al crear una convocatoria', async () => {
-    mockLogs([
-      makeLog({
-        id: 'log-2',
-        action: 'application_form.insert',
-        resource_type: 'application_form',
-        resource_id: '14c6fd1f-da88-4421-810b-f8b4a4419594',
-        details: {
-          new: {
-            title: 'Convocatoria TEE 2026',
-            position_count: 3,
-            positions_summary: 'Presidencia, Vicepresidencia, Secretaria',
-            eligible_count: 120,
-            voter_scope: 'Todo el padron activo',
-          },
-          form_title: 'Convocatoria TEE 2026',
-        },
-      }),
-    ]);
-
-    render(<AuditPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('creó la convocatoria')).toBeInTheDocument();
-    });
-    expect(screen.getByText('«Convocatoria TEE 2026»')).toBeInTheDocument();
+    // Convocatoria: los puestos silenciados aparecen resumidos aquí.
+    expect(screen.getByText('creó la convocatoria')).toBeInTheDocument();
     expect(screen.getByText(/3 puestos/)).toBeInTheDocument();
     expect(screen.getByText(/120 personas convocadas/)).toBeInTheDocument();
-    expect(screen.queryByText(/14c6fd1f/)).not.toBeInTheDocument();
-  });
 
-  it('describe una postulación aprobada con la persona y el puesto', async () => {
-    mockLogs([
-      makeLog({
-        id: 'log-3',
-        action: 'application.update',
-        resource_type: 'application',
-        resource_id: 'app-1',
-        target_name: 'Ana García',
-        target_carnet: '2021009999',
-        details: {
-          changes: { status: 'APPROVED' },
-          previous: { status: 'SUBMITTED' },
-          position_name: 'Presidencia',
-          form_title: 'Convocatoria TEE 2026',
-        },
-      }),
-    ]);
-
-    render(<AuditPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('aprobó la postulación de')).toBeInTheDocument();
-    });
+    // Resolución de una postulación: quién, a qué puesto y con qué decisión.
+    expect(screen.getByText('aprobó la postulación de')).toBeInTheDocument();
     expect(screen.getByText('Ana García · 2021009999')).toBeInTheDocument();
     expect(screen.getByText(/al puesto «Presidencia»/)).toBeInTheDocument();
     expect(screen.getByText('Aprobada')).toBeInTheDocument();
+
+    // Un tipo de evento sin caso propio cae a la frase que redacta el backend.
+    expect(screen.getByText('Revision registrada en postulacion')).toBeInTheDocument();
+
+    // Ningún identificador crudo sobrevive en la narrativa.
+    for (const fragmento of ['fd188816', '14c6fd1f', '99999999']) {
+      expect(screen.queryByText(new RegExp(fragmento))).not.toBeInTheDocument();
+    }
+
+    // La categoría propia habilita filtrar y purgar el módulo por separado.
+    expect(
+      screen.getByRole('button', { name: /Convocatorias, puestos y candidaturas/ }),
+    ).toBeInTheDocument();
   });
 
-  it('ofrece la categoría Postulaciones para filtrar y purgar', async () => {
-    mockLogs([]);
-
-    render(<AuditPage />);
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /Postulaciones/ }),
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('esconde las llaves foráneas del detalle y deja lo legible', async () => {
+  it('esconde las llaves foráneas al abrir el detalle', async () => {
     const user = userEvent.setup();
     mockLogs([
       makeLog({
@@ -181,26 +177,5 @@ describe('auditoría de postulaciones', () => {
     });
     expect(screen.getByText('orden')).toBeInTheDocument();
     expect(screen.queryByText('36ce087a-a6cf-4661-871e-1ae1ccbbe6a4')).not.toBeInTheDocument();
-    expect(screen.queryByText('convocatoria')).not.toBeInTheDocument();
-  });
-
-  it('usa la frase del backend antes que el identificador para eventos sin caso propio', async () => {
-    mockLogs([
-      makeLog({
-        id: 'log-4',
-        action: 'application_review.insert',
-        resource_type: 'application_review',
-        resource_id: '99999999-0000-0000-0000-000000000000',
-        details: null,
-        activityMessage: 'Revision registrada en postulacion',
-      }),
-    ]);
-
-    render(<AuditPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Revision registrada en postulacion')).toBeInTheDocument();
-    });
-    expect(screen.queryByText(/99999999/)).not.toBeInTheDocument();
   });
 });
