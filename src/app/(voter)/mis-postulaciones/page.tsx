@@ -10,9 +10,13 @@ import type { MyApplicationFormSummary } from '@/types/postulaciones';
 
 /** Qué invita a hacer cada estado cuando el estudiante abre el formulario. */
 function callToAction(form: MyApplicationFormSummary): string {
-  if (!form.application_status) return 'Postularme';
+  if (!form.application_status) return form.can_edit ? 'Postularme' : 'Ver convocatoria';
   if (form.application_status === 'CONDITIONED') return 'Corregir y reenviar';
-  if (form.application_status === 'DRAFT') return 'Continuar borrador';
+  // Un borrador de una convocatoria ya cerrada no se puede continuar, así que
+  // no se invita a hacerlo.
+  if (form.application_status === 'DRAFT') {
+    return form.can_edit ? 'Continuar borrador' : 'Ver borrador';
+  }
   return 'Ver mi postulación';
 }
 
@@ -102,6 +106,20 @@ export default function MisPostulacionesPage() {
                       ? `Cierra el ${formatDateTime(form.end_time)}`
                       : 'Convocatoria cerrada'}
                   </div>
+
+                  {form.application_status === 'DRAFT' && (
+                    <div
+                      className={`postulacion-banner ${form.can_edit ? 'conditioned' : 'rejected'}`}
+                      style={{ marginTop: '0.75rem' }}
+                    >
+                      <div className="postulacion-banner-title">
+                        {form.can_edit ? 'Borrador sin enviar' : 'Borrador no enviado a tiempo'}
+                      </div>
+                      {form.can_edit
+                        ? 'Todavía no has enviado esta postulación. Mientras no la envíes no entra a revisión.'
+                        : 'La convocatoria cerró y este borrador nunca se envió, así que no entró a revisión.'}
+                    </div>
+                  )}
 
                   {form.application_status === 'CONDITIONED' && (
                     <div className="postulacion-banner conditioned" style={{ marginTop: '0.75rem' }}>
