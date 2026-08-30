@@ -6123,6 +6123,37 @@ body {
   font-weight: 500;
 }
 
+/* ─── Editor de puestos ─── */
+.postulacion-position-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.postulacion-position-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.postulacion-position-count {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  background: var(--surface-sunken);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* ─── Visor de adjuntos ─── */
 .postulacion-viewer {
   max-width: 900px;
