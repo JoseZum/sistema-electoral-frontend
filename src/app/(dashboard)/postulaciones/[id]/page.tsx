@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import Loader from '@/components/Loader';
 import ApplicationStatusBadge, { FormStatusBadge } from '@/components/postulaciones/ApplicationStatusBadge';
 import FileViewer from '@/components/postulaciones/FileViewer';
+import PositionsEditor from '@/components/postulaciones/PositionsEditor';
 import {
   getAdminFileUrl,
   getApplication,
@@ -223,25 +224,37 @@ export default function RevisarPostulacionesPage() {
         </div>
       ) : (
         <div className="postulacion-layout">
-          {/* Lista de respuestas */}
-          <div className="postulacion-list">
-            {applications.map((application) => (
-              <button
-                key={application.id}
-                type="button"
-                className={`postulacion-list-item ${application.id === selectedId ? 'selected' : ''}`}
-                onClick={() => setSelectedId(application.id)}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', alignItems: 'center' }}>
-                  <span className="postulacion-list-name">{application.student_full_name}</span>
-                  <ApplicationStatusBadge status={application.status} size="sm" />
-                </div>
-                <span className="postulacion-list-meta">
-                  {application.student_carnet} · {application.files_count} archivo(s)
-                  {application.submitted_at && ` · ${formatDateTime(application.submitted_at)}`}
-                </span>
-              </button>
-            ))}
+          {/* Puestos + lista de respuestas */}
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            <section className="card" style={{ padding: '1rem', display: 'grid', gap: '0.75rem' }}>
+              <div className="overline">Puestos</div>
+              <PositionsEditor formId={formId} onChange={loadAll} />
+            </section>
+
+            <div className="postulacion-list">
+              {applications.map((application) => (
+                <button
+                  key={application.id}
+                  type="button"
+                  className={`postulacion-list-item ${application.id === selectedId ? 'selected' : ''}`}
+                  onClick={() => setSelectedId(application.id)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', alignItems: 'center' }}>
+                    <span className="postulacion-list-name">{application.student_full_name}</span>
+                    <ApplicationStatusBadge status={application.status} size="sm" />
+                  </div>
+                  <span className="postulacion-list-meta">
+                    {application.position_name && (
+                      <>
+                        <strong>{application.position_name}</strong>
+                        {' · '}
+                      </>
+                    )}
+                    {application.student_carnet} · {application.files_count} archivo(s)
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Detalle + revisión */}
@@ -280,6 +293,13 @@ export default function RevisarPostulacionesPage() {
                     <div className="overline">Datos del postulante</div>
                     <ApplicationStatusBadge status={detail.status} />
                   </div>
+
+                  {detail.position_name && (
+                    <div className="postulacion-banner info" style={{ borderColor: 'var(--accent)' }}>
+                      <div className="postulacion-banner-title">Se postula a</div>
+                      {detail.position_name}
+                    </div>
+                  )}
 
                   <div className="postulacion-data-grid">
                     {[...TEXT_FIELDS, ...SELECT_FIELDS].map((field) => (
