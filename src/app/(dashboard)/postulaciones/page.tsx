@@ -128,7 +128,7 @@ export default function PostulacionesPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <Link href={`/postulaciones/${form.id}`} className="btn btn-outline btn-sm">
-                      Revisar ({form.submitted_count + form.conditioned_count + form.approved_count + form.rejected_count})
+                      Ver respuestas ({form.submitted_count + form.conditioned_count + form.approved_count + form.rejected_count + form.draft_count})
                     </Link>
                     <button
                       type="button"
@@ -143,6 +143,9 @@ export default function PostulacionesPage() {
                     <span style={{ color: '#059669' }}>{form.approved_count} aprobadas</span>
                     <span style={{ color: '#d97706' }}>{form.conditioned_count} condicionadas</span>
                     <span style={{ color: '#dc2626' }}>{form.rejected_count} denegadas</span>
+                    {/* Los borradores no se revisan, pero el admin necesita
+                        saber cuánta gente empezó y no llegó a enviar. */}
+                    <span style={{ color: 'var(--muted)' }}>{form.draft_count} sin terminar</span>
                   </div>
                 </div>
               </div>
