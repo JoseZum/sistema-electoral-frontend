@@ -350,6 +350,13 @@ function fieldLabel(key: string): string {
   return FIELD_LABELS[key] || key.replace(/_/g, ' ');
 }
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(value: unknown): boolean {
+  return typeof value === 'string' && UUID_PATTERN.test(value);
+}
+
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Borrador',
   SCHEDULED: 'Programada',
@@ -1731,7 +1738,14 @@ function EventDetail({ log, narrative }: { log: AuditLog; narrative: Narrative }
     ]);
     const entries = Object.entries(row).filter(
       ([k, v]) =>
-        !hidden.has(k) && v !== null && v !== '' && typeof v !== 'object',
+        !hidden.has(k) &&
+        v !== null &&
+        v !== '' &&
+        typeof v !== 'object' &&
+        // Las llaves foráneas no le dicen nada a quien lee la bitácora: el
+        // nombre legible del recurso ya viaja en la narrativa del evento, y
+        // el identificador sigue disponible en los datos técnicos.
+        !isUuid(v),
     );
     if (entries.length === 0) {
       return (

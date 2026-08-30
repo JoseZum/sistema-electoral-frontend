@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import AuditPage from '@/app/(dashboard)/auditoria/page';
 import { apiClient } from '@/lib/api-client';
 
@@ -145,6 +146,42 @@ describe('auditoría de postulaciones', () => {
         screen.getByRole('button', { name: /Postulaciones/ }),
       ).toBeInTheDocument();
     });
+  });
+
+  it('esconde las llaves foráneas del detalle y deja lo legible', async () => {
+    const user = userEvent.setup();
+    mockLogs([
+      makeLog({
+        id: 'log-5',
+        action: 'application_position.insert',
+        resource_type: 'application_position',
+        resource_id: 'e62e39a7-b7b3-4878-a824-020321c4b9ec',
+        details: {
+          new: {
+            id: 'e62e39a7-b7b3-4878-a824-020321c4b9ec',
+            form_id: '36ce087a-a6cf-4661-871e-1ae1ccbbe6a4',
+            name: 'Tesoreria',
+            display_order: 3,
+          },
+          position_name: 'Tesoreria',
+          form_title: 'Convocatoria TEE 2026',
+        },
+      }),
+    ]);
+
+    render(<AuditPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('agregó el puesto')).toBeInTheDocument();
+    });
+    await user.click(screen.getByText(/Ver detalles/));
+
+    await waitFor(() => {
+      expect(screen.getByText('nombre')).toBeInTheDocument();
+    });
+    expect(screen.getByText('orden')).toBeInTheDocument();
+    expect(screen.queryByText('36ce087a-a6cf-4661-871e-1ae1ccbbe6a4')).not.toBeInTheDocument();
+    expect(screen.queryByText('convocatoria')).not.toBeInTheDocument();
   });
 
   it('usa la frase del backend antes que el identificador para eventos sin caso propio', async () => {
