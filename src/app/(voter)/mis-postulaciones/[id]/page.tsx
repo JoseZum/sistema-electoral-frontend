@@ -17,6 +17,7 @@ import {
 } from '@/lib/postulaciones-api';
 import {
   FILE_FIELDS,
+  POSITION_FIELD,
   SELECT_FIELDS,
   TEXT_FIELDS,
   formatDateTime,
@@ -42,6 +43,7 @@ const EMPTY_VALUES: FormValues = {
   phone: '',
   sede: '',
   career: '',
+  position_id: '',
 };
 
 /**
@@ -67,6 +69,8 @@ function buildValues(detail: MyApplicationDetail): FormValues {
     phone: pick('phone'),
     sede: pick('sede'),
     career: pick('career'),
+    // El puesto no tiene sugerencia del padrón: o está elegido o está vacío.
+    position_id: application?.position_id ?? '',
   };
 }
 
@@ -271,6 +275,41 @@ export default function LlenarPostulacionPage() {
       )}
 
       <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
+        {/* Puesto: solo aparece si el formulario define alguno */}
+        {detail.positions.length > 0 && (
+          <section className="card" style={{ padding: '1.25rem', display: 'grid', gap: '1rem' }}>
+            <div className="overline">Puesto</div>
+            {(() => {
+              const locked = !canEdit || !editable.has(POSITION_FIELD.key);
+              return (
+                <div className="input-group">
+                  <label htmlFor={POSITION_FIELD.key}>
+                    {POSITION_FIELD.label}
+                    {locked && <span style={{ color: 'var(--muted-light)' }}> · bloqueado</span>}
+                  </label>
+                  <select
+                    id={POSITION_FIELD.key}
+                    className={`input ${locked ? 'postulacion-input-locked' : ''}`}
+                    value={values.position_id}
+                    disabled={locked}
+                    onChange={(event) => update(POSITION_FIELD.key, event.target.value)}
+                  >
+                    <option value="">{POSITION_FIELD.placeholder}</option>
+                    {detail.positions.map((position) => (
+                      <option key={position.id} value={position.id}>
+                        {position.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--muted-light)' }}>
+                    Elige el puesto al que quieres presentarte
+                  </span>
+                </div>
+              );
+            })()}
+          </section>
+        )}
+
         {/* Información personal */}
         <section className="card" style={{ padding: '1.25rem', display: 'grid', gap: '1rem' }}>
           <div className="overline">Información personal</div>
