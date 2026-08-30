@@ -28,11 +28,26 @@ import type {
   ApplicationFieldKey,
   ApplicationFileMeta,
   ApplicationFormWithStats,
+  ApplicationStatus,
   ApplicationSummary,
   ReviewDecision,
 } from '@/types/postulaciones';
 
 type FeedbackState = { tone: 'success' | 'error'; message: string } | null;
+type StatusFilter = 'ALL' | ApplicationStatus;
+
+/**
+ * El filtro se aplica en el cliente sobre la lista ya cargada: son decenas de
+ * respuestas, no miles, y así el conteo de cada pestaña sale gratis.
+ */
+const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [
+  { value: 'ALL', label: 'Todas' },
+  { value: 'SUBMITTED', label: 'Por revisar' },
+  { value: 'CONDITIONED', label: 'Condicionadas' },
+  { value: 'APPROVED', label: 'Aprobadas' },
+  { value: 'REJECTED', label: 'Denegadas' },
+  { value: 'DRAFT', label: 'Sin terminar' },
+];
 
 const DECISIONS: Array<{ value: ReviewDecision; label: string; className: string }> = [
   { value: 'APPROVED', label: 'Aprobado', className: 'approved' },
@@ -61,6 +76,7 @@ export default function RevisarPostulacionesPage() {
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [viewingFile, setViewingFile] = useState<ApplicationFileMeta | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
 
   // Estado del panel de decisión
   const [decision, setDecision] = useState<ReviewDecision | null>(null);
@@ -123,6 +139,27 @@ export default function RevisarPostulacionesPage() {
       cancelled = true;
     };
   }, [selectedId]);
+
+  const counts = useMemo(() => {
+    const base: Record<StatusFilter, number> = {
+      ALL: applications.length,
+      DRAFT: 0,
+      SUBMITTED: 0,
+      APPROVED: 0,
+      CONDITIONED: 0,
+      REJECTED: 0,
+    };
+    for (const application of applications) base[application.status] += 1;
+    return base;
+  }, [applications]);
+
+  const visibleApplications = useMemo(
+    () =>
+      statusFilter === 'ALL'
+        ? applications
+        : applications.filter((application) => application.status === statusFilter),
+    [applications, statusFilter]
+  );
 
   const filesByField = useMemo(() => {
     const map = new Map<string, ApplicationFileMeta[]>();
@@ -231,8 +268,30 @@ export default function RevisarPostulacionesPage() {
               <PositionsEditor formId={formId} onChange={loadAll} />
             </section>
 
+            <div className="voter-filter-row" style={{ margin: 0, padding: 0, flexWrap: 'wrap' }}>
+              {STATUS_FILTERS.filter(
+                // Solo se ofrecen los estados que existen, para no llenar de
+                // pestañas vacías.
+                (option) => option.value === 'ALL' || counts[option.value] > 0
+              ).map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`filter-chip ${statusFilter === option.value ? 'active' : ''}`}
+                  onClick={() => setStatusFilter(option.value)}
+                >
+                  {option.label} ({counts[option.value]})
+                </button>
+              ))}
+            </div>
+
             <div className="postulacion-list">
-              {applications.map((application) => (
+              {visibleApplications.length === 0 && (
+                <div className="postulacion-file-empty">
+                  No hay postulaciones en este estado.
+                </div>
+              )}
+              {visibleApplications.map((application) => (
                 <button
                   key={application.id}
                   type="button"
@@ -356,8 +415,10 @@ export default function RevisarPostulacionesPage() {
 
                   {!canReview ? (
                     <div className="postulacion-banner info">
-                      El estudiante todavía no ha enviado esta postulación, así que no se puede
-                      resolver.
+                      <div className="postulacion-banner-title">Borrador sin enviar</div>
+                      El estudiante empezó a llenar el formulario pero todavía no lo ha enviado,
+                      así que no se puede resolver. Puedes ver lo que lleva escrito y los
+                      documentos que ya subió.
                     </div>
                   ) : (
                     <>
