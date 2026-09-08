@@ -22,6 +22,16 @@ import type {
 export default function CargarPadronPage() {
   const [file, setFile] = useState<File | null>(null);
   const [analysis, setAnalysis] = useState<PadronAnalysis | null>(null);
+  /**
+   * Cambia con cada analisis recibido y se usa como `key` de ColumnMapper.
+   *
+   * Ese componente guarda en estado local el mapeo que el admin edita y su
+   * confirmacion de bajas. Sin remontarlo, ese estado sobrevive al analisis
+   * siguiente: los desplegables seguirian mostrando el mapeo de la hoja
+   * anterior mientras la vista previa muestra la nueva, y una confirmacion de
+   * desactivacion masiva valdria para un diff que ya cambio.
+   */
+  const [analysisVersion, setAnalysisVersion] = useState(0);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ImportSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +54,7 @@ export default function CargarPadronPage() {
         buildFormData(target, options)
       );
       setAnalysis(res);
+      setAnalysisVersion((version) => version + 1);
     } catch (err) {
       setAnalysis(null);
       setError(err instanceof Error ? err.message : 'No se pudo leer el archivo');
@@ -92,23 +103,30 @@ export default function CargarPadronPage() {
       setResult(res);
       setAnalysis(null);
     } catch (err) {
-      // Si el diff creció entre el análisis y la confirmación, el backend
-      // vuelve a pedir el visto bueno con las cifras actualizadas.
-      if (err instanceof ApiError && err.code === 'PADRON_IMPORT_NEEDS_CONFIRMATION') {
-        const meta = err.meta as unknown as (ImportSummary & { activeStudents: number }) | undefined;
-        if (meta) {
-          setAnalysis((previous) =>
-            previous
-              ? {
-                  ...previous,
-                  diff: meta,
-                  activeStudents: meta.activeStudents,
-                  requiresConfirmation: true,
-                }
-              : previous
-          );
-        }
+      // Si el diff crecio entre el analisis y la confirmacion, el backend
+      // vuelve a pedir el visto bueno con las cifras actualizadas. Eso no es un
+      // fallo, asi que no se muestra el banner de error: se reabre la
+      // advertencia con los numeros nuevos y el admin decide sobre ellos.
+      const meta =
+        err instanceof ApiError && err.code === 'PADRON_IMPORT_NEEDS_CONFIRMATION'
+          ? (err.meta as unknown as (ImportSummary & { activeStudents: number }) | undefined)
+          : undefined;
+
+      if (meta) {
+        setAnalysis((previous) =>
+          previous
+            ? {
+                ...previous,
+                diff: meta,
+                activeStudents: meta.activeStudents,
+                requiresConfirmation: true,
+              }
+            : previous
+        );
+        setAnalysisVersion((version) => version + 1);
+        return;
       }
+
       setError(err instanceof Error ? err.message : 'Error al importar');
     } finally {
       setBusy(false);
@@ -192,6 +210,7 @@ export default function CargarPadronPage() {
 
       {analysis && !result && (
         <ColumnMapper
+          key={analysisVersion}
           analysis={analysis}
           onRecalculate={handleRecalculate}
           onConfirm={handleConfirm}

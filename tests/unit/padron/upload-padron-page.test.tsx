@@ -283,6 +283,120 @@ describe('CargarPadronPage', () => {
         expect(screen.queryByText(/Resultado de la importación/i)).not.toBeInTheDocument();
     });
 
+    // El componente de mapeo no se desmonta entre analisis, asi que su estado
+    // local puede quedar describiendo un archivo que ya no es el que se va a
+    // importar. Estos tres casos cubren esa desincronizacion.
+    describe('sincronización con un análisis nuevo', () => {
+        const dosHojas: PadronAnalysis = {
+            ...mockAnalysis,
+            sheets: [
+                { index: 0, name: 'Hoja1', rowCount: 5 },
+                { index: 1, name: 'Padrón', rowCount: 90 },
+            ],
+        };
+
+        // Mismo archivo, otra hoja: columnas en otro orden y mapeo distinto.
+        const otraHoja: PadronAnalysis = {
+            ...dosHojas,
+            sheetIndex: 1,
+            headerRowIndex: 0,
+            columns: [
+                { index: 0, header: 'nombre', label: 'nombre', samples: ['BRENES MOLINA'] },
+                { index: 1, header: 'correo', label: 'correo', samples: ['m.brenes.4@estudiantec.cr'] },
+                { index: 2, header: 'carne', label: 'carne', samples: ['2024302905'] },
+            ],
+            mapping: { full_name: 0, email: 1, carnet: 2 },
+        };
+
+        it('muestra el mapeo del análisis nuevo, no el anterior', async () => {
+            const apiUploadMock = vi.mocked(apiClientModule.apiUpload);
+            apiUploadMock.mockResolvedValueOnce(dosHojas);
+            apiUploadMock.mockResolvedValueOnce(otraHoja);
+
+            const { container } = render(<CargarPadronPage />);
+            selectFile(container);
+
+            await waitFor(() => {
+                expect(screen.getByLabelText('Hoja')).toBeInTheDocument();
+            });
+
+            fireEvent.change(screen.getByLabelText('Hoja'), { target: { value: '1' } });
+
+            await waitFor(() => {
+                expect(screen.getByLabelText('Campo para la columna carne')).toHaveValue('carnet');
+            });
+            // Con el estado viejo, la columna 0 seguiria marcada como carnet.
+            expect(screen.getByLabelText('Campo para la columna nombre')).toHaveValue('full_name');
+            expect(screen.getByLabelText('Campo para la columna correo')).toHaveValue('email');
+        });
+
+        it('vuelve a pedir la confirmación de bajas tras recalcular', async () => {
+            const masiva: PadronAnalysis = {
+                ...dosHojas,
+                diff: { total: 1, new: 1, updated: 0, reactivated: 0, deactivated: 10_000 },
+                requiresConfirmation: true,
+            };
+            const masivaOtroDiff: PadronAnalysis = {
+                ...otraHoja,
+                diff: { total: 1, new: 1, updated: 0, reactivated: 0, deactivated: 9_000 },
+                requiresConfirmation: true,
+            };
+
+            const apiUploadMock = vi.mocked(apiClientModule.apiUpload);
+            apiUploadMock.mockResolvedValueOnce(masiva);
+            apiUploadMock.mockResolvedValueOnce(masivaOtroDiff);
+
+            const { container } = render(<CargarPadronPage />);
+            selectFile(container);
+
+            await waitFor(() => {
+                expect(screen.getByRole('checkbox')).toBeInTheDocument();
+            });
+
+            // El admin acepta 10 000 bajas...
+            await userEvent.click(screen.getByRole('checkbox'));
+            expect(screen.getByRole('button', { name: 'Confirmar e importar' })).toBeEnabled();
+
+            // ...y despues cambia de hoja, con lo que el diff pasa a ser otro.
+            fireEvent.change(screen.getByLabelText('Hoja'), { target: { value: '1' } });
+
+            await waitFor(() => {
+                expect(screen.getByRole('checkbox')).not.toBeChecked();
+            });
+            expect(screen.getByRole('button', { name: 'Confirmar e importar' })).toBeDisabled();
+        });
+
+        it('no muestra el banner de error cuando el backend solo pide confirmación', async () => {
+            const apiUploadMock = vi.mocked(apiClientModule.apiUpload);
+            apiUploadMock.mockResolvedValueOnce(mockAnalysis);
+            apiUploadMock.mockRejectedValueOnce(
+                new apiClientModule.ApiError({
+                    endpoint: '/api/users/students/import',
+                    message: 'Este archivo desactivaría a 10282 de 10282 estudiantes activos.',
+                    status: 409,
+                    code: 'PADRON_IMPORT_NEEDS_CONFIRMATION',
+                    meta: {
+                        total: 1,
+                        new: 1,
+                        updated: 0,
+                        reactivated: 0,
+                        deactivated: 10_282,
+                        activeStudents: 10_282,
+                    },
+                })
+            );
+
+            const { container } = render(<CargarPadronPage />);
+            await uploadAndConfirm(container);
+
+            await waitFor(() => {
+                expect(screen.getByRole('checkbox')).toBeInTheDocument();
+            });
+            // Pedir confirmacion no es un fallo.
+            expect(screen.queryByText('No se pudo importar')).not.toBeInTheDocument();
+        });
+    });
+
     it('resets result when clicking upload another file', async () => {
         const apiUploadMock = vi.mocked(apiClientModule.apiUpload);
         apiUploadMock.mockResolvedValueOnce(mockAnalysis);
