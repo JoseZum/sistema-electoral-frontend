@@ -91,10 +91,8 @@ export default function DropZone({ onFileSelected, disabled }: DropZoneProps) {
           marginTop: '0.75rem',
         }}
       >
-        Columnas esperadas:{' '}
-        <span className="mono" style={{ fontSize: '0.6875rem' }}>
-          carnet &middot; nombre &middot; dato institucional &middot; sede &middot; carrera &middot; grado
-        </span>
+        No importa el orden ni el nombre de las columnas: en el siguiente paso
+        podrá revisar y corregir cómo se leyó cada una.
       </div>
     </div>
   );
