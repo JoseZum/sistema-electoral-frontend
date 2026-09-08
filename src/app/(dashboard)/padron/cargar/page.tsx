@@ -1,54 +1,130 @@
 'use client';
 
 import { useState } from 'react';
-import { apiUpload } from '@/lib/api-client';
+import { ApiError, apiUpload } from '@/lib/api-client';
 import DropZone from '@/components/padron/DropZone';
 import UploadProgress from '@/components/padron/UploadProgress';
 import ImportResult from '@/components/padron/ImportResult';
+import ColumnMapper from '@/components/padron/ColumnMapper';
+import type {
+  ColumnMapping,
+  ImportSummary,
+  PadronAnalysis,
+  PadronImportOptions,
+} from '@/types/padron';
 
-interface ImportResponse {
-  total: number;
-  new: number;
-  updated: number;
-  reactivated: number;
-  deactivated: number;
-}
-
+/**
+ * La importación va en tres pasos: subir, revisar el mapeo y confirmar.
+ *
+ * El archivo se guarda en memoria y se reenvía en cada llamada: el backend corre
+ * en serverless y no puede conservarlo entre peticiones.
+ */
 export default function CargarPadronPage() {
-  const [uploading, setUploading] = useState(false);
-  const [result, setResult] = useState<ImportResponse | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [analysis, setAnalysis] = useState<PadronAnalysis | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<ImportSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFile = async (file: File) => {
-    setUploading(true);
+  function buildFormData(target: File, options?: PadronImportOptions) {
+    const formData = new FormData();
+    formData.append('file', target);
+    if (options) {
+      formData.append('options', JSON.stringify(options));
+    }
+    return formData;
+  }
+
+  const runAnalysis = async (target: File, options?: PadronImportOptions) => {
+    setBusy(true);
     setError(null);
-    setResult(null);
-
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await apiUpload<ImportResponse>(
-        '/api/users/students/import',
-        formData
+      const res = await apiUpload<PadronAnalysis>(
+        '/api/users/students/import/analyze',
+        buildFormData(target, options)
       );
-
-      setResult(res);
+      setAnalysis(res);
     } catch (err) {
+      setAnalysis(null);
+      setError(err instanceof Error ? err.message : 'No se pudo leer el archivo');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleFile = async (selected: File) => {
+    setFile(selected);
+    setResult(null);
+    await runAnalysis(selected);
+  };
+
+  const handleRecalculate = async (options: {
+    sheetIndex: number;
+    headerRowIndex: number;
+    mapping: ColumnMapping;
+  }) => {
+    if (!file) return;
+    // Un mapeo vacío significa «volvé a detectarlo»: no se manda.
+    const hasMapping = Object.keys(options.mapping).length > 0;
+    await runAnalysis(file, {
+      sheetIndex: options.sheetIndex,
+      headerRowIndex: options.headerRowIndex,
+      ...(hasMapping ? { mapping: options.mapping } : {}),
+    });
+  };
+
+  const handleConfirm = async (options: {
+    sheetIndex: number;
+    headerRowIndex: number;
+    mapping: ColumnMapping;
+    confirmDeactivation: boolean;
+  }) => {
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await apiUpload<ImportSummary>(
+        '/api/users/students/import',
+        buildFormData(file, options),
+        // El 409 de confirmación es parte del flujo, no un fallo que reportar.
+        { suppressErrorDetailLog: true }
+      );
+      setResult(res);
+      setAnalysis(null);
+    } catch (err) {
+      // Si el diff creció entre el análisis y la confirmación, el backend
+      // vuelve a pedir el visto bueno con las cifras actualizadas.
+      if (err instanceof ApiError && err.code === 'PADRON_IMPORT_NEEDS_CONFIRMATION') {
+        const meta = err.meta as unknown as (ImportSummary & { activeStudents: number }) | undefined;
+        if (meta) {
+          setAnalysis((previous) =>
+            previous
+              ? {
+                  ...previous,
+                  diff: meta,
+                  activeStudents: meta.activeStudents,
+                  requiresConfirmation: true,
+                }
+              : previous
+          );
+        }
+      }
       setError(err instanceof Error ? err.message : 'Error al importar');
     } finally {
-      setUploading(false);
+      setBusy(false);
     }
   };
 
   const handleReset = () => {
+    setFile(null);
+    setAnalysis(null);
     setResult(null);
     setError(null);
-    setUploading(false);
+    setBusy(false);
   };
 
   return (
-    <div className="view-enter" style={{ maxWidth: '780px', margin: '0 auto' }}>
+    <div className="view-enter" style={{ maxWidth: '860px', margin: '0 auto' }}>
       <div style={{ marginBottom: '2rem' }}>
         <div className="swiss-bar" />
         <h2
@@ -68,21 +144,19 @@ export default function CargarPadronPage() {
             marginTop: '0.25rem',
           }}
         >
-          Importa el archivo Excel para actualizar el padrón. El sistema
-          hace merge inteligente.
+          Suba el archivo Excel. Antes de aplicar nada podrá revisar cómo se leyó
+          y qué cambios va a producir.
         </p>
       </div>
 
-      {/* Drop Zone */}
-      {!result && <DropZone onFileSelected={handleFile} disabled={uploading} />}
+      {!analysis && !result && <DropZone onFileSelected={handleFile} disabled={busy} />}
 
-      {/* Upload Progress */}
-      <UploadProgress isUploading={uploading} />
+      <UploadProgress isUploading={busy && !analysis} />
 
-      {/* Error */}
       {error && (
         <div
           className="card"
+          role="alert"
           style={{
             marginTop: '1rem',
             borderColor: 'var(--error)',
@@ -106,7 +180,7 @@ export default function CargarPadronPage() {
             </svg>
             <div>
               <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--error)' }}>
-                Error al importar
+                No se pudo importar
               </div>
               <div style={{ fontSize: '0.8125rem', color: 'var(--ink-soft)', marginTop: '0.25rem' }}>
                 {error}
@@ -116,7 +190,16 @@ export default function CargarPadronPage() {
         </div>
       )}
 
-      {/* Result */}
+      {analysis && !result && (
+        <ColumnMapper
+          analysis={analysis}
+          onRecalculate={handleRecalculate}
+          onConfirm={handleConfirm}
+          onCancel={handleReset}
+          busy={busy}
+        />
+      )}
+
       {result && <ImportResult summary={result} onReset={handleReset} />}
 
       <p

@@ -36,15 +36,17 @@ describe('DropZone', () => {
         ).toBeInTheDocument();
     });
 
-    it('renders expected columns text', () => {
+    // Ya no se anuncia una lista fija de columnas: el mapeo se revisa y se
+    // corrige en el paso siguiente, asi que la zona de carga lo explica asi.
+    it('explains that column names and order do not matter', () => {
         render(<DropZone onFileSelected={mockOnFileSelected} />);
 
         expect(
-            screen.getByText(/carnet/i)
+            screen.getByText(/No importa el orden ni el nombre de las columnas/i)
         ).toBeInTheDocument();
 
         expect(
-            screen.getByText(/nombre/i)
+            screen.getByText(/podrá revisar y corregir cómo se leyó cada una/i)
         ).toBeInTheDocument();
     });
 

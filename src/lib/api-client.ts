@@ -5,6 +5,7 @@ interface ErrorPayload {
   message?: string;
   code?: string;
   details?: unknown;
+  meta?: Record<string, unknown>;
 }
 
 interface ApiErrorOptions {
@@ -13,6 +14,7 @@ interface ApiErrorOptions {
   status: number;
   code?: string;
   details?: unknown;
+  meta?: Record<string, unknown>;
 }
 
 interface ApiClientOptions extends RequestInit {
@@ -24,14 +26,21 @@ export class ApiError extends Error {
   readonly status: number;
   readonly code?: string;
   readonly details?: unknown;
+  /**
+   * Datos que el backend marca como parte del contrato del error y que la UI
+   * necesita para reaccionar (a diferencia de `details`, que solo llega en
+   * desarrollo). Por ejemplo, el resumen de bajas de una importacion de padron.
+   */
+  readonly meta?: Record<string, unknown>;
 
-  constructor({ endpoint, message, status, code, details }: ApiErrorOptions) {
+  constructor({ endpoint, message, status, code, details, meta }: ApiErrorOptions) {
     super(message);
     this.name = 'ApiError';
     this.endpoint = endpoint;
     this.status = status;
     this.code = code;
     this.details = details;
+    this.meta = meta;
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -121,6 +130,7 @@ async function handleResponse<T>(
       status: response.status,
       code: error.code,
       details: error.details,
+      meta: error.meta,
     });
   }
 
@@ -164,7 +174,8 @@ export async function apiClient<T>(
 
 export async function apiUpload<T>(
   endpoint: string,
-  formData: FormData
+  formData: FormData,
+  options: { suppressErrorDetailLog?: boolean } = {}
 ): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('tee_token') : null;
 
@@ -178,5 +189,5 @@ export async function apiUpload<T>(
     body: formData,
   });
 
-  return handleResponse<T>(response, endpoint);
+  return handleResponse<T>(response, endpoint, options);
 }
