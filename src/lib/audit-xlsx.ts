@@ -1,4 +1,13 @@
 import writeXlsxFile, { type Cell, type SheetData } from 'write-excel-file/browser';
+import {
+  BODY_TEXT,
+  MUTED_TEXT,
+  TRIBUNAL_CREAM,
+  TRIBUNAL_CREAM_DARK,
+  TRIBUNAL_NAVY,
+  bodyCell,
+  headerCell,
+} from './xlsx-style';
 
 export interface AuditLogRow {
   id: string;
@@ -28,13 +37,6 @@ export interface AuditXlsxMeta {
   generatedAt?: Date;
 }
 
-const TRIBUNAL_NAVY = '#0F1E40';
-const TRIBUNAL_CREAM = '#FDFAF4';
-const TRIBUNAL_CREAM_DARK = '#F3EFE5';
-const ZEBRA_GREY = '#FAFAF8';
-const BORDER_GREY = '#C4BDB0';
-const MUTED_TEXT = '#6B6557';
-const BODY_TEXT = '#172033';
 
 function formatPerson(name?: string | null, carnet?: string | null): string {
   if (name && carnet) return `${name} · ${carnet}`;
@@ -57,43 +59,6 @@ function pickTarget(log: AuditLogRow): string {
 function pickMessage(log: AuditLogRow): string {
   if (log.activityMessage) return log.activityMessage;
   return `${log.actionLabel ?? log.action} · ${log.resourceLabel ?? log.resource_type}`;
-}
-
-function headerCell(value: string): Cell {
-  return {
-    value,
-    fontFamily: 'Calibri',
-    fontSize: 11,
-    fontWeight: 'bold',
-    textColor: '#FFFFFF',
-    backgroundColor: TRIBUNAL_NAVY,
-    alignVertical: 'center',
-    bottomBorderColor: TRIBUNAL_NAVY,
-    bottomBorderStyle: 'medium',
-    leftBorderColor: TRIBUNAL_NAVY,
-    leftBorderStyle: 'thin',
-    rightBorderColor: TRIBUNAL_NAVY,
-    rightBorderStyle: 'thin',
-    topBorderColor: TRIBUNAL_NAVY,
-    topBorderStyle: 'thin',
-    height: 24,
-  };
-}
-
-function bodyCell(value: string | number | Date, zebra = false): Cell {
-  return {
-    value,
-    fontFamily: 'Calibri',
-    fontSize: 10,
-    textColor: BODY_TEXT,
-    alignVertical: 'top',
-    wrap: true,
-    backgroundColor: zebra ? ZEBRA_GREY : undefined,
-    bottomBorderColor: BORDER_GREY,
-    bottomBorderStyle: 'hair',
-    rightBorderColor: BORDER_GREY,
-    rightBorderStyle: 'hair',
-  };
 }
 
 function summarySheet(logs: AuditLogRow[], meta: AuditXlsxMeta, generatedAt: Date): SheetData {
