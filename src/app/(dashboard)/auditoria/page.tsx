@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { buildApiUrl } from '@/lib/api-url';
+import { ELECTION_STATUS_LABELS } from '@/lib/suffrage';
 import Loader from '@/components/Loader';
 import { buildAuditXlsxBlob, type AuditLogRow } from '@/lib/audit-xlsx';
 
@@ -358,12 +359,7 @@ function isUuid(value: unknown): boolean {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Borrador',
-  SCHEDULED: 'Programada',
-  OPEN: 'Abierta',
-  CLOSED: 'Cerrada',
-  SCRUTINIZED: 'Escrutada',
-  ARCHIVED: 'Archivada',
+  ...ELECTION_STATUS_LABELS,
   // Estados de una postulación
   SUBMITTED: 'Enviada',
   APPROVED: 'Aprobada',

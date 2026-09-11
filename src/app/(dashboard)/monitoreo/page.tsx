@@ -12,6 +12,7 @@ import {
   type TooltipContentProps,
 } from 'recharts';
 import { apiClient } from '@/lib/api-client';
+import { ELECTION_STATUS_LABELS as STATUS_LABELS } from '@/lib/suffrage';
 import TagBadge from '@/components/tags/TagBadge';
 import Loader from '@/components/Loader';
 import type { Election, ElectionDetail } from '@/types/elections';
@@ -43,15 +44,6 @@ type MonitoringStatusFilter = 'OPEN' | 'FINISHED' | 'ALL';
 const MONITORABLE_STATUSES = new Set<Election['status']>(['OPEN', 'CLOSED', 'SCRUTINIZED', 'ARCHIVED']);
 const REFRESH_INTERVAL_MS = 30_000;
 const HOUR_MS = 60 * 60 * 1000;
-
-const STATUS_LABELS: Record<Election['status'], string> = {
-  DRAFT: 'Borrador',
-  SCHEDULED: 'Programada',
-  OPEN: 'Abierta',
-  CLOSED: 'Cerrada',
-  SCRUTINIZED: 'Escrutada',
-  ARCHIVED: 'Archivada',
-};
 
 const STATUS_BADGE: Record<Election['status'], string> = {
   DRAFT: 'badge-draft',

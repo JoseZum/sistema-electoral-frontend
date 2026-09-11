@@ -9,18 +9,10 @@ import type { Election } from '@/types/elections';
 import Loader from '@/components/Loader';
 import { resolveTagColor } from '@/lib/tag-colors';
 import { getElectionCountdown } from '@/lib/election-countdown';
+import { ELECTION_STATUS_LABELS as STATUS_LABELS } from '@/lib/suffrage';
 
 type StatusFilter = 'ALL' | 'OPEN' | 'DRAFT' | 'CLOSED' | 'ARCHIVED' | 'SCHEDULED' | 'SCRUTINIZED';
 type FeedbackState = { tone: 'success' | 'error'; message: string } | null;
-
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Borrador',
-  SCHEDULED: 'Programada',
-  OPEN: 'Abierta',
-  CLOSED: 'Cerrada',
-  SCRUTINIZED: 'Escrutada',
-  ARCHIVED: 'Archivada',
-};
 
 const STATUS_BADGE_VARIANTS: Record<Election['status'], BadgeVariant> = {
   DRAFT: 'gray',

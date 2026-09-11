@@ -16,21 +16,16 @@ export function getNoVoteLabel(): string {
   return 'No votó';
 }
 
+/** Unica fuente de los nombres de estado de una eleccion que ve el usuario. */
+export const ELECTION_STATUS_LABELS: Record<string, string> = {
+  DRAFT: 'Borrador',
+  SCHEDULED: 'Programada',
+  OPEN: 'Abierta',
+  CLOSED: 'Cerrada',
+  SCRUTINIZED: 'Escrutada',
+  ARCHIVED: 'Archivada',
+};
+
 export function getElectionStatusLabel(status: string): string {
-  switch (status) {
-    case 'DRAFT':
-      return 'Borrador';
-    case 'SCHEDULED':
-      return 'Programada';
-    case 'OPEN':
-      return 'Abierta';
-    case 'CLOSED':
-      return 'Cerrada';
-    case 'SCRUTINIZED':
-      return 'Escrutada';
-    case 'ARCHIVED':
-      return 'Archivada';
-    default:
-      return status;
-  }
+  return ELECTION_STATUS_LABELS[status] ?? status;
 }
