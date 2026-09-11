@@ -43,10 +43,6 @@ function formatPerson(name?: string | null, carnet?: string | null): string {
   return name ?? carnet ?? '';
 }
 
-function pickActor(log: AuditLogRow): string {
-  return formatPerson(log.actor_name, log.actor_carnet);
-}
-
 function pickTarget(log: AuditLogRow): string {
   return (
     formatPerson(log.target_name, log.target_carnet) ||
@@ -132,7 +128,7 @@ function eventsSheet(logs: AuditLogRow[]): SheetData {
       dateCell,
       bodyCell(log.resourceLabel ?? log.resource_type ?? '', zebra),
       bodyCell(log.actionLabel ?? log.action ?? '', zebra),
-      bodyCell(pickActor(log) || '—', zebra),
+      bodyCell(formatPerson(log.actor_name, log.actor_carnet) || '—', zebra),
       bodyCell(pickTarget(log) || '—', zebra),
       bodyCell(pickMessage(log), zebra),
       bodyCell(log.election_title ?? '', zebra),

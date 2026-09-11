@@ -1,5 +1,6 @@
 import type { ElectionResultOption, ElectionResults } from '@/types/elections';
 import { getSuffrageLabel } from '@/lib/suffrage';
+import { escapeHtml } from '@/lib/html';
 
 const ROMAN = [
   'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
@@ -7,15 +8,6 @@ const ROMAN = [
 ];
 
 const BADGE_COLORS = ['#1B365D', '#2D6A4F', '#8B1A2B', '#5C4033', '#1E4D8C', '#8B6914', '#1A4731', '#6B2D3E'];
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
 
 function toRoman(n: number): string {
   return ROMAN[n] ?? String(n + 1);

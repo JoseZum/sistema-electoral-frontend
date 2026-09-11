@@ -5,7 +5,7 @@ import { apiClient } from '@/lib/api-client';
 import { exportResultsToPDF, exportResultsToDOCX } from '@/lib/export-results';
 import {
   getElectionStatusLabel,
-  getNoVoteLabel,
+  NO_VOTE_LABEL,
   getParticipationLabel,
   getSuffrageDescription,
   getSuffrageLabel,
@@ -714,7 +714,7 @@ export default function ResultadosPage() {
                               >
                                 {voter.has_voted
                                   ? voter.selected_option_label ?? 'Sin detalle disponible'
-                                  : getNoVoteLabel()}
+                                  : NO_VOTE_LABEL}
                               </span>
                             )}
                           </td>

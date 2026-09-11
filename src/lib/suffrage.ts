@@ -12,9 +12,7 @@ export function getParticipationLabel(hasVoted: boolean): string {
   return hasVoted ? 'Sí' : 'No';
 }
 
-export function getNoVoteLabel(): string {
-  return 'No votó';
-}
+export const NO_VOTE_LABEL = 'No votó';
 
 /** Unica fuente de los nombres de estado de una eleccion que ve el usuario. */
 export const ELECTION_STATUS_LABELS: Record<string, string> = {

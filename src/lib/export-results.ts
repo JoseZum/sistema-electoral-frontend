@@ -1,12 +1,13 @@
 import type { ElectionResultOption, ElectionResultVoter, ElectionResults } from '@/types/elections';
 import {
   getElectionStatusLabel,
-  getNoVoteLabel,
+  NO_VOTE_LABEL,
   getParticipationLabel,
   getSuffrageDescription,
   getSuffrageLabel,
 } from '@/lib/suffrage';
 import { buildBallotReplicaSection, BALLOT_REPLICA_STYLES } from '@/lib/ballot-replica';
+import { escapeHtml } from '@/lib/html';
 
 const LOGO_PATH = '/logo-color-texto.png';
 
@@ -47,15 +48,6 @@ async function loadLogoDataUrl(): Promise<string | null> {
 const fmtDate = (value: string | null) =>
   value ? new Date(value).toLocaleString('es-CR') : 'No definido';
 const fmtNum = (value: number) => value.toLocaleString('es-CR');
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -103,7 +95,7 @@ function renderParticipationCell(voter: ElectionResultVoter, isAnonymous: boolea
     return `<span class="${statusClass}">${getParticipationLabel(voter.has_voted)}</span>`;
   }
   if (!voter.has_voted) {
-    return `<span class="pill pill--danger">${getNoVoteLabel()}</span>`;
+    return `<span class="pill pill--danger">${NO_VOTE_LABEL}</span>`;
   }
   return escapeHtml(voter.selected_option_label ?? 'Sin detalle disponible');
 }
