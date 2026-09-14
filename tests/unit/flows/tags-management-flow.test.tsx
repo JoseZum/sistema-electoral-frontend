@@ -120,7 +120,7 @@ describe('Flujo de integración: gestión de tags', () => {
         vi.mocked(tagsApiModule.listTags).mockResolvedValue([]);
 
         vi.mocked(tagsApiModule.createTag).mockResolvedValue({
-            ...mockTag,
+            ...mockTagDetail,
             id: 'tag-created',
             name: 'Nueva Tag',
         });
