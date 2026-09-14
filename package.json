@@ -41,11 +41,11 @@
   "dependencies": {
     "@azure/msal-browser": "^5.4.0",
     "@azure/msal-react": "^5.0.6",
-    "next": "^16.2.11",
+    "next": "^16.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.8.1",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.4",
     "write-excel-file": "^4.1.1"
   },
   "overrides": {
@@ -81,7 +81,7 @@
     "autoprefixer": "^10.4.20",
     "chrome-launcher": "1.2.1",
     "eslint": "^9.39.4",
-    "eslint-config-next": "^16.2.11",
+    "eslint-config-next": "^16.3.3",
     "jsdom": "^23.0.1",
     "lighthouse": "13.2.0",
     "postcss": "8.5.24",
