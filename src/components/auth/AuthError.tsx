@@ -21,6 +21,8 @@ export default function AuthError() {
     title = 'Cuenta no autorizada';
   } else if (isPadronError) {
     title = 'Cuenta sin acceso';
+  } else if (normalizedError.includes('sesión expiró')) {
+    title = 'Sesión expirada';
   } else if (isServiceError) {
     title = 'Servicio no disponible';
   }

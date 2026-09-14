@@ -203,6 +203,32 @@ describe('Auth context - AuthProvider (integración con MSAL + backend)', () => 
 		expect(screen.getByTestId('error3').textContent).toContain('No se pudo conectar con el servidor');
 	});
 
+	it('muestra sesión expirada en el login cuando MSAL devuelve timed_out', async () => {
+		const { BrowserAuthError, BrowserAuthErrorCodes } = await import('@azure/msal-browser');
+		const timeout = new BrowserAuthError(BrowserAuthErrorCodes.timedOut);
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const msal = await import('@azure/msal-react');
+		(msal.useMsal as any).mockImplementation(() => ({
+			instance: { acquireTokenSilent: vi.fn().mockRejectedValue(timeout) },
+			accounts: [{ username: 'user@example.com', homeAccountId: 'home-1' }],
+		}));
+		vi.mocked(msal.useIsAuthenticated).mockReturnValue(true);
+
+		const { AuthProvider } = await import('../../../src/lib/auth-context');
+		const { default: LoginCard } = await import('../../../src/components/auth/LoginCard');
+		render(
+			<AuthProvider>
+				<LoginCard />
+			</AuthProvider>,
+		);
+
+		expect(await screen.findByText('Tu sesión expiró. Inicia sesión de nuevo.')).toBeInTheDocument();
+		expect(screen.getByText('Sesión expirada')).toBeInTheDocument();
+		expect(screen.queryByText(/timed_out|aka\.ms/)).not.toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Continuar con Microsoft' })).toBeEnabled();
+		expect(consoleError).toHaveBeenCalledWith('[Auth] Error', timeout);
+	});
+
 	it('loginWithMicrosoft llama loginRedirect y logout limpia sesion y llama logoutRedirect', async () => {
 		// Verificamos que `loginWithMicrosoft` invoque `instance.loginRedirect`
 		// y que `logout` limpie `localStorage` y llame `instance.logoutRedirect`.

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
+import { AuthError, BrowserAuthErrorCodes } from '@azure/msal-browser';
 import { loginRequest } from './msal';
 import { apiClient, ApiError } from './api-client';
 import type { User, AuthState } from '@/types/auth';
@@ -44,6 +45,10 @@ function hydrateStoredSession(
 }
 
 function getAuthErrorMessage(error: unknown): string {
+  if (error instanceof AuthError && error.errorCode === BrowserAuthErrorCodes.timedOut) {
+    return 'Tu sesión expiró. Inicia sesión de nuevo.';
+  }
+
   if (error instanceof ApiError) {
     switch (error.code) {
       case 'NETWORK_ERROR':
