@@ -86,7 +86,7 @@ export default function CorreosMasivosPage() {
           {emailType === 'custom' && (
             <div className="input-group">
               <label htmlFor="email-message">Contenido del mensaje</label>
-              <textarea id="email-message" className="input" rows={5} required maxLength={5000} value={message} onChange={(event) => setMessage(event.target.value)} />
+              <textarea id="email-message" className="input" rows={5} required maxLength={5000} value={message} onChange={(event) => { setMessage(event.target.value); setSuccess(null); }} />
             </div>
           )}
           {election && requiresOpenElection && <p className="text-sm text-error">Selecciona una votación abierta para enviar este aviso.</p>}
