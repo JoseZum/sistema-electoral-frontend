@@ -13,13 +13,14 @@ export default function LoginCard() {
       </h1>
 
       <p className="text-white/70 text-[0.9375rem] leading-[1.7] mb-8">
-        Elecciones estudiantiles con garantías de integridad, anonimato y transparencia en cada proceso.
+        Elecciones estudiantiles con garantías de integridad, confidencialidad y transparencia en cada proceso.
       </p>
 
       <MicrosoftLoginButton />
       <AuthError />
 
-      <p className="text-white/45 text-xs leading-relaxed mt-4">
+      {/* 60% es el minimo que pasa AA sobre --ink en texto de 12px; con 45% da 3.8:1. */}
+      <p className="text-white/60 text-xs leading-relaxed mt-4">
         Se ingresa con la cuenta institucional del TEC. El sistema no guarda tu contraseña.
       </p>
     </div>

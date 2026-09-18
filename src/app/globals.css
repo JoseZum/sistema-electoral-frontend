@@ -6349,7 +6349,10 @@ body {
 }
 
 /* ─── Portada (login) ─── */
+/* `flex: 1` sobre el contenedor de altura completa: sin esto el hero se queda en su
+   alto natural y deja media pantalla vacia bajo la franja de cifras. */
 .cover-hero {
+  flex: 1;
   display: grid;
   grid-template-columns: 1fr 0.8fr;
   align-items: center;

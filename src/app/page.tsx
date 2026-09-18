@@ -6,11 +6,14 @@ import { useAuth } from '@/lib/auth-context';
 import LoginCard from '@/components/auth/LoginCard';
 import Loader from '@/components/Loader';
 
-// Cifras del padrón, consultadas en solo lectura en Supabase prod el 2026-09-16.
+// Cifras verificadas a mano contra producción el 18 de septiembre de 2026.
+// "Carreras" no se muestra: un count(distinct) daba 100, pero es la misma
+// carrera escrita de varias formas; normalizando tildes y mayúsculas no queda
+// una cifra defendible. "Sedes" sí, ya agrupada a mano (antes daba 16 por el
+// mismo motivo: el mismo campus escrito de varias formas).
 const PADRON = 12946;
 const HABILITADOS = 10283;
-const CARRERAS = 100;
-const SEDES = 16;
+const SEDES = 5;
 const n = (value: number) => value.toLocaleString('es-CR');
 
 export default function LoginPage() {
@@ -64,17 +67,15 @@ export default function LoginPage() {
       </div>
 
       <div className="cover-strip">
-        <p>
-          Padrón vigente: {n(PADRON)} personas registradas, {n(HABILITADOS)} habilitadas para votar.
-        </p>
+        <p>Padrón estudiantil vigente, verificado antes de cada proceso electoral.</p>
         <div className="cover-figures">
           <div>
-            <strong>{n(HABILITADOS)}</strong>
-            <span>Estudiantes habilitados</span>
+            <strong>{n(PADRON)}</strong>
+            <span>Personas en el padrón</span>
           </div>
           <div>
-            <strong>{CARRERAS}</strong>
-            <span>Carreras</span>
+            <strong>{n(HABILITADOS)}</strong>
+            <span>Habilitadas para votar</span>
           </div>
           <div>
             <strong>{SEDES}</strong>
