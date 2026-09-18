@@ -74,7 +74,7 @@ async function preparePublicSession(chromePort, frontendUrl) {
         localStorage.removeItem('tee_token');
         localStorage.removeItem('tee_user');
         sessionStorage.clear();
-        document.querySelector('h1')?.textContent?.includes('Portal de votacion') || false;
+        document.querySelector('h1')?.textContent?.includes('Tu voto decide') || false;
       `,
       20_000,
       true,

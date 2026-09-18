@@ -43,8 +43,8 @@ describe('LoginCard - render y delegación', () => {
 		render(<LoginCard />);
 
 		expect(screen.getByText('Tribunal Electoral Estudiantil')).toBeDefined();
-		expect(screen.getByText(/Portal\ de\ votaci[oó]n/i)).toBeDefined();
-		expect(screen.getByText(/Ingresa con tu cuenta institucional/i)).toBeDefined();
+		expect(screen.getByText(/Tu voto decide qui[eé]n representa al TEC/i)).toBeDefined();
+		expect(screen.getByText(/Elecciones estudiantiles con garant[ií]as/i)).toBeDefined();
 		expect(screen.getByRole('button', { name: 'Continuar con Microsoft' })).toBeDefined();
 	});
 
