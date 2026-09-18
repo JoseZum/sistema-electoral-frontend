@@ -6349,6 +6349,27 @@ body {
 }
 
 /* ─── Portada (login) ─── */
+
+.cover-page {
+  display: flex;
+  flex-direction: column;
+  /* En el telefono, 100vh mide MAS que lo que se ve: no descuenta la barra del
+     navegador, asi que la franja de cifras quedaba escondida debajo de ella. `dvh`
+     mide el alto realmente visible. El vh queda de respaldo para navegadores viejos. */
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* El overline general es rojo, pensado para fondo claro. Sobre el azul del hero
+   resulta chillon y cuesta leerlo; en la maqueta va en blanco suave. */
+.cover-hero .overline {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.cover-hero .overline::before {
+  background: currentColor;
+}
+
 /* `flex: 1` sobre el contenedor de altura completa: sin esto el hero se queda en su
    alto natural y deja media pantalla vacia bajo la franja de cifras. */
 .cover-hero {
@@ -6467,16 +6488,24 @@ body {
 .cover-dot-2 { right: 10%; bottom: 20%; width: 8px; height: 8px; }
 
 @media (max-width: 760px) {
+  /* Medidas apretadas a proposito: en el telefono la portada entera (hero + cifras)
+     debe caber en lo que se ve sin barra de navegador, o la franja de abajo queda
+     cortada a media frase. */
   .cover-hero {
     grid-template-columns: 1fr;
     gap: 0;
-    padding: 2rem 1.6rem 2.25rem;
+    padding: 1.5rem 1.4rem 1.75rem;
   }
 
-  /* La urna es lo que le da caracter a la portada: se reduce, no se oculta. */
-  .cover-ballot { order: -1; min-height: 210px; transform: scale(0.72); transform-origin: center; }
+  .cover-hero h1 { font-size: 1.75rem; margin-top: 0.75rem; }
+  .cover-hero > div > p { margin-top: 0.6rem; }
+  .cover-hero .ms-button { margin-top: 1.1rem; }
+  .cover-hero .legal { margin-top: 0.7rem; }
 
-  .cover-strip { flex-direction: column; align-items: flex-start; gap: 1.1rem; padding: 1.4rem 1.6rem 2rem; }
+  /* La urna es lo que le da caracter a la portada: se reduce, no se oculta. */
+  .cover-ballot { order: -1; min-height: 155px; transform: scale(0.62); transform-origin: center; }
+
+  .cover-strip { flex-direction: column; align-items: flex-start; gap: 0.8rem; padding: 1.1rem 1.4rem 1.4rem; }
   .cover-strip > p { font-size: 0.75rem; }
   .cover-figures { gap: 1.5rem; }
   .cover-figures > div > strong { font-size: 1.4rem; }

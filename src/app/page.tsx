@@ -40,7 +40,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="cover-page">
       <div className="cover-hero">
         <LoginCard />
 
