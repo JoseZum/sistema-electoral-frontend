@@ -6347,3 +6347,135 @@ body {
 @media (max-width: 900px) {
   .postulacion-layout { grid-template-columns: 1fr; }
 }
+
+/* ─── Portada (login) ─── */
+.cover-hero {
+  display: grid;
+  grid-template-columns: 1fr 0.8fr;
+  align-items: center;
+  gap: 2rem;
+  padding: 3.5rem 4rem;
+  background:
+    radial-gradient(1200px 400px at 85% 40%, rgba(43, 78, 122, 0.55), transparent 70%),
+    var(--ink);
+  color: #fff;
+}
+
+.cover-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.6rem 4rem;
+  background: var(--surface-raised);
+  border-top: 1px solid var(--border);
+}
+
+.cover-strip > p {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  max-width: 26rem;
+}
+
+.cover-figures { display: flex; gap: 2.5rem; }
+
+.cover-figures > div > strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.75rem;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.cover-figures > div > span {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Urna dibujada en CSS: sin imagenes externas. */
+.cover-ballot { position: relative; width: 100%; min-height: 320px; display: grid; place-items: center; }
+
+.cover-orbit {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+}
+
+.cover-orbit-1 { width: 260px; height: 260px; }
+.cover-orbit-2 { width: 340px; height: 340px; }
+
+.cover-paper {
+  position: absolute;
+  top: calc(50% - 88px); left: 50%;
+  width: 92px; height: 111px;
+  transform: translateX(-50%) rotate(12deg);
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(21, 45, 77, 0.16);
+  display: grid; place-items: center;
+}
+
+.cover-paper svg {
+  width: 38px; height: 38px; padding: 6px;
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 5px;
+  color: var(--ink-soft);
+}
+
+.cover-box {
+  position: absolute;
+  top: calc(50% - 8px); left: 50%;
+  width: 138px; height: 104px;
+  transform: translateX(-50%) rotate(-8deg);
+  border-radius: 11px;
+  background: #21406C;
+  box-shadow: 12px 15px 0 rgba(0, 0, 0, 0.16);
+  display: grid; place-items: center;
+}
+
+.cover-box > span {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-indent: 0.14em;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.cover-box::before {
+  content: '';
+  position: absolute;
+  top: 12px; left: 24px; right: 24px;
+  height: 7px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.cover-dot { position: absolute; width: 11px; height: 11px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); }
+.cover-dot-1 { left: 8%; top: 22%; }
+.cover-dot-2 { right: 10%; bottom: 20%; width: 8px; height: 8px; }
+
+@media (max-width: 760px) {
+  .cover-hero {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 2rem 1.6rem 2.25rem;
+  }
+
+  /* La urna es lo que le da caracter a la portada: se reduce, no se oculta. */
+  .cover-ballot { order: -1; min-height: 210px; transform: scale(0.72); transform-origin: center; }
+
+  .cover-strip { flex-direction: column; align-items: flex-start; gap: 1.1rem; padding: 1.4rem 1.6rem 2rem; }
+  .cover-strip > p { font-size: 0.75rem; }
+  .cover-figures { gap: 1.5rem; }
+  .cover-figures > div > strong { font-size: 1.4rem; }
+  .cover-figures > div > span { font-size: 0.5625rem; }
+}

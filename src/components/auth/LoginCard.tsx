@@ -3,21 +3,25 @@ import AuthError from './AuthError';
 
 export default function LoginCard() {
   return (
-    <div className="max-w-[400px] w-full animate-fadeInUp">
+    <div className="max-w-[26rem] w-full animate-fadeInUp">
       <div className="overline" style={{ marginBottom: '1rem' }}>
         Tribunal Electoral Estudiantil
       </div>
 
-      <h1 className="font-display font-normal tracking-tight text-[2.5rem] leading-[1.08] mb-2">
-        Portal de votacion
+      <h1 className="font-display font-medium tracking-tight text-[clamp(2.1rem,4vw,3.1rem)] leading-[1.1] text-white mb-4">
+        Tu voto decide quién representa al TEC
       </h1>
 
-      <p className="text-muted text-[0.9375rem] mb-10">
-        Ingresa con tu cuenta institucional para acceder al sistema de votacion.
+      <p className="text-white/70 text-[0.9375rem] leading-[1.7] mb-8">
+        Elecciones estudiantiles con garantías de integridad, anonimato y transparencia en cada proceso.
       </p>
 
       <MicrosoftLoginButton />
       <AuthError />
+
+      <p className="text-white/45 text-xs leading-relaxed mt-4">
+        Se ingresa con la cuenta institucional del TEC. El sistema no guarda tu contraseña.
+      </p>
     </div>
   );
 }
