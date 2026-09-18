@@ -23,3 +23,6 @@ yarn-error.log*
 tests/lighthouse/**/.reports/
 .next-lighthouse-admin/
 .next-lighthouse-scrutiny/
+.local-shots/
+test-results/
+playwright-report/
