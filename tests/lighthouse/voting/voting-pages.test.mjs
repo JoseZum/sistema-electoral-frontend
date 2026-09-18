@@ -51,7 +51,7 @@ const ELECTIONS = [
   {
     id: OPEN_ELECTION_ID,
     title: 'Eleccion del Consejo Ejecutivo FEITEC',
-    description: 'Votacion activa para seleccionar la representacion estudiantil.',
+    description: 'Votación activa para seleccionar la representación estudiantil.',
     status: 'OPEN',
     is_anonymous: true,
     tag_name: 'Computacion Cartago',

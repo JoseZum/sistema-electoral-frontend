@@ -1405,7 +1405,7 @@ export default function CrearEleccionPage() {
                 <input
                   type="text"
                   className="input"
-                  aria-label="Titulo de la votacion"
+                  aria-label="Título de la votación"
                   placeholder="Ej: Elección Consejo Ejecutivo FEITEC 2026"
                   value={form.title}
                   onChange={(event) => updateForm('title', event.target.value)}

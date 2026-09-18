@@ -256,7 +256,7 @@ export default function DashboardPage() {
           <span className="dash-live-text">
             <strong>
               {data.stats.openElections === 1
-                ? 'Hay 1 votacion abierta ahora mismo'
+                ? 'Hay 1 votación abierta ahora mismo'
                 : `Hay ${data.stats.openElections} votaciones abiertas ahora mismo`}
             </strong>
             {nextClosingElection?.endTime && nextClosingCountdown && (

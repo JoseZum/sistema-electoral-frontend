@@ -190,7 +190,7 @@ export default function ImmediateStartConfig({
               <label>Duración</label>
               <select
                 className="input"
-                aria-label="Duracion de la votacion inmediata"
+                aria-label="Duración de la votación inmediata"
                 value={durationValue}
                 onChange={(event) => onChange({ durationValue: event.target.value })}
                 disabled={!startsImmediately}
@@ -207,7 +207,7 @@ export default function ImmediateStartConfig({
               <label>Unidad</label>
               <select
                 className="input"
-                aria-label="Unidad de duracion de la votacion inmediata"
+                aria-label="Unidad de duración de la votación inmediata"
                 value={durationUnit}
                 onChange={(event) => {
                   const nextUnit = event.target.value as ImmediateDurationUnit;

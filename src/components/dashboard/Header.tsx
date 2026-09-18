@@ -8,18 +8,18 @@ interface HeaderProps {
 }
 
 const pageTitles: Record<string, string> = {
-  '/padron': 'Padron estudiantil',
-  '/padron/cargar': 'Cargar padron',
+  '/padron': 'Padrón estudiantil',
+  '/padron/cargar': 'Cargar padrón',
   '/admin-manager': 'Administradores',
-  '/auditoria': 'Auditoria',
+  '/auditoria': 'Auditoría',
   '/elecciones': 'Votaciones',
-  '/elecciones/crear': 'Crear votacion',
+  '/elecciones/crear': 'Crear votación',
   '/resultados': 'Resultados',
   '/generar-llaves': 'Generar llaves',
   '/escrutinio': 'Escrutinio',
   '/escrutinio/agregar-llaves': 'Agregar llaves',
   '/postulaciones': 'Postulaciones',
-  '/postulaciones/crear': 'Crear formulario de postulacion',
+  '/postulaciones/crear': 'Crear formulario de postulación',
 };
 
 export default function Header({ onToggleSidebar }: HeaderProps) {

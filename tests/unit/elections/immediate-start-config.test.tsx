@@ -147,7 +147,7 @@ describe('ImmediateStartConfig', () => {
         );
 
         const durationSelect = screen.getByLabelText(
-            'Duracion de la votacion inmediata'
+            'Duración de la votación inmediata'
         );
 
         await user.selectOptions(durationSelect, '30');
@@ -168,7 +168,7 @@ describe('ImmediateStartConfig', () => {
         );
 
         const unitSelect = screen.getByLabelText(
-            'Unidad de duracion de la votacion inmediata'
+            'Unidad de duración de la votación inmediata'
         );
 
         await user.selectOptions(unitSelect, 'hours');
@@ -192,7 +192,7 @@ describe('ImmediateStartConfig', () => {
         );
 
         const unitSelect = screen.getByLabelText(
-            'Unidad de duracion de la votacion inmediata'
+            'Unidad de duración de la votación inmediata'
         );
 
         await user.selectOptions(unitSelect, 'hours');
