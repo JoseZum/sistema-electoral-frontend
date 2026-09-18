@@ -6,13 +6,14 @@ import { useAuth } from '@/lib/auth-context';
 import LoginCard from '@/components/auth/LoginCard';
 import Loader from '@/components/Loader';
 
-// Cifras verificadas a mano contra producción el 18 de septiembre de 2026.
-// "Carreras" no se muestra: un count(distinct) daba 100, pero es la misma
-// carrera escrita de varias formas; normalizando tildes y mayúsculas no queda
-// una cifra defendible. "Sedes" sí, ya agrupada a mano (antes daba 16 por el
-// mismo motivo: el mismo campus escrito de varias formas).
+// Cifras verificadas contra producción el 18 de septiembre de 2026.
+// Al actualizarlas, NO uses COUNT(DISTINCT ...): `sede` y `career` son texto libre con
+// varias grafías para el mismo valor («CARTAGO» y «CAMPUS TECNOLÓGICO CENTRAL CARTAGO»
+// son el mismo campus), así que esa cuenta devuelve 16 sedes y 100 carreras, que no
+// existen. Hay que agrupar las variantes a mano.
 const PADRON = 12946;
 const HABILITADOS = 10283;
+const CARRERAS = 20;
 const SEDES = 5;
 const n = (value: number) => value.toLocaleString('es-CR');
 
@@ -67,15 +68,18 @@ export default function LoginPage() {
       </div>
 
       <div className="cover-strip">
-        <p>Padrón estudiantil vigente, verificado antes de cada proceso electoral.</p>
+        <p>
+          Padrón vigente: {n(PADRON)} personas registradas, {n(HABILITADOS)} habilitadas
+          para votar.
+        </p>
         <div className="cover-figures">
           <div>
-            <strong>{n(PADRON)}</strong>
-            <span>Personas en el padrón</span>
+            <strong>{n(HABILITADOS)}</strong>
+            <span>Estudiantes habilitados</span>
           </div>
           <div>
-            <strong>{n(HABILITADOS)}</strong>
-            <span>Habilitadas para votar</span>
+            <strong>{CARRERAS}</strong>
+            <span>Carreras</span>
           </div>
           <div>
             <strong>{SEDES}</strong>
