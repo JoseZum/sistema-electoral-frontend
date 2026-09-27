@@ -1,3 +1,6 @@
+/* Tiene que ir antes de @tailwind: un @import despues de otras reglas se ignora. */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6535,4 +6538,825 @@ body {
   .cover-figures { gap: 1.5rem; }
   .cover-figures > div > strong { font-size: 1.4rem; }
   .cover-figures > div > span { font-size: 0.5625rem; }
+}
+
+
+/* ===========================================================
+   Dashboard "Esencial" (propuesta 04). Conserva la navegacion
+   existente; solo cambia el contenido de la pagina de inicio.
+   =========================================================== */
+
+.ess-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.ess-eyebrow {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ess-greeting {
+  margin-bottom: 1.75rem;
+}
+
+.ess-greeting-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+/* Titular en la serif de la portada. Newsreader llega hasta 600 (no hay 700), asi
+   que el semibold es el tope disponible para mantener el mismo peso visual. */
+.ess-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3.2vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.ess-sub {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.ess-cta {
+  flex-shrink: 0;
+}
+
+.ess-greeting-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-shrink: 0;
+}
+
+.ess-updated {
+  display: block;
+  margin-top: 0.625rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Aviso de carga parcial: lo que no llegó se dice, no se rellena con ceros. */
+.ess-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.875rem 1.1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--error);
+  border-radius: 10px;
+  background: var(--error-light);
+  color: var(--ink);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+/* --- Hero de participacion --- */
+
+.ess-hero {
+  display: grid;
+  grid-template-columns: 1.1fr 0.85fr 0.7fr;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 2.25rem;
+  margin-bottom: 2rem;
+  border-radius: 14px;
+  background: #f0f3f7;
+  overflow: hidden;
+}
+
+/* Hero copiado del laboratorio de diseño: cifra en la sans, azul institucional. */
+.ess-number {
+  font-family: 'Plus Jakarta Sans', var(--font-body);
+  font-size: 76px;
+  font-weight: 500;
+  letter-spacing: -6px;
+  line-height: 1.1;
+  margin: 15px 0;
+  color: #254c80;
+}
+
+.ess-number > span {
+  font-size: 42px;
+  letter-spacing: -1px;
+}
+
+.ess-number-empty {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  letter-spacing: -0.02em;
+  color: var(--muted);
+}
+
+/* Sin esto, el ancho intrinseco del <select> (titulos largos) empuja la columna del
+   grid y saca 4px al layout en moviles. */
+.ess-hero-main {
+  min-width: 0;
+}
+
+.ess-hero-main > p {
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.ess-hero-main > p strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.ess-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.25rem;
+  max-width: 16rem;
+  min-height: 2.25rem;
+  padding: 0 0.7rem;
+  border: 1px solid #e4e8ec;
+  border-radius: 7px;
+  background: #fff;
+  color: #20374f;
+}
+
+.ess-filter:hover {
+  border-color: #a7b8d0;
+}
+
+.ess-filter > .ess-icon {
+  width: 15px;
+  height: 15px;
+  color: #63707c;
+}
+
+.ess-filter select {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.25rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+
+.ess-filter select:focus-visible {
+  outline: none;
+}
+
+.ess-filter:focus-within {
+  outline: 2px solid #254c80;
+  outline-offset: 2px;
+}
+
+/* Ilustracion decorativa: urna y papeleta, sin imagenes externas. */
+.ess-visual {
+  position: relative;
+  min-height: 230px;
+}
+
+/* Sin z-index negativo: una capa negativa dentro de un contexto aislado se escapa
+   del overflow:hidden del hero al componer. El orden del DOM ya deja las orbitas
+   detras de la urna. */
+.ess-orbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border: 1px solid #d7dfe9;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.ess-orbit-one { width: 235px; height: 235px; }
+.ess-orbit-two { width: 300px; height: 300px; }
+
+.ess-box {
+  position: absolute;
+  top: 105px;
+  left: 50%;
+  width: 124px;
+  height: 94px;
+  transform: translateX(-50%) rotate(-8deg);
+  border-radius: 10px;
+  background: #264775;
+  box-shadow: 11px 14px 0 #dbe2ec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.ess-box > span {
+  font-family: var(--font-body);
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+}
+
+.ess-box > div {
+  position: absolute;
+  top: 11px;
+  left: 22px;
+  right: 22px;
+  height: 6px;
+  border-radius: 3px;
+  background: #152d4d;
+}
+
+.ess-paper {
+  position: absolute;
+  left: 50%;
+  top: 32px;
+  width: 83px;
+  height: 100px;
+  transform: translateX(-50%) rotate(12deg);
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(29, 52, 81, 0.09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ess-paper svg {
+  width: 34px;
+  height: 34px;
+  padding: 5px;
+  border: 1.5px solid #6687b4;
+  border-radius: 4px;
+  color: #4774a9;
+}
+
+.ess-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c9d5e4;
+}
+
+.ess-dot-one { left: 15px; top: 60px; }
+.ess-dot-two { right: 18px; bottom: 28px; width: 7px; height: 7px; background: #baa58d; }
+
+.ess-aside {
+  border-left: 1px solid #d7dee6;
+  padding: 0.9rem 0 0.9rem 1.8rem;
+}
+
+.ess-aside > strong {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #20374f;
+  margin-bottom: 0.5rem;
+}
+
+.ess-aside > p {
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.ess-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.2rem;
+  min-height: 2.4rem;
+  padding: 0.65rem 0.95rem;
+  border: 1px solid #e4e8ec;
+  border-radius: 7px;
+  background: #fff;
+  color: #20374f;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ess-step:hover {
+  background: #ebf0f8;
+}
+
+.ess-step > .ess-arrow {
+  width: 15px;
+  height: 15px;
+}
+
+.ess-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.52);
+  color: #63707c;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.ess-live > i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ess-live.is-live {
+  background: #e1ebdb;
+  color: #49603a;
+}
+
+.ess-live.is-live > i {
+  background: #6d8d55;
+  animation: ess-pulse 2s var(--ease-smooth) infinite;
+}
+
+@keyframes ess-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* --- Tres accesos principales --- */
+
+.ess-links {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.375rem;
+  margin-bottom: 2rem;
+}
+
+.ess-links > a {
+  position: relative;
+  display: block;
+  padding: 1.6rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out),
+    border-color 0.25s var(--ease-out);
+}
+
+.ess-links > a:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+  box-shadow: 0 8px 22px rgba(48, 77, 117, 0.08);
+}
+
+.ess-link-index {
+  position: absolute;
+  right: 1.5rem;
+  top: 1.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  color: var(--muted-light);
+}
+
+.ess-link-icon {
+  display: block;
+  margin-bottom: 1.5rem;
+  color: #254c80;
+}
+
+.ess-link-icon svg {
+  width: 23px;
+  height: 23px;
+}
+
+.ess-links h3 {
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+
+.ess-links p {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin-bottom: 1.15rem;
+}
+
+.ess-link-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #254c80;
+}
+
+.ess-arrow {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+/* --- Paneles inferiores --- */
+
+.ess-bottom {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  align-items: start;
+  gap: 1.375rem;
+}
+
+.ess-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  background: var(--surface-sunken);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.ess-election-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 1.25rem laterales: el mismo margen que .dash-panel-head y .dash-activity. */
+.ess-election {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  color: inherit;
+  text-decoration: none;
+}
+
+.ess-election:last-child {
+  border-bottom: 0;
+}
+
+.ess-election:hover .ess-election-name strong {
+  color: var(--accent);
+}
+
+.ess-election-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--surface-sunken);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.ess-election-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.ess-election-name strong {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s var(--ease-smooth);
+}
+
+.ess-election-name small {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.ess-election-progress {
+  flex-shrink: 0;
+  width: 130px;
+  text-align: right;
+}
+
+.ess-election-figures {
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.ess-election-figures strong {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ess-election-figures small {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+/* --- Acciones rapidas --- */
+
+.ess-quick {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.875rem;
+  margin-top: 1.375rem;
+}
+
+.ess-quick > a,
+.ess-quick > button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.95rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 0.2s var(--ease-smooth), color 0.2s var(--ease-smooth);
+}
+
+.ess-quick > button {
+  width: 100%;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.ess-quick > button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.ess-quick > a:hover,
+.ess-quick > button:not(:disabled):hover {
+  border-color: var(--border-strong);
+  color: var(--accent);
+}
+
+/* --- Adaptacion a pantallas menores --- */
+
+@media (max-width: 1100px) {
+  .ess-hero {
+    grid-template-columns: 1.2fr 0.8fr;
+    padding: 1.75rem;
+  }
+
+  .ess-aside {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    border-left: 0;
+    border-top: 1px solid #d7dee6;
+    padding: 1.2rem 0 0;
+  }
+
+  .ess-live { margin-bottom: 0; }
+  .ess-aside > strong { margin-bottom: 0; }
+  .ess-aside > p { flex: 1; min-width: 12rem; }
+  .ess-step { margin-top: 0; }
+
+  .ess-bottom { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 860px) {
+  .ess-greeting-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .ess-links { grid-template-columns: 1fr; gap: 0.875rem; }
+  .ess-links > a { padding: 1.35rem 1.35rem 1.2rem 4rem; }
+  .ess-link-icon { position: absolute; left: 1.35rem; top: 1.5rem; margin: 0; }
+  .ess-links h3 { padding-right: 2rem; }
+
+  .ess-quick { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .ess-hero {
+    grid-template-columns: 1fr;
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+
+  /* La ilustracion es decorativa: se oculta antes que el contenido util. */
+  .ess-visual { display: none; }
+
+  .ess-election-progress { width: 96px; }
+  .ess-election-figures small { display: none; }
+}
+
+/* La barra vive dentro de un <span>: sin display:block el alto no aplica. */
+.ess-election-progress .dash-progress-track,
+.ess-election-progress .dash-progress-fill {
+  display: block;
+}
+
+/* El hero opaco corta la marca de agua del logo por la mitad y el borde queda a la
+   vista. El dashboard ya tiene su propia ilustracion, asi que aqui se retira. */
+.main-body:has(.ess-page)::before {
+  display: none;
+}
+
+
+/* --- Paneles inferiores y actividad, como en el laboratorio de diseño --- */
+
+.ess-panel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+.ess-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.45rem 1.45rem 0.5rem;
+}
+
+.ess-panel-head h3 {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #20374f;
+}
+
+.ess-panel-head p {
+  margin-top: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.ess-panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #254c80;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ess-panel-link:hover {
+  text-decoration: underline;
+}
+
+.ess-panel .dash-panel-empty {
+  padding: 2.5rem 1.45rem;
+}
+
+.ess-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  padding: 1.1rem 1.45rem 1.45rem;
+}
+
+.ess-activity {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.ess-activity-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.ess-activity-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ess-activity-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ess-activity-body strong,
+.ess-activity-body small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ess-activity-body strong {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #20374f;
+}
+
+.ess-activity-body small {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.ess-activity time {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Accesos rapidos: icono a la izquierda, flecha al extremo derecho. */
+.ess-quick > a > span,
+.ess-quick > button > span {
+  flex: 1;
+  text-align: left;
+}
+
+.ess-quick .ess-icon {
+  width: 16px;
+  height: 16px;
+  color: #254c80;
+}
+
+.ess-quick .ess-arrow {
+  color: var(--muted);
+}
+
+.ess-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ess-cta > .ess-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Medidas del laboratorio para telefono. */
+@media (max-width: 720px) {
+  .ess-number { font-size: 63px; letter-spacing: -4px; }
+  .ess-number > span { font-size: 32px; }
+}
+
+.ess-activity-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.ess-activity-title > strong {
+  min-width: 0;
+}
+
+.ess-activity-title > .audit-op-badge {
+  flex-shrink: 0;
 }
