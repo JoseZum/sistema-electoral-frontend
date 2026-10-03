@@ -1015,6 +1015,11 @@ function dayHeader(dateStr: string): { primary: string; secondary: string } {
 
 const PAGE_SIZE = 30;
 
+// Medido en producción el 2026-10-03 con copias de la bitácora en una tabla temporal,
+// sumando el conteo y la primera página: 5 380 eventos ≈ 0,35 s, 10 760 ≈ 0,65 s y
+// 26 900 ≈ 3 s. Pasados los 10 000 el tiempo deja de crecer en línea recta.
+const AUDIT_SLOW_THRESHOLD = 10_000;
+
 export default function AuditPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState(0);
@@ -1101,6 +1106,9 @@ export default function AuditPage() {
   }, [stats]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  // La lentitud depende del tamaño de toda la tabla, no del filtro activo.
+  const tableSize = categoryCounts.all ?? 0;
+  const tooBig = tableSize >= AUDIT_SLOW_THRESHOLD;
 
   // Group logs by local day
   const grouped = useMemo(() => {
@@ -1136,7 +1144,7 @@ export default function AuditPage() {
           </div>
           <div className="audit-hero-meta">
             <div className="audit-hero-stat">
-              <span className="audit-hero-stat-value">
+              <span className={`audit-hero-stat-value ${tooBig ? 'is-danger' : ''}`}>
                 {total.toLocaleString('es-CR')}
               </span>
               <span className="audit-hero-stat-label">
