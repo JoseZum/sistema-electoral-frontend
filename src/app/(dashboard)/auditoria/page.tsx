@@ -1018,7 +1018,8 @@ const PAGE_SIZE = 30;
 // Medido en producción el 2026-10-03 con copias de la bitácora en una tabla temporal,
 // sumando el conteo y la primera página: 5 380 eventos ≈ 0,35 s, 10 760 ≈ 0,65 s y
 // 26 900 ≈ 3 s. Pasados los 10 000 el tiempo deja de crecer en línea recta.
-const AUDIT_SLOW_THRESHOLD = 10_000;
+// NEXT_PUBLIC_AUDIT_SLOW_THRESHOLD lo baja para ver la alerta en staging.
+const AUDIT_SLOW_THRESHOLD = Number(process.env.NEXT_PUBLIC_AUDIT_SLOW_THRESHOLD) || 10_000;
 
 export default function AuditPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
