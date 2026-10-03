@@ -3866,6 +3866,7 @@ body {
   color: var(--error);
   font: 700 1rem/1 var(--font-body);
   cursor: pointer;
+  anchor-name: --audit-size-alert;
 }
 
 .audit-size-popover {
@@ -3880,6 +3881,17 @@ body {
   font-size: 0.875rem;
   line-height: 1.45;
   box-shadow: 0 12px 32px rgb(0 0 0 / 0.18);
+}
+
+/* Debajo del «!» en vez de centrado; sin soporte se queda centrado. */
+@supports (position-area: bottom) {
+  .audit-size-popover {
+    position-anchor: --audit-size-alert;
+    position-area: bottom span-left;
+    position-try-fallbacks: flip-block;
+    inset: auto;
+    margin: 0.5rem 0;
+  }
 }
 
 .audit-size-popover strong {
