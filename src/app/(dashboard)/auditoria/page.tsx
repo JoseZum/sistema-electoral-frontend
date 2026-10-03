@@ -1145,8 +1145,31 @@ export default function AuditPage() {
           <div className="audit-hero-meta">
             <div className="audit-hero-stat">
               <span className={`audit-hero-stat-value ${tooBig ? 'is-danger' : ''}`}>
+                {tooBig && (
+                  <button
+                    type="button"
+                    className="audit-size-alert"
+                    popoverTarget="audit-size-warning"
+                    aria-label="Advertencia: la bitácora es demasiado grande"
+                  >
+                    !
+                  </button>
+                )}
                 {total.toLocaleString('es-CR')}
               </span>
+              {tooBig && (
+                <div id="audit-size-warning" popover="auto" className="audit-size-popover">
+                  <strong>La bitácora se está volviendo pesada</strong>
+                  <p>
+                    Hay {tableSize.toLocaleString('es-CR')} eventos registrados. A partir de{' '}
+                    {AUDIT_SLOW_THRESHOLD.toLocaleString('es-CR')} esta página puede tardar
+                    varios segundos en cargar.
+                  </p>
+                  <p>
+                    Exporta los eventos antiguos y purga ese rango para mantenerla ágil.
+                  </p>
+                </div>
+              )}
               <span className="audit-hero-stat-label">
                 evento{total === 1 ? '' : 's'} en esta vista
               </span>
